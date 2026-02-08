@@ -1,0 +1,9 @@
+node_modules
+.DS_Store
+dist
+.env
+.bun
+apps/backend/node_modules
+apps/frontend/node_modules
+apps/frontend/.expo
+apps/frontend/dist
