@@ -1,16 +1,15 @@
-version: '3.8'
 services:
-  db:
-    image: postgres:15-alpine
-    container_name: wallofme_db
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: wallofme
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
     ports:
-      - "5433:5432"
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: wallofme
+      POSTGRES_PASSWORD: wallofme
+      POSTGRES_DB: wallofme
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
 
 volumes:
-  db_data:
+  pgdata:

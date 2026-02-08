@@ -1,0 +1,62 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirm": "Confirm"
+  },
+  "auth": {
+    "login": "Log In",
+    "register": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "orContinueWith": "Or continue with",
+    "google": "Continue with Google",
+    "apple": "Continue with Apple",
+    "verifyEmail": "Verify your email",
+    "otpSent": "We sent a code to your email",
+    "otpPlaceholder": "Enter verification code"
+  },
+  "tabs": {
+    "home": "Home",
+    "explore": "Explore",
+    "trophies": "Trophies",
+    "profile": "Profile"
+  },
+  "home": {
+    "title": "Pain Cave",
+    "emptyRoom": "Your Pain Cave is empty. Add trophies to decorate!"
+  },
+  "explore": {
+    "title": "Explore",
+    "subtitle": "Discover other athletes' Pain Caves"
+  },
+  "trophies": {
+    "title": "My Trophies",
+    "empty": "No trophies yet. Scan your first medal or bib!",
+    "scan": "Scan Trophy",
+    "medal": "Medal",
+    "bib": "Bib",
+    "processing": "Processing...",
+    "ready": "Ready"
+  },
+  "profile": {
+    "title": "Profile",
+    "settings": "Settings",
+    "logout": "Log Out",
+    "language": "Language",
+    "theme": "Theme",
+    "pro": "Upgrade to Pro"
+  },
+  "room": {
+    "edit": "Edit Room",
+    "visit": "Visit Pain Cave"
+  }
+}

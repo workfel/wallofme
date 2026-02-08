@@ -1,0 +1,62 @@
+{
+  "common": {
+    "loading": "Chargement...",
+    "error": "Une erreur est survenue",
+    "retry": "Réessayer",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "confirm": "Confirmer"
+  },
+  "auth": {
+    "login": "Se connecter",
+    "register": "S'inscrire",
+    "email": "Email",
+    "password": "Mot de passe",
+    "name": "Nom",
+    "forgotPassword": "Mot de passe oublié ?",
+    "noAccount": "Pas encore de compte ?",
+    "hasAccount": "Déjà un compte ?",
+    "orContinueWith": "Ou continuer avec",
+    "google": "Continuer avec Google",
+    "apple": "Continuer avec Apple",
+    "verifyEmail": "Vérifiez votre email",
+    "otpSent": "Nous avons envoyé un code à votre email",
+    "otpPlaceholder": "Entrez le code de vérification"
+  },
+  "tabs": {
+    "home": "Accueil",
+    "explore": "Explorer",
+    "trophies": "Trophées",
+    "profile": "Profil"
+  },
+  "home": {
+    "title": "Pain Cave",
+    "emptyRoom": "Votre Pain Cave est vide. Ajoutez des trophées pour décorer !"
+  },
+  "explore": {
+    "title": "Explorer",
+    "subtitle": "Découvrez les Pain Caves d'autres athlètes"
+  },
+  "trophies": {
+    "title": "Mes Trophées",
+    "empty": "Aucun trophée. Scannez votre première médaille ou dossard !",
+    "scan": "Scanner un trophée",
+    "medal": "Médaille",
+    "bib": "Dossard",
+    "processing": "En traitement...",
+    "ready": "Prêt"
+  },
+  "profile": {
+    "title": "Profil",
+    "settings": "Paramètres",
+    "logout": "Se déconnecter",
+    "language": "Langue",
+    "theme": "Thème",
+    "pro": "Passer à Pro"
+  },
+  "room": {
+    "edit": "Modifier la salle",
+    "visit": "Visiter la Pain Cave"
+  }
+}

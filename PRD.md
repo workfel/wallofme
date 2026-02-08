@@ -44,7 +44,7 @@ Rewarded Videos : Regarder une publicité pour obtenir des tokens et débloquer 
 
 API & Logique : Hono (Bun) avec RPC et Zod Validator sur VPS Coolify.
 
-Auth : Google/Apple et email( otp ) with BetterAuth ( pour expo: https://www.better-auth.com/docs/integrations/expo)
+Auth : Google/Apple et email( otp ) with BetterAuth ( https://hono.dev/examples/better-auth, https://www.better-auth.com/docs/integrations/expo)
 
 Data : Postgres + Drizzle ORM.
 
@@ -56,4 +56,4 @@ IA : ai-sdk nodejs avec chat gpt comme provider.
 
 Monetization : RevenueCat.
 
-Multilangage : Utiliser la localization d'expo https://docs.expo.dev/versions/latest/sdk/localization/ avec par défault EN et FR seulement.
+Multilangage : Utiliser la localization d'expo https://docs.expo.dev/versions/latest/sdk/localization/ avec par défault EN et FR seulement. Tout les textes doivent etre traduit.

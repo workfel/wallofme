@@ -4,12 +4,12 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import i18n from "@/lib/i18n";
 
-export default function ExploreScreen() {
+export default function TrophyScanScreen() {
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title">{i18n.t("explore.title")}</ThemedText>
+      <ThemedText type="title">{i18n.t("trophies.scan")}</ThemedText>
       <ThemedText style={styles.subtitle}>
-        {i18n.t("explore.subtitle")}
+        Camera capture will be implemented here.
       </ThemedText>
     </ThemedView>
   );

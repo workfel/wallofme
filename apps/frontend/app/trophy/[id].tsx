@@ -1,16 +1,16 @@
 import { StyleSheet } from "react-native";
+import { useLocalSearchParams } from "expo-router";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import i18n from "@/lib/i18n";
 
-export default function ExploreScreen() {
+export default function TrophyDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title">{i18n.t("explore.title")}</ThemedText>
-      <ThemedText style={styles.subtitle}>
-        {i18n.t("explore.subtitle")}
-      </ThemedText>
+      <ThemedText type="title">Trophy</ThemedText>
+      <ThemedText style={styles.id}>ID: {id}</ThemedText>
     </ThemedView>
   );
 }
@@ -22,9 +22,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 24,
   },
-  subtitle: {
+  id: {
     marginTop: 12,
     opacity: 0.7,
-    textAlign: "center",
   },
 });

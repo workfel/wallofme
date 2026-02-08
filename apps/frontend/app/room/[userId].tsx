@@ -1,15 +1,18 @@
 import { StyleSheet } from "react-native";
+import { useLocalSearchParams } from "expo-router";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import i18n from "@/lib/i18n";
 
-export default function ExploreScreen() {
+export default function RoomVisitScreen() {
+  const { userId } = useLocalSearchParams<{ userId: string }>();
+
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title">{i18n.t("explore.title")}</ThemedText>
+      <ThemedText type="title">{i18n.t("room.visit")}</ThemedText>
       <ThemedText style={styles.subtitle}>
-        {i18n.t("explore.subtitle")}
+        3D Pain Cave viewer will be implemented here.
       </ThemedText>
     </ThemedView>
   );
