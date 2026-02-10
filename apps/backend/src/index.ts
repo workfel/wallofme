@@ -8,6 +8,8 @@ import { races } from "./routes/races.routes";
 import { rooms } from "./routes/rooms.routes";
 import { decorations } from "./routes/decorations.routes";
 import { upload } from "./routes/upload.routes";
+import { scan } from "./routes/scan.routes";
+import { users } from "./routes/users.routes";
 
 type Variables = {
   user: typeof auth.$Infer.Session.user | null;
@@ -25,7 +27,7 @@ app.use(
   cors({
     origin: (origin) => origin,
     credentials: true,
-  })
+  }),
 );
 
 // Session middleware — populates user/session on every request (non-blocking)
@@ -45,8 +47,13 @@ const route = app
   .route("/api/races", races)
   .route("/api/rooms", rooms)
   .route("/api/decorations", decorations)
-  .route("/api/upload", upload);
+  .route("/api/upload", upload)
+  .route("/api/scan", scan)
+  .route("/api/users", users);
 
 export type AppType = typeof route;
 
-export default app;
+export default {
+  port: process.env.PORT || 3333,
+  fetch: app.fetch,
+};

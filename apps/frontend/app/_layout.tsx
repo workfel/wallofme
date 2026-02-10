@@ -22,11 +22,24 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     if (isPending) return;
 
     const inAuthGroup = segments[0] === "(auth)";
+    const inOnboarding = segments[0] === "onboarding";
+    const user = session?.user as
+      | (typeof session & { firstName?: string | null })["user"]
+      | undefined;
+    const hasFirstName = !!(user as any)?.firstName;
 
     if (!session && !inAuthGroup) {
       router.replace("/(auth)/login");
     } else if (session && inAuthGroup) {
+      if (!hasFirstName) {
+        router.replace("/onboarding");
+      } else {
+        router.replace("/(tabs)");
+      }
+    } else if (session && inOnboarding && hasFirstName) {
       router.replace("/(tabs)");
+    } else if (session && !inOnboarding && !inAuthGroup && !hasFirstName) {
+      router.replace("/onboarding");
     }
   }, [session, isPending, segments]);
 
@@ -44,12 +57,20 @@ export default function RootLayout() {
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen
+              name="onboarding"
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
               name="trophy/[id]"
               options={{ title: "Trophy" }}
             />
             <Stack.Screen
               name="trophy/scan"
               options={{ presentation: "modal", title: "Scan Trophy" }}
+            />
+            <Stack.Screen
+              name="trophy/review"
+              options={{ title: "Review" }}
             />
             <Stack.Screen
               name="room/edit"

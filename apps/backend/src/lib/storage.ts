@@ -52,3 +52,27 @@ export async function deleteObject(key: string): Promise<void> {
 export function getPublicUrl(key: string): string {
   return `${process.env.R2_PUBLIC_URL}/${key}`;
 }
+
+export async function uploadBuffer(
+  buffer: Buffer,
+  key: string,
+  contentType: string
+): Promise<void> {
+  const command = new PutObjectCommand({
+    Bucket: bucket,
+    Key: key,
+    Body: buffer,
+    ContentType: contentType,
+  });
+  await s3.send(command);
+}
+
+export async function downloadBuffer(key: string): Promise<Buffer> {
+  const command = new GetObjectCommand({
+    Bucket: bucket,
+    Key: key,
+  });
+  const response = await s3.send(command);
+  const bytes = await response.Body!.transformToByteArray();
+  return Buffer.from(bytes);
+}

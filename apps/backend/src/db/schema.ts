@@ -53,6 +53,9 @@ export const user = pgTable("user", {
   displayName: text("display_name"),
   isPro: boolean("is_pro").default(false).notNull(),
   locale: text("locale").default("en"),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  country: text("country"),
 });
 
 export const session = pgTable("session", {

@@ -58,5 +58,63 @@
   "room": {
     "edit": "Edit Room",
     "visit": "Visit Pain Cave"
+  },
+  "onboarding": {
+    "title": "Welcome!",
+    "subtitle": "Tell us about yourself so we can find your race results",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "country": "Country (e.g. FR)",
+    "continue": "Continue",
+    "fieldsRequired": "First name and last name are required"
+  },
+  "scan": {
+    "permissionRequired": "Camera permission is required to scan trophies",
+    "grantPermission": "Grant Permission",
+    "pickFromGallery": "Pick from Gallery",
+    "gallery": "Gallery",
+    "retake": "Retake",
+    "continue": "Continue",
+    "uploading": "Uploading your trophy..."
+  },
+  "review": {
+    "processing": "Processing image...",
+    "removingBg": "Removing background...",
+    "analyzing": "Analyzing your trophy...",
+    "analyzeComplete": "Analysis complete",
+    "searchingResults": "Searching for your race results...",
+    "trophyType": "Trophy Type",
+    "raceInfo": "Race Information",
+    "raceName": "Race name",
+    "date": "Date (YYYY-MM-DD)",
+    "city": "City",
+    "country": "Country (e.g. FR)",
+    "distance": "Distance (e.g. 42.195km)",
+    "sport": "Sport",
+    "getMyResults": "Get my results",
+    "raceNameRequired": "Race name is required",
+    "inappropriateContent": "This image contains inappropriate content and cannot be processed",
+    "done": "Trophy Added!",
+    "resultsFound": "Race Results Found",
+    "noResults": "No race results found. You can add them manually later.",
+    "noResultsMessage": "No results found. You can add them manually later.",
+    "time": "Time",
+    "ranking": "Ranking",
+    "categoryRanking": "Category",
+    "source": "Source",
+    "finish": "Done",
+    "step1": "Processing",
+    "step2": "Details",
+    "step3": "Search",
+    "step4": "Done"
+  },
+  "sports": {
+    "running": "Running",
+    "trail": "Trail",
+    "triathlon": "Triathlon",
+    "cycling": "Cycling",
+    "swimming": "Swimming",
+    "obstacle": "Obstacle",
+    "other": "Other"
   }
 }

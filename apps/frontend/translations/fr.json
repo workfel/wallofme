@@ -58,5 +58,63 @@
   "room": {
     "edit": "Modifier la salle",
     "visit": "Visiter la Pain Cave"
+  },
+  "onboarding": {
+    "title": "Bienvenue !",
+    "subtitle": "Parlez-nous de vous pour retrouver vos résultats de course",
+    "firstName": "Prénom",
+    "lastName": "Nom de famille",
+    "country": "Pays (ex: FR)",
+    "continue": "Continuer",
+    "fieldsRequired": "Le prénom et le nom sont requis"
+  },
+  "scan": {
+    "permissionRequired": "L'accès à la caméra est nécessaire pour scanner vos trophées",
+    "grantPermission": "Autoriser la caméra",
+    "pickFromGallery": "Choisir dans la galerie",
+    "gallery": "Galerie",
+    "retake": "Reprendre",
+    "continue": "Continuer",
+    "uploading": "Upload de votre trophée..."
+  },
+  "review": {
+    "processing": "Traitement de l'image...",
+    "removingBg": "Suppression du fond...",
+    "analyzing": "Analyse de votre trophée...",
+    "analyzeComplete": "Analyse terminée",
+    "searchingResults": "Recherche de vos résultats...",
+    "trophyType": "Type de trophée",
+    "raceInfo": "Informations de la course",
+    "raceName": "Nom de la course",
+    "date": "Date (AAAA-MM-JJ)",
+    "city": "Ville",
+    "country": "Pays (ex: FR)",
+    "distance": "Distance (ex: 42.195km)",
+    "sport": "Sport",
+    "getMyResults": "Récupérer mes résultats",
+    "raceNameRequired": "Le nom de la course est requis",
+    "inappropriateContent": "Cette image contient du contenu inapproprié et ne peut pas être traitée",
+    "done": "Trophée ajouté !",
+    "resultsFound": "Résultats trouvés",
+    "noResults": "Aucun résultat trouvé. Vous pourrez les ajouter manuellement plus tard.",
+    "noResultsMessage": "Aucun résultat trouvé. Vous pourrez les ajouter manuellement plus tard.",
+    "time": "Temps",
+    "ranking": "Classement",
+    "categoryRanking": "Catégorie",
+    "source": "Source",
+    "finish": "Terminé",
+    "step1": "Traitement",
+    "step2": "Détails",
+    "step3": "Recherche",
+    "step4": "Terminé"
+  },
+  "sports": {
+    "running": "Course à pied",
+    "trail": "Trail",
+    "triathlon": "Triathlon",
+    "cycling": "Cyclisme",
+    "swimming": "Natation",
+    "obstacle": "Obstacle",
+    "other": "Autre"
   }
 }
