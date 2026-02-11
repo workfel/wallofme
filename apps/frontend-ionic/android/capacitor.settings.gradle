@@ -25,3 +25,6 @@ project(':capacitor-splash-screen').projectDir = new File('../../../node_modules
 
 include ':capacitor-status-bar'
 project(':capacitor-status-bar').projectDir = new File('../../../node_modules/@capacitor/status-bar/android')
+
+include ':better-auth-capacitor'
+project(':better-auth-capacitor').projectDir = new File('../../../node_modules/better-auth-capacitor/android')

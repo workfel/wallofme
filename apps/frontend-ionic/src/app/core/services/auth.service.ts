@@ -113,6 +113,7 @@ export class AuthService {
       ? '/auth/callback'
       : `${window.location.origin}/auth/callback`;
 
+    console.log('callbackURL', callbackURL);
     await this.authClient.signIn.social({
       provider,
       callbackURL,

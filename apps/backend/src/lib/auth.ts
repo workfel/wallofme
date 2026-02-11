@@ -56,7 +56,9 @@ export const auth = betterAuth({
       },
     },
   },
-  plugins: [capacitor(), bearer()],
+  plugins: [capacitor({
+    disableOriginOverride: false,
+  }), bearer()],
   trustedOrigins: [
     "wallofme://",
     "wallofme://*",
