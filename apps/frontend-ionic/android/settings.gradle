@@ -1,0 +1,9 @@
+include ':app'
+include ':capacitor-cordova-android-plugins'
+project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
+
+apply from: 'capacitor.settings.gradle'
+
+// BetterAuth Capacitor native plugin (not auto-detected due to exports field)
+include ':better-auth-capacitor'
+project(':better-auth-capacitor').projectDir = new File('../../../node_modules/better-auth-capacitor/android')

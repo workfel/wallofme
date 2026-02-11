@@ -27,14 +27,23 @@ app.use(
   cors({
     origin: (origin) => origin,
     credentials: true,
+    allowHeaders: [
+      "Content-Type",
+      "Authorization",
+      "User-Agent",
+      "x-skip-oauth-proxy",
+      "capacitor-origin",
+    ],
+    allowMethods: ["POST", "GET", "OPTIONS"],
+    exposeHeaders: ["set-auth-token"],
   }),
 );
 
 // Session middleware — populates user/session on every request (non-blocking)
 app.use("*", sessionMiddleware);
 
-// BetterAuth handler
-app.on(["POST", "GET"], "/api/auth/*", (c) => {
+// BetterAuth handler — Hono's c.res setter auto-merges CORS headers from middleware
+app.on(["POST", "GET"], "/api/auth/*", async (c) => {
   return auth.handler(c.req.raw);
 });
 

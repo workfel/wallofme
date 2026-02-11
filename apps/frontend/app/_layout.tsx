@@ -74,7 +74,7 @@ export default function RootLayout() {
             />
             <Stack.Screen
               name="room/edit"
-              options={{ presentation: "modal", title: "Edit Room" }}
+              options={{ title: "Edit Room" }}
             />
             <Stack.Screen
               name="room/[userId]"

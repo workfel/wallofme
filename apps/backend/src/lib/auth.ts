@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { expo } from "@better-auth/expo";
+import { bearer } from "better-auth/plugins/bearer";
+import { capacitor } from "better-auth-capacitor";
 import { db } from "../db";
 import * as schema from "../db/schema";
 
@@ -55,16 +56,24 @@ export const auth = betterAuth({
       },
     },
   },
-  plugins: [expo()],
+  plugins: [capacitor(), bearer()],
   trustedOrigins: [
     "wallofme://",
     "wallofme://*",
+    "capacitor://localhost",
+    "http://localhost",
     ...(process.env.NODE_ENV !== "production"
       ? [
           "exp://",
           "exp://**",
           "exp://192.168.*.*:*/**",
           "http://localhost:8081",
+          "http://localhost:8100",
+          "http://localhost:8101",
+          "http://localhost:8102",
+          "http://192.168.1.11:8100",
+          "http://192.168.1.11:8101",
+          "http://192.168.1.11:8102",
         ]
       : []),
   ],

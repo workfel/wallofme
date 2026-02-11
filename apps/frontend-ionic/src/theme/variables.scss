@@ -1,0 +1,149 @@
+/**
+ * Ionic CSS Custom Properties — WallOfMe Theme
+ * Based on existing theme.ts colors
+ */
+
+:root {
+  /* Primary — teal/blue accent */
+  --ion-color-primary: #0a7ea4;
+  --ion-color-primary-rgb: 10, 126, 164;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #086f90;
+  --ion-color-primary-tint: #238bad;
+
+  /* Secondary */
+  --ion-color-secondary: #3dc2ff;
+  --ion-color-secondary-rgb: 61, 194, 255;
+  --ion-color-secondary-contrast: #000000;
+  --ion-color-secondary-contrast-rgb: 0, 0, 0;
+  --ion-color-secondary-shade: #36abe0;
+  --ion-color-secondary-tint: #50c8ff;
+
+  /* Tertiary */
+  --ion-color-tertiary: #5260ff;
+  --ion-color-tertiary-rgb: 82, 96, 255;
+  --ion-color-tertiary-contrast: #ffffff;
+  --ion-color-tertiary-contrast-rgb: 255, 255, 255;
+  --ion-color-tertiary-shade: #4854e0;
+  --ion-color-tertiary-tint: #6370ff;
+
+  /* Success */
+  --ion-color-success: #2dd36f;
+  --ion-color-success-rgb: 45, 211, 111;
+  --ion-color-success-contrast: #000000;
+  --ion-color-success-contrast-rgb: 0, 0, 0;
+  --ion-color-success-shade: #28ba62;
+  --ion-color-success-tint: #42d77d;
+
+  /* Warning */
+  --ion-color-warning: #ffc409;
+  --ion-color-warning-rgb: 255, 196, 9;
+  --ion-color-warning-contrast: #000000;
+  --ion-color-warning-contrast-rgb: 0, 0, 0;
+  --ion-color-warning-shade: #e0ac08;
+  --ion-color-warning-tint: #ffca22;
+
+  /* Danger */
+  --ion-color-danger: #eb445a;
+  --ion-color-danger-rgb: 235, 68, 90;
+  --ion-color-danger-contrast: #ffffff;
+  --ion-color-danger-contrast-rgb: 255, 255, 255;
+  --ion-color-danger-shade: #cf3c4f;
+  --ion-color-danger-tint: #ed576b;
+
+  /* Light mode background & text */
+  --ion-background-color: #ffffff;
+  --ion-background-color-rgb: 255, 255, 255;
+  --ion-text-color: #11181c;
+  --ion-text-color-rgb: 17, 24, 28;
+
+  --ion-color-step-50: #f2f2f2;
+  --ion-color-step-100: #e6e6e6;
+  --ion-color-step-150: #d9d9d9;
+  --ion-color-step-200: #cccccc;
+  --ion-color-step-250: #bfbfbf;
+  --ion-color-step-300: #b3b3b3;
+  --ion-color-step-350: #a6a6a6;
+  --ion-color-step-400: #999999;
+  --ion-color-step-450: #8c8c8c;
+  --ion-color-step-500: #808080;
+  --ion-color-step-550: #737373;
+  --ion-color-step-600: #666666;
+  --ion-color-step-650: #595959;
+  --ion-color-step-700: #4d4d4d;
+  --ion-color-step-750: #404040;
+  --ion-color-step-800: #333333;
+  --ion-color-step-850: #262626;
+  --ion-color-step-900: #191919;
+  --ion-color-step-950: #0d0d0d;
+
+  /* Tab bar */
+  --ion-tab-bar-background: #ffffff;
+  --ion-tab-bar-color: #687076;
+  --ion-tab-bar-color-selected: #0a7ea4;
+
+  /* Toolbar */
+  --ion-toolbar-background: #ffffff;
+  --ion-toolbar-color: #11181c;
+}
+
+/*
+ * Dark Mode
+ * Matches existing dark theme from theme.ts
+ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ion-color-primary: #ffffff;
+    --ion-color-primary-rgb: 255, 255, 255;
+    --ion-color-primary-contrast: #151718;
+    --ion-color-primary-contrast-rgb: 21, 23, 24;
+    --ion-color-primary-shade: #e0e0e0;
+    --ion-color-primary-tint: #ffffff;
+
+    --ion-background-color: #151718;
+    --ion-background-color-rgb: 21, 23, 24;
+    --ion-text-color: #ecedee;
+    --ion-text-color-rgb: 236, 237, 238;
+
+    --ion-color-step-50: #1e2023;
+    --ion-color-step-100: #27292c;
+    --ion-color-step-150: #303336;
+    --ion-color-step-200: #393c3f;
+    --ion-color-step-250: #424549;
+    --ion-color-step-300: #4b4f52;
+    --ion-color-step-350: #54585c;
+    --ion-color-step-400: #5d6165;
+    --ion-color-step-450: #666a6f;
+    --ion-color-step-500: #6f7478;
+    --ion-color-step-550: #787d82;
+    --ion-color-step-600: #81868b;
+    --ion-color-step-650: #8a8f95;
+    --ion-color-step-700: #93999e;
+    --ion-color-step-750: #9ca2a8;
+    --ion-color-step-800: #a5abb1;
+    --ion-color-step-850: #aeb5bb;
+    --ion-color-step-900: #b7bec4;
+    --ion-color-step-950: #c0c7ce;
+
+    /* Tab bar dark */
+    --ion-tab-bar-background: #1e2023;
+    --ion-tab-bar-color: #9ba1a6;
+    --ion-tab-bar-color-selected: #ffffff;
+
+    /* Toolbar dark */
+    --ion-toolbar-background: #1e2023;
+    --ion-toolbar-color: #ecedee;
+
+    /* Card dark */
+    --ion-card-background: #1e2023;
+
+    /* Item dark */
+    --ion-item-background: #1e2023;
+  }
+
+  ion-modal {
+    --ion-background-color: #151718;
+    --ion-toolbar-background: #1e2023;
+  }
+}

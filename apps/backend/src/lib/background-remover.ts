@@ -16,7 +16,7 @@ export async function removeImageBackground(
       .jpeg({ quality: 80 })
       .toBuffer();
 
-    const blob = new Blob([optimized], { type: "image/jpeg" });
+    const blob = new Blob([new Uint8Array(optimized)], { type: "image/jpeg" });
     const result = await removeBackground(blob);
     const arrayBuffer = await result.arrayBuffer();
     return sharp(Buffer.from(arrayBuffer)).webp({ quality: 90 }).toBuffer();

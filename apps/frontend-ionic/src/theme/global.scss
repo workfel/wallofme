@@ -1,0 +1,107 @@
+/**
+ * Global styles — WallOfMe premium look
+ */
+
+/* Smooth transitions between light/dark modes */
+ion-content,
+ion-toolbar,
+ion-tab-bar,
+ion-card {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Card styling */
+ion-card {
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Button styling */
+ion-button {
+  --border-radius: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Input styling */
+ion-input,
+ion-select {
+  --border-radius: 12px;
+}
+
+/* Tab bar premium feel */
+ion-tab-bar {
+  --border: none;
+  box-shadow: 0 -1px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Remove Ionic default focus ring, use subtle one */
+:focus-visible {
+  outline: 2px solid var(--ion-color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Safe area padding for Capacitor */
+ion-content {
+  --padding-top: env(safe-area-inset-top);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+.animate-fade-in-down {
+  animation: fadeInDown 0.4s ease-out;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s ease-out;
+}
