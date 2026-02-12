@@ -1,4 +1,4 @@
-import { Component, inject, signal, output, OnInit } from '@angular/core';
+import { Component, inject, signal, output, OnInit, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import {
   IonHeader,
   IonToolbar,
@@ -9,18 +9,21 @@ import {
   IonLabel,
   IonButtons,
   IonBadge,
+  IonSpinner,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { addCircleOutline, cartOutline } from 'ionicons/icons';
+import { addCircleOutline, cartOutline, cubeOutline, bicycleOutline, barbellOutline, fitnessOutline } from 'ionicons/icons';
 import { TranslateModule } from '@ngx-translate/core';
 import { RoomService, type RoomItem } from '@app/core/services/room.service';
 import { TrophyService, type Trophy } from '@app/core/services/trophy.service';
+import { DecorationService, type Decoration } from '@app/core/services/decoration.service';
 import { TokenBalanceComponent } from '@app/shared/components/token-balance/token-balance.component';
 import { TokenService } from '@app/core/services/token.service';
 
 @Component({
   selector: 'app-object-catalog-sheet',
   standalone: true,
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   imports: [
     IonHeader,
     IonToolbar,
@@ -31,6 +34,7 @@ import { TokenService } from '@app/core/services/token.service';
     IonLabel,
     IonButtons,
     IonBadge,
+    IonSpinner,
     TranslateModule,
     TokenBalanceComponent,
   ],
@@ -76,7 +80,25 @@ import { TokenService } from '@app/core/services/token.service';
             }
           </div>
         } @else {
-          <p class="empty-text">{{ 'room.comingSoon' | translate }}</p>
+          @if (decorationService.loading()) {
+            <div class="loading-container">
+              <ion-spinner name="crescent" />
+            </div>
+          } @else if (decorationService.decorations().length === 0) {
+            <p class="empty-text">{{ 'room.noDecorations' | translate }}</p>
+          } @else {
+            <div class="catalog-grid">
+              @for (deco of decorationService.decorations(); track deco.id) {
+                <button class="catalog-card" (click)="placeDecoration.emit(deco.id)">
+                  <div class="card-icon">
+                    <ion-icon [name]="getDecorationIcon(deco.name)" />
+                  </div>
+                  <span class="card-name">{{ deco.name }}</span>
+                  <ion-badge color="success">{{ 'room.free' | translate }}</ion-badge>
+                </button>
+              }
+            </div>
+          }
         }
       </div>
     </ion-content>
@@ -126,6 +148,21 @@ import { TokenService } from '@app/core/services/token.service';
       border-radius: 8px;
     }
 
+    .card-icon {
+      width: 64px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--ion-color-step-100);
+      border-radius: 12px;
+
+      ion-icon {
+        font-size: 32px;
+        color: var(--ion-color-primary);
+      }
+    }
+
     .card-name {
       font-size: 13px;
       font-weight: 600;
@@ -138,20 +175,29 @@ import { TokenService } from '@app/core/services/token.service';
       font-size: 14px;
       margin: 32px 0;
     }
+
+    .loading-container {
+      display: flex;
+      justify-content: center;
+      margin: 32px 0;
+    }
   `,
 })
 export class ObjectCatalogSheetComponent implements OnInit {
   private roomService = inject(RoomService);
   private trophyService = inject(TrophyService);
+  decorationService = inject(DecorationService);
   tokenService = inject(TokenService);
 
   activeSegment = signal<'trophies' | 'objects'>('trophies');
 
   placeTrophy = output<string>();
+  placeDecoration = output<string>();
   getTokens = output<void>();
 
   ngOnInit() {
     this.trophyService.fetchTrophies();
+    this.decorationService.fetchDecorations();
   }
 
   availableTrophies(): Trophy[] {
@@ -175,6 +221,16 @@ export class ObjectCatalogSheetComponent implements OnInit {
   }
 
   constructor() {
-    addIcons({ addCircleOutline, cartOutline });
+    addIcons({ addCircleOutline, cartOutline, cubeOutline, bicycleOutline, barbellOutline, fitnessOutline });
+  }
+
+  private readonly iconMap: Record<string, string> = {
+    bicycle: 'bicycle-outline',
+    kettlebell: 'barbell-outline',
+    treadmill: 'fitness-outline',
+  };
+
+  getDecorationIcon(name: string): string {
+    return this.iconMap[name.toLowerCase()] ?? 'cube-outline';
   }
 }

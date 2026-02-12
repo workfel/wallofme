@@ -34,7 +34,8 @@ const LERP_SPEED = 3;
         minPolarAngle: 0.2,
         maxPolarAngle: 1.42,
         enableDamping: true,
-        makeDefault: true
+        makeDefault: true,
+        enabled: enabled()
       }"
     />
   `,
@@ -42,6 +43,7 @@ const LERP_SPEED = 3;
 export class CameraControlsComponent {
   inspectedItemId = input<string | null>(null);
   items = input<RoomItem3D[]>([]);
+  enabled = input(true);
 
   private store = injectStore();
 

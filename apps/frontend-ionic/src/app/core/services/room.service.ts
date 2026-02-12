@@ -11,6 +11,9 @@ export interface RoomItem {
   positionY: number;
   positionZ: number;
   rotationY: number;
+  scaleX?: number;
+  scaleY?: number;
+  scaleZ?: number;
   wall: 'left' | 'right' | null;
   trophy?: {
     id: string;
@@ -53,7 +56,9 @@ export class RoomService {
   readonly loading = signal(false);
 
   async fetchMyRoom(): Promise<Room | null> {
-    this.loading.set(true);
+    // Only show loading spinner on initial fetch (room not yet loaded)
+    const isInitial = this.room() === null;
+    if (isInitial) this.loading.set(true);
     try {
       const res = await this.api.client.api.rooms.me.$get();
       if (res.ok) {
@@ -64,9 +69,33 @@ export class RoomService {
     } catch {
       // silently fail
     } finally {
-      this.loading.set(false);
+      if (isInitial) this.loading.set(false);
     }
     return null;
+  }
+
+  async addDecorationToRoom(decorationId: string): Promise<boolean> {
+    try {
+      const res = await this.api.client.api.rooms.items.$post({
+        json: {
+          decorationId,
+          positionX: 0,
+          positionY: 0,
+          positionZ: 0,
+          rotationY: 0,
+          scaleX: 0.5,
+          scaleY: 0.5,
+          scaleZ: 0.5,
+        },
+      });
+      if (res.ok) {
+        await this.fetchMyRoom();
+        return true;
+      }
+    } catch {
+      // silently fail
+    }
+    return false;
   }
 
   async addItemToRoom(trophyId: string): Promise<boolean> {
@@ -100,7 +129,7 @@ export class RoomService {
 
   async updateItem(
     itemId: string,
-    data: { positionX: number; positionY: number; positionZ: number; wall?: 'left' | 'right' | null; rotationY?: number }
+    data: { positionX: number; positionY: number; positionZ: number; wall?: 'left' | 'right' | null; rotationY?: number; scaleX?: number; scaleY?: number; scaleZ?: number }
   ): Promise<boolean> {
     try {
       const res = await this.api.client.api.rooms.items[':id'].$patch({

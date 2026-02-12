@@ -33,9 +33,10 @@ import { TrophyService } from '@app/core/services/trophy.service';
 import { ThemeService } from '@app/core/services/theme.service';
 import { TokenService } from '@app/core/services/token.service';
 import { ShareService } from '@app/core/services/share.service';
+import { DecorationService } from '@app/core/services/decoration.service';
 import { type RoomTheme } from '@app/types/room-theme';
 
-import { PainCaveSceneComponent } from '../components/pain-cave-scene/pain-cave-scene.component';
+import { PainCaveSceneComponent, type ItemDragEvent } from '../components/pain-cave-scene/pain-cave-scene.component';
 import { EditorToolbarComponent } from '../components/editor-toolbar/editor-toolbar.component';
 import { ContextActionBarComponent } from '../components/context-action-bar/context-action-bar.component';
 import { FloorPlacementPanelComponent, type FloorPlacementValues } from '../components/floor-placement-panel/floor-placement-panel.component';
@@ -87,55 +88,62 @@ type EditorState =
     </ion-header>
 
     <ion-content [fullscreen]="true">
-      @if (roomService.loading()) {
-        <div class="centered">
-          <ion-spinner name="crescent" />
-        </div>
-      } @else {
-        <div class="editor-layout">
-          <!-- 3D Canvas -->
-          <div class="canvas-section">
-            <ngt-canvas
-              [shadows]="true"
-              [dpr]="[1, 2]"
-              [camera]="{ position: [5, 5, 5], fov: 45 }"
-            >
-              <app-pain-cave-scene
-                *canvasContent
-                [items]="roomService.room()?.items ?? []"
-                [editable]="true"
-                [theme]="themeService.activeTheme()"
-                (itemPressed)="onItemPressed($event)"
-              />
-            </ngt-canvas>
+      <div class="editor-layout">
+        <!-- Loading overlay (non-destructive — canvas stays alive) -->
+        @if (roomService.loading()) {
+          <div class="loading-overlay">
+            <ion-spinner name="crescent" />
           </div>
+        }
 
-          <!-- Context Action Bar (shown when item selected) -->
-          @if (isDecorationSelected()) {
-            <app-floor-placement-panel
-              [positionX]="selectedItem()?.positionX ?? 0"
-              [positionZ]="selectedItem()?.positionZ ?? 0"
-              [rotationDegrees]="selectedItemRotationDeg()"
-              (changed)="onFloorPlacementChange($event)"
-              (delete)="confirmDelete()"
+        <!-- 3D Canvas -->
+        <div class="canvas-section">
+          <ngt-canvas
+            [shadows]="true"
+            [dpr]="[1, 2]"
+            [camera]="{ position: [5, 5, 5], fov: 45 }"
+          >
+            <app-pain-cave-scene
+              *canvasContent
+              [items]="roomService.room()?.items ?? []"
+              [editable]="true"
+              [selectedItemId]="selectedItemId()"
+              [theme]="themeService.activeTheme()"
+              (itemPressed)="onItemPressed($event)"
+              (itemDragged)="onItemDragged($event)"
+              (itemDragEnd)="onItemDragEnd($event)"
             />
-          } @else if (isItemSelected()) {
-            <app-context-action-bar
-              (delete)="confirmDelete()"
-              (rotate)="rotateItem()"
-              (move)="startMove()"
-            />
-          }
+          </ngt-canvas>
         </div>
 
-        <!-- FAB: Add items -->
-        @if (state().kind === 'IDLE') {
-          <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-            <ion-fab-button (click)="openCatalog()">
-              <ion-icon name="add-outline" />
-            </ion-fab-button>
-          </ion-fab>
+        <!-- Context Action Bar (shown when item selected) -->
+        @if (isDecorationSelected()) {
+          <app-floor-placement-panel
+            [positionX]="selectedItem()?.positionX ?? 0"
+            [positionY]="selectedItem()?.positionY ?? 0"
+            [positionZ]="selectedItem()?.positionZ ?? 0"
+            [rotationDegrees]="selectedItemRotationDeg()"
+            [scale]="selectedItem()?.scaleX ?? 0.5"
+            [name]="selectedItem()?.decoration?.name ?? null"
+            (changed)="onFloorPlacementChange($event)"
+            (delete)="confirmDelete()"
+          />
+        } @else if (isItemSelected()) {
+          <app-context-action-bar
+            (delete)="confirmDelete()"
+            (rotate)="rotateItem()"
+            (move)="startMove()"
+          />
         }
+      </div>
+
+      <!-- FAB: Add items -->
+      @if (state().kind === 'IDLE') {
+        <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+          <ion-fab-button (click)="openCatalog()">
+            <ion-icon name="add-outline" />
+          </ion-fab-button>
+        </ion-fab>
       }
     </ion-content>
 
@@ -167,6 +175,7 @@ type EditorState =
       <ng-template>
         <app-object-catalog-sheet
           (placeTrophy)="onPlaceTrophy($event)"
+          (placeDecoration)="onPlaceDecoration($event)"
           (getTokens)="onGetTokens()"
         />
       </ng-template>
@@ -199,14 +208,18 @@ type EditorState =
     />
   `,
   styles: `
-    .centered {
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      z-index: 10;
     }
 
     .editor-layout {
+      position: relative;
       display: flex;
       flex-direction: column;
       height: 100%;
@@ -230,6 +243,7 @@ export class RoomEditPage implements OnInit {
   tokenService = inject(TokenService);
   private shareService = inject(ShareService);
   private trophyService = inject(TrophyService);
+  private decorationService = inject(DecorationService);
   private router = inject(Router);
 
   // ─── State Machine ───────────────────────────────
@@ -238,7 +252,9 @@ export class RoomEditPage implements OnInit {
   isItemSelected = computed(() => this.state().kind === 'SELECTED');
   selectedItemId = computed(() => {
     const s = this.state();
-    return s.kind === 'SELECTED' ? s.itemId : null;
+    if (s.kind === 'SELECTED') return s.itemId;
+    if (s.kind === 'CONFIRM_DELETE') return s.itemId;
+    return null;
   });
 
   selectedItem = computed(() => {
@@ -273,6 +289,7 @@ export class RoomEditPage implements OnInit {
     this.roomService.fetchMyRoom();
     this.trophyService.fetchTrophies();
     this.tokenService.fetchBalance();
+    this.decorationService.fetchInventory();
   }
 
   // ─── Item Interactions ───────────────────────────
@@ -347,11 +364,45 @@ export class RoomEditPage implements OnInit {
     if (!id) return;
     const item = this.selectedItem();
     if (!item) return;
+    const uniformScale = values.scale ?? item.scaleX ?? 0.5;
     await this.roomService.updateItem(id, {
       positionX: values.positionX,
-      positionY: item.positionY,
+      positionY: values.positionY,
       positionZ: values.positionZ,
       rotationY: values.rotationY,
+      scaleX: uniformScale,
+      scaleY: uniformScale,
+      scaleZ: uniformScale,
+    });
+  }
+
+  // ─── Drag ─────────────────────────────────────────
+  onItemDragged(event: ItemDragEvent): void {
+    // Optimistic local update during drag (no API call)
+    const room = this.roomService.room();
+    if (!room) return;
+    const items = room.items.map((item) => {
+      if (item.id !== event.itemId) return item;
+      return {
+        ...item,
+        positionX: event.positionX,
+        ...(event.positionY !== undefined && { positionY: event.positionY }),
+        positionZ: event.positionZ,
+        ...(event.rotationY !== undefined && { rotationY: event.rotationY }),
+      };
+    });
+    this.roomService.room.set({ ...room, items });
+  }
+
+  async onItemDragEnd(event: ItemDragEvent): Promise<void> {
+    // Persist final position to server
+    const item = this.roomService.room()?.items.find((i) => i.id === event.itemId);
+    if (!item) return;
+    await this.roomService.updateItem(event.itemId, {
+      positionX: event.positionX,
+      positionY: event.positionY ?? item.positionY,
+      positionZ: event.positionZ,
+      rotationY: event.rotationY ?? item.rotationY,
     });
   }
 
@@ -368,6 +419,16 @@ export class RoomEditPage implements OnInit {
 
   async onPlaceTrophy(trophyId: string): Promise<void> {
     await this.roomService.addItemToRoom(trophyId);
+    this.state.set({ kind: 'IDLE' });
+  }
+
+  async onPlaceDecoration(decorationId: string): Promise<void> {
+    // Acquire if not already owned (free decorations auto-acquire)
+    if (!this.decorationService.isOwned(decorationId)) {
+      const acquired = await this.decorationService.acquire(decorationId);
+      if (!acquired) return;
+    }
+    await this.roomService.addDecorationToRoom(decorationId);
     this.state.set({ kind: 'IDLE' });
   }
 
