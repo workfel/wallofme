@@ -35,13 +35,14 @@ import { TokenService } from '@app/core/services/token.service';
 import { ShareService } from '@app/core/services/share.service';
 import { ScreenshotService } from '@app/core/services/screenshot.service';
 import { DecorationService } from '@app/core/services/decoration.service';
-import { type RoomTheme } from '@app/types/room-theme';
+import { type RoomTheme, type CustomThemeColors, CUSTOM_THEME_ID } from '@app/types/room-theme';
 
 import { PainCaveSceneComponent, type ItemDragEvent } from '../components/pain-cave-scene/pain-cave-scene.component';
 import { EditorToolbarComponent } from '../components/editor-toolbar/editor-toolbar.component';
 import { ContextActionBarComponent } from '../components/context-action-bar/context-action-bar.component';
 import { FloorPlacementPanelComponent, type FloorPlacementValues } from '../components/floor-placement-panel/floor-placement-panel.component';
 import { ThemeSelectorSheetComponent } from '../components/theme-selector-sheet/theme-selector-sheet.component';
+import { CustomThemeEditorComponent } from '../components/custom-theme-editor/custom-theme-editor.component';
 import { ObjectCatalogSheetComponent } from '../components/object-catalog-sheet/object-catalog-sheet.component';
 import { ShareRoomSheetComponent } from '../components/share-room-sheet/share-room-sheet.component';
 
@@ -52,6 +53,7 @@ type EditorState =
   | { kind: 'CATALOG_OPEN' }
   | { kind: 'SLOT_PICKING'; itemToPlace: string; source: 'catalog' | 'move' }
   | { kind: 'THEME_OPEN' }
+  | { kind: 'CUSTOM_EDITOR_OPEN' }
   | { kind: 'SHARE_OPEN' }
   | { kind: 'CONFIRM_DELETE'; itemId: string };
 
@@ -66,6 +68,7 @@ type EditorState =
     ContextActionBarComponent,
     FloorPlacementPanelComponent,
     ThemeSelectorSheetComponent,
+    CustomThemeEditorComponent,
     ObjectCatalogSheetComponent,
     ShareRoomSheetComponent,
     IonContent,
@@ -161,6 +164,23 @@ type EditorState =
           [currentTheme]="themeService.activeTheme()"
           (preview)="onThemePreview($event)"
           (apply)="onThemeApply($event)"
+          (openCustomEditor)="onOpenCustomEditor()"
+        />
+      </ng-template>
+    </ion-modal>
+
+    <!-- Custom Theme Editor Bottom Sheet -->
+    <ion-modal
+      [isOpen]="state().kind === 'CUSTOM_EDITOR_OPEN'"
+      [initialBreakpoint]="0.55"
+      [breakpoints]="[0, 0.55, 0.85]"
+      (didDismiss)="closeCustomEditor()"
+    >
+      <ng-template>
+        <app-custom-theme-editor
+          [initialColors]="themeService.customColors()"
+          (preview)="onCustomPreview($event)"
+          (apply)="onCustomApply($event)"
         />
       </ng-template>
     </ion-modal>
@@ -289,8 +309,20 @@ export class RoomEditPage implements OnInit {
     addIcons({ addOutline, trashOutline, refreshOutline, moveOutline, shareOutline });
   }
 
-  ngOnInit(): void {
-    this.roomService.fetchMyRoom();
+  async ngOnInit(): Promise<void> {
+    const room = await this.roomService.fetchMyRoom();
+    if (room) {
+      const theme = this.themeService.resolveThemeFromRoom(room);
+      if (theme.id === CUSTOM_THEME_ID && room.customTheme) {
+        try {
+          this.themeService.applyCustomColors(JSON.parse(room.customTheme));
+        } catch {
+          this.themeService.applyTheme(theme);
+        }
+      } else {
+        this.themeService.applyTheme(theme);
+      }
+    }
     this.trophyService.fetchTrophies();
     this.tokenService.fetchBalance();
     this.decorationService.fetchInventory();
@@ -448,6 +480,8 @@ export class RoomEditPage implements OnInit {
   }
 
   closeThemeSelector(): void {
+    // Don't reset to IDLE if we transitioned to the custom editor
+    if (this.state().kind === 'CUSTOM_EDITOR_OPEN') return;
     if (this.state().kind === 'THEME_OPEN' && this.previousTheme) {
       this.themeService.applyTheme(this.previousTheme);
     }
@@ -462,7 +496,33 @@ export class RoomEditPage implements OnInit {
     if (theme) {
       this.themeService.applyTheme(theme);
       this.previousTheme = null;
+      this.roomService.updateRoom({ themeId: theme.id, customTheme: null });
     }
+    this.state.set({ kind: 'IDLE' });
+  }
+
+  // ─── Custom Theme Editor ──────────────────────────
+  onOpenCustomEditor(): void {
+    this.state.set({ kind: 'CUSTOM_EDITOR_OPEN' });
+  }
+
+  closeCustomEditor(): void {
+    if (this.state().kind === 'CUSTOM_EDITOR_OPEN' && this.previousTheme) {
+      this.themeService.applyTheme(this.previousTheme);
+    }
+    if (this.state().kind === 'CUSTOM_EDITOR_OPEN') {
+      this.state.set({ kind: 'IDLE' });
+    }
+  }
+
+  onCustomPreview(colors: CustomThemeColors): void {
+    this.themeService.applyCustomColors(colors);
+  }
+
+  onCustomApply(colors: CustomThemeColors): void {
+    this.themeService.applyCustomColors(colors);
+    this.previousTheme = null;
+    this.roomService.updateRoom({ themeId: null, customTheme: colors });
     this.state.set({ kind: 'IDLE' });
   }
 

@@ -1,0 +1,1 @@
+ALTER TABLE "room" ALTER COLUMN "theme_id" SET DATA TYPE text;

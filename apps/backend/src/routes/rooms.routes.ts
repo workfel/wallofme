@@ -179,9 +179,14 @@ export const rooms = new Hono<{ Variables: Variables }>()
       const user = c.get("user")!;
       const body = c.req.valid("json");
 
+      const updateData: Record<string, unknown> = { ...body, updatedAt: new Date() };
+      if (body.customTheme !== undefined) {
+        updateData.customTheme = body.customTheme ? JSON.stringify(body.customTheme) : null;
+      }
+
       const [updated] = await db
         .update(room)
-        .set({ ...body, updatedAt: new Date() })
+        .set(updateData)
         .where(eq(room.userId, user.id))
         .returning();
 

@@ -112,7 +112,11 @@
     "move": "Move",
     "unlockTheme": "Unlock Theme",
     "unlockThemeMessage": "Unlock {{name}} for {{price}} flames?",
-    "unlock": "Unlock"
+    "unlock": "Unlock",
+    "custom": "Custom",
+    "customTheme": "Custom Theme",
+    "floor": "Floor",
+    "background": "Background"
   },
   "tokens": {
     "title": "Get Tokens",

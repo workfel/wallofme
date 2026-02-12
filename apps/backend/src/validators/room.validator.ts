@@ -1,8 +1,16 @@
 import { z } from "zod";
 
+const customThemeSchema = z.object({
+  leftWallColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  backWallColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  floorColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  background: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+}).nullable();
+
 export const updateRoomSchema = z.object({
-  themeId: z.string().uuid().optional(),
+  themeId: z.string().nullable().optional(),
   floor: z.string().optional(),
+  customTheme: customThemeSchema.optional(),
 });
 
 export const placeItemSchema = z.object({

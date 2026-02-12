@@ -1,0 +1,1 @@
+ALTER TABLE "room" ADD COLUMN "custom_theme" text;

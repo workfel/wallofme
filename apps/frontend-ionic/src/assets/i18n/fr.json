@@ -112,7 +112,11 @@
     "move": "Déplacer",
     "unlockTheme": "Débloquer le thème",
     "unlockThemeMessage": "Débloquer {{name}} pour {{price}} flammes ?",
-    "unlock": "Débloquer"
+    "unlock": "Débloquer",
+    "custom": "Personnalisé",
+    "customTheme": "Thème personnalisé",
+    "floor": "Sol",
+    "background": "Arrière-plan"
   },
   "tokens": {
     "title": "Obtenir des Tokens",

@@ -11,12 +11,12 @@ import {
   IonAlert,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { checkmarkOutline, lockClosedOutline, flameOutline } from 'ionicons/icons';
+import { checkmarkOutline, lockClosedOutline, flameOutline, colorPaletteOutline } from 'ionicons/icons';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ThemeService } from '@app/core/services/theme.service';
 import { TokenService } from '@app/core/services/token.service';
 import { ApiService } from '@app/core/services/api.service';
-import { RoomTheme, BUILT_IN_THEMES } from '@app/types/room-theme';
+import { RoomTheme, BUILT_IN_THEMES, CUSTOM_THEME_ID } from '@app/types/room-theme';
 
 @Component({
   selector: 'app-theme-selector-sheet',
@@ -83,6 +83,22 @@ import { RoomTheme, BUILT_IN_THEMES } from '@app/types/room-theme';
             }
           </button>
         }
+
+        <!-- Custom Theme Card -->
+        <button
+          class="theme-card"
+          [class.selected]="isCustomSelected()"
+          (click)="onOpenCustomEditor()"
+        >
+          <div class="theme-preview custom-preview">
+            <ion-icon name="color-palette-outline" class="custom-icon" />
+          </div>
+          <span class="theme-name">{{ 'room.custom' | translate }}</span>
+          <ion-badge color="success">FREE</ion-badge>
+          @if (isCustomSelected()) {
+            <ion-icon name="checkmark-outline" color="primary" class="check" />
+          }
+        </button>
       </div>
     </ion-content>
 
@@ -181,6 +197,19 @@ import { RoomTheme, BUILT_IN_THEMES } from '@app/types/room-theme';
       }
     }
 
+    .custom-preview {
+      background: linear-gradient(135deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3) !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .custom-icon {
+      font-size: 32px;
+      color: white;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+    }
+
     .theme-name {
       font-size: 12px;
       font-weight: 600;
@@ -214,6 +243,7 @@ export class ThemeSelectorSheetComponent implements OnInit {
 
   preview = output<RoomTheme>();
   apply = output<RoomTheme | null>();
+  openCustomEditor = output<void>();
 
   themes = BUILT_IN_THEMES;
   selectedTheme = signal<RoomTheme | null>(null);
@@ -232,7 +262,7 @@ export class ThemeSelectorSheetComponent implements OnInit {
   ];
 
   constructor() {
-    addIcons({ checkmarkOutline, lockClosedOutline, flameOutline });
+    addIcons({ checkmarkOutline, lockClosedOutline, flameOutline, colorPaletteOutline });
   }
 
   ngOnInit() {
@@ -241,6 +271,14 @@ export class ThemeSelectorSheetComponent implements OnInit {
       this.selectedTheme.set(current);
     }
     this.fetchOwnedThemes();
+  }
+
+  isCustomSelected(): boolean {
+    return this.currentTheme()?.id === CUSTOM_THEME_ID;
+  }
+
+  onOpenCustomEditor(): void {
+    this.openCustomEditor.emit();
   }
 
   isOwned(theme: RoomTheme): boolean {

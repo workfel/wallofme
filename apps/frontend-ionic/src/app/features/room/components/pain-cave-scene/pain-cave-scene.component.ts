@@ -17,8 +17,9 @@ import {
   PlaneGeometry,
   MeshStandardMaterial,
   MeshBasicMaterial,
-  AmbientLight,
+  HemisphereLight,
   DirectionalLight,
+  SpotLight,
   PointLight,
   Color,
 } from 'three';
@@ -35,8 +36,9 @@ extend({
   PlaneGeometry,
   MeshStandardMaterial,
   MeshBasicMaterial,
-  AmbientLight,
+  HemisphereLight,
   DirectionalLight,
+  SpotLight,
   PointLight,
 });
 
@@ -108,15 +110,49 @@ export interface ItemDragEvent {
       [enabled]="!isDragging()"
     />
 
-    <!-- Lighting -->
-    <ngt-ambient-light [intensity]="theme().ambientLight.intensity" />
+    <!-- Hemisphere fill — sky/ground gradient for natural ambient -->
+    <ngt-hemisphere-light
+      *args="[theme().hemisphereLight.skyColor, theme().hemisphereLight.groundColor, theme().hemisphereLight.intensity]"
+    />
+
+    <!-- Key directional light — offset from camera for visible shadows -->
     <ngt-directional-light
       [position]="theme().mainLight.position"
       [intensity]="theme().mainLight.intensity"
+      [color]="theme().mainLight.color ?? '#fff8f0'"
       [castShadow]="true"
       [shadow-mapSize]="[shadowMapSize(), shadowMapSize()]"
+      [shadow-camera-left]="-5"
+      [shadow-camera-right]="5"
+      [shadow-camera-top]="5"
+      [shadow-camera-bottom]="-5"
+      [shadow-camera-near]="1"
+      [shadow-camera-far]="20"
+      [shadow-bias]="-0.002"
+      [shadow-normalBias]="0.02"
     />
-    <ngt-point-light [position]="[0, 2.5, 0]" [intensity]="theme().accentLight.intensity" [color]="theme().accentLight.color" />
+
+    <!-- Overhead spotlight — diorama showcase effect -->
+    <ngt-spot-light
+      [position]="theme().spotLight.position"
+      [intensity]="theme().spotLight.intensity"
+      [color]="theme().spotLight.color"
+      [angle]="theme().spotLight.angle"
+      [penumbra]="theme().spotLight.penumbra"
+      [decay]="1.5"
+      [distance]="15"
+    />
+
+    <!-- Subtle fill from viewing side -->
+    @if (theme().fillLight) {
+      <ngt-point-light
+        [position]="theme().fillLight!.position"
+        [intensity]="theme().fillLight!.intensity"
+        [color]="theme().fillLight!.color"
+        [distance]="8"
+        [decay]="2"
+      />
+    }
 
     <!-- Floor -->
     <ngt-mesh

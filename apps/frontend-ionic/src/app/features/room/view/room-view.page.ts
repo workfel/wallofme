@@ -15,13 +15,17 @@ import { TranslateModule } from '@ngx-translate/core';
 import { NgtCanvas } from 'angular-three/dom';
 
 import { ApiService } from '@app/core/services/api.service';
+import { ThemeService } from '@app/core/services/theme.service';
 import { PainCaveSceneComponent, type RoomItem3D } from '../components/pain-cave-scene/pain-cave-scene.component';
 import { TrophyInfoSheetComponent, type TrophyInfoData } from '../components/trophy-info-sheet/trophy-info-sheet.component';
+import type { RoomTheme } from '@app/types/room-theme';
+import { DEFAULT_THEME } from '@app/types/room-theme';
 
 interface RoomData {
   id: string;
   userId: string;
   themeId: string | null;
+  customTheme: string | null;
   floor: string | null;
   items: RoomItem3D[];
 }
@@ -73,6 +77,7 @@ interface RoomData {
               [items]="room()!.items"
               [inspectedItemId]="inspectedItemId()"
               [shadowMapSize]="512"
+              [theme]="resolvedTheme()"
               (itemPressed)="onItemPressed($event)"
             />
           </ngt-canvas>
@@ -127,10 +132,17 @@ export class RoomViewPage implements OnInit {
 
   private api = inject(ApiService);
   private router = inject(Router);
+  private themeService = inject(ThemeService);
 
   room = signal<RoomData | null>(null);
   loading = signal(true);
   inspectedItemId = signal<string | null>(null);
+
+  resolvedTheme = computed<RoomTheme>(() => {
+    const r = this.room();
+    if (!r) return DEFAULT_THEME;
+    return this.themeService.resolveThemeFromRoom(r);
+  });
 
   inspectedTrophyData = computed<TrophyInfoData | null>(() => {
     const itemId = this.inspectedItemId();

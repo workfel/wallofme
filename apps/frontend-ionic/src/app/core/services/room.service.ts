@@ -44,6 +44,7 @@ export interface Room {
   id: string;
   userId: string;
   themeId: string | null;
+  customTheme: string | null;
   floor: string | null;
   items: RoomItem[];
 }
@@ -72,6 +73,26 @@ export class RoomService {
       if (isInitial) this.loading.set(false);
     }
     return null;
+  }
+
+  async updateRoom(data: { themeId?: string | null; customTheme?: { leftWallColor: string; backWallColor: string; floorColor: string; background: string } | null }): Promise<boolean> {
+    try {
+      const res = await this.api.client.api.rooms.me.$patch({
+        json: data,
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const d = json.data as { themeId: string | null; customTheme: string | null };
+        const current = this.room();
+        if (current) {
+          this.room.set({ ...current, themeId: d.themeId, customTheme: d.customTheme });
+        }
+        return true;
+      }
+    } catch {
+      // silently fail
+    }
+    return false;
   }
 
   async addDecorationToRoom(decorationId: string): Promise<boolean> {

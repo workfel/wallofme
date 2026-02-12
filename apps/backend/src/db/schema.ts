@@ -166,7 +166,8 @@ export const room = pgTable("room", {
     .notNull()
     .unique()
     .references(() => user.id, { onDelete: "cascade" }),
-  themeId: uuid("theme_id"),
+  themeId: text("theme_id"),
+  customTheme: text("custom_theme"),
   shareSlug: text("share_slug").unique(),
   floor: text("floor"),
   createdAt: timestamp("created_at").defaultNow().notNull(),

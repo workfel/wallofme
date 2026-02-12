@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   IonContent,
@@ -19,12 +19,16 @@ import { addIcons } from 'ionicons';
 import { add, camera, create } from 'ionicons/icons';
 
 import { ApiService } from '@app/core/services/api.service';
+import { ThemeService } from '@app/core/services/theme.service';
 import { PainCaveSceneComponent, type RoomItem3D } from '../../room/components/pain-cave-scene/pain-cave-scene.component';
+import type { RoomTheme } from '@app/types/room-theme';
+import { DEFAULT_THEME } from '@app/types/room-theme';
 
 interface RoomData {
   id: string;
   userId: string;
   themeId: string | null;
+  customTheme: string | null;
   floor: string | null;
   items: RoomItem3D[];
 }
@@ -91,7 +95,7 @@ interface RoomData {
             [dpr]="[1, 2]"
             [camera]="{ position: [5, 5, 5], fov: 45 }"
           >
-            <app-pain-cave-scene *canvasContent [items]="room()!.items" />
+            <app-pain-cave-scene *canvasContent [items]="room()!.items" [theme]="resolvedTheme()" />
           </ngt-canvas>
         </div>
       }
@@ -148,11 +152,18 @@ interface RoomData {
 export class HomePage implements OnInit {
   private api = inject(ApiService);
   private router = inject(Router);
+  private themeService = inject(ThemeService);
 
   room = signal<RoomData | null>(null);
   loading = signal(true);
   error = signal(false);
   hasItems = signal(false);
+
+  resolvedTheme = computed<RoomTheme>(() => {
+    const r = this.room();
+    if (!r) return DEFAULT_THEME;
+    return this.themeService.resolveThemeFromRoom(r);
+  });
 
   constructor() {
     addIcons({ add, camera, create });

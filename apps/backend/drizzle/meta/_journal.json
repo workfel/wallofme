@@ -15,6 +15,20 @@
       "when": 1770817834748,
       "tag": "0001_mysterious_norrin_radd",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1770921052821,
+      "tag": "0002_last_red_hulk",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1770923356330,
+      "tag": "0003_gray_marauders",
+      "breakpoints": true
     }
   ]
 }
