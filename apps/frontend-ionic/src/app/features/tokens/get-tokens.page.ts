@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import {
   IonHeader,
   IonToolbar,
@@ -13,8 +13,8 @@ import {
   IonLabel,
   IonBadge,
   IonSpinner,
-  IonText,
   ToastController,
+  ViewDidEnter,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
@@ -28,7 +28,7 @@ import {
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { TokenService } from '@app/core/services/token.service';
 import { AdService } from '@app/core/services/ad.service';
-import { PurchaseService } from '@app/core/services/purchase.service';
+import { PurchaseService, type TokenPackOffering } from '@app/core/services/purchase.service';
 
 interface TokenPack {
   id: string;
@@ -63,7 +63,6 @@ const TOKEN_PACKS: TokenPack[] = [
     IonLabel,
     IonBadge,
     IonSpinner,
-    IonText,
     TranslateModule,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -160,12 +159,6 @@ const TOKEN_PACKS: TokenPack[] = [
       <!-- Buy Tokens Section -->
       <h2 class="section-title">{{ 'tokens.buyTokens' | translate }}</h2>
 
-      @if (!purchaseService.isAvailable()) {
-        <ion-text color="medium">
-          <p class="store-hint">{{ 'tokens.purchaseOnDevice' | translate }}</p>
-        </ion-text>
-      }
-
       <div class="packs-grid">
         @for (pack of packs; track pack.id) {
           <button
@@ -246,12 +239,6 @@ const TOKEN_PACKS: TokenPack[] = [
       }
     }
 
-    .store-hint {
-      font-size: 13px;
-      text-align: center;
-      padding: 8px 0;
-    }
-
     .packs-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -312,7 +299,7 @@ const TOKEN_PACKS: TokenPack[] = [
     }
   `,
 })
-export class GetTokensPage implements OnInit {
+export class GetTokensPage implements OnInit, OnDestroy, ViewDidEnter {
   tokenService = inject(TokenService);
   adService = inject(AdService);
   purchaseService = inject(PurchaseService);
@@ -324,7 +311,6 @@ export class GetTokensPage implements OnInit {
   videoLoading = signal(false);
   dailyLoading = signal(false);
   dailyClaimed = signal(false);
-  /** Minutes remaining before next rewarded video is available */
   videoCooldownMinutes = signal(0);
 
   private cooldownTimer: ReturnType<typeof setInterval> | null = null;
@@ -355,13 +341,20 @@ export class GetTokensPage implements OnInit {
     this.checkVideoCooldown();
   }
 
-  /** Probe the daily-login endpoint to see if already claimed today */
+  ngOnDestroy(): void {
+    if (this.cooldownTimer) clearInterval(this.cooldownTimer);
+  }
+
+  /** Refresh balance when returning to this page (e.g. after web checkout) */
+  ionViewDidEnter(): void {
+    this.tokenService.fetchBalance();
+  }
+
   private async checkDailyStatus(): Promise<void> {
     const result = await this.tokenService.earnDailyLogin();
     if (result.blocked === 'already_claimed') {
       this.dailyClaimed.set(true);
     } else if (result.earned > 0) {
-      // It wasn't claimed yet but now it is!
       this.dailyClaimed.set(true);
       await this.showToast(
         this.translate.instant('tokens.loginClaimed', { amount: result.earned }),
@@ -370,16 +363,13 @@ export class GetTokensPage implements OnInit {
     }
   }
 
-  /** Probe the video endpoint to check cooldown status */
   private async checkVideoCooldown(): Promise<void> {
     const result = await this.tokenService.earnFromVideo();
     if (result.blocked === 'cooldown' && result.retryAfterSeconds) {
       this.startCooldownTimer(result.retryAfterSeconds);
     } else if (result.blocked === 'daily_limit') {
-      // Keep button hidden via high cooldown
       this.videoCooldownMinutes.set(-1);
     } else if (result.earned > 0) {
-      // Oops — it actually earned, which means it was available. Show the reward.
       await this.showToast(
         this.translate.instant('tokens.adWatched', { amount: result.earned }),
         'success',
@@ -407,7 +397,7 @@ export class GetTokensPage implements OnInit {
 
   getPackPrice(pack: TokenPack): string {
     const offering = this.purchaseService.offerings().find(
-      (o) => o.rcPackage.product.identifier === pack.productId,
+      (o) => o.productId === pack.productId,
     );
     return offering?.localizedPrice ?? this.fallbackPrices[pack.productId] ?? '';
   }
@@ -415,7 +405,6 @@ export class GetTokensPage implements OnInit {
   async watchAd(): Promise<void> {
     this.videoLoading.set(true);
     try {
-      // On native: show real ad first
       if (this.adService.isAvailable()) {
         const rewarded = await this.adService.showRewardedAd();
         if (!rewarded) return;
@@ -457,7 +446,6 @@ export class GetTokensPage implements OnInit {
           'success',
         );
       } else {
-        // Already claimed (429)
         this.dailyClaimed.set(true);
       }
     } finally {
@@ -466,8 +454,8 @@ export class GetTokensPage implements OnInit {
   }
 
   async buyPack(pack: TokenPack): Promise<void> {
-    const offering = this.purchaseService.offerings().find(
-      (o) => o.rcPackage.product.identifier === pack.productId,
+    const offering: TokenPackOffering | undefined = this.purchaseService.offerings().find(
+      (o) => o.productId === pack.productId,
     );
 
     if (!offering) {
@@ -478,7 +466,7 @@ export class GetTokensPage implements OnInit {
       return;
     }
 
-    const result = await this.purchaseService.purchasePackage(offering.rcPackage);
+    const result = await this.purchaseService.purchasePackage(offering);
 
     if (result.success) {
       await this.showToast(

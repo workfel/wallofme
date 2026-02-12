@@ -22,9 +22,12 @@ export class AppComponent implements OnInit {
 
   constructor() {
     this.platform.ready().then(async () => {
-      // Initialize RevenueCat
-      await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
-      await Purchases.configure({ apiKey: environment.revenueCat.apiKey });
+      // Initialize RevenueCat Capacitor SDK only on iOS native (Apple IAP)
+      // Web/Android use RevenueCat Web Billing via PurchaseService
+      if (this.platform.is('capacitor') && this.platform.is('ios')) {
+        await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
+        await Purchases.configure({ apiKey: environment.revenueCat.apiKey });
+      }
 
       // Initialize AdMob
       await this.adService.initialize();

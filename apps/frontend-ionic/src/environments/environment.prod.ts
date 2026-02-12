@@ -3,7 +3,8 @@ export const environment = {
   apiUrl: 'http://localhost:3333',
   revenueCat: {
     // TODO: Replace with production RevenueCat API key
-    apiKey: 'YOUR_PRODUCTION_REVENUECAT_API_KEY',
+    apiKey: 'YOUR_PRODUCTION_REVENUECAT_API_KEY',       // Capacitor iOS (Apple IAP)
+    webApiKey: 'YOUR_PRODUCTION_WEB_BILLING_KEY',       // Web Billing (Stripe)
   },
   admob: {
     // TODO: Replace with production rewarded ad unit ID

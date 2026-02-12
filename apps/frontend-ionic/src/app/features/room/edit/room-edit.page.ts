@@ -479,11 +479,22 @@ export class RoomEditPage implements OnInit {
 
   async onShareNative(): Promise<void> {
     const link = this.shareLink();
-    if (link) {
+    if (!link) return;
+
+    try {
+      const { Share } = await import('@capacitor/share');
+      await Share.share({
+        title: 'My Pain Cave',
+        text: 'Check out my Pain Cave!',
+        url: link,
+        dialogTitle: 'Share your Pain Cave',
+      });
+    } catch {
+      // User cancelled or share not supported — try web fallback
       try {
         await navigator.share({ title: 'My Pain Cave', url: link });
       } catch {
-        // User cancelled or share not supported
+        // Silently fail
       }
     }
   }

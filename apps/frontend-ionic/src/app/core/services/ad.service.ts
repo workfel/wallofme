@@ -51,31 +51,39 @@ export class AdService {
         isTesting: !environment.production,
       };
 
-      // Listen for the reward event
-      const rewardPromise = new Promise<boolean>((resolve) => {
-        const rewardHandler = AdMob.addListener(
+      // Listen for the reward event — store handles for cleanup
+      let rewardHandle: Awaited<ReturnType<typeof AdMob.addListener>> | null = null;
+      let dismissHandle: Awaited<ReturnType<typeof AdMob.addListener>> | null = null;
+      let failHandle: Awaited<ReturnType<typeof AdMob.addListener>> | null = null;
+
+      const cleanup = async () => {
+        await rewardHandle?.remove();
+        await dismissHandle?.remove();
+        await failHandle?.remove();
+      };
+
+      const rewardPromise = new Promise<boolean>(async (resolve) => {
+        let resolved = false;
+        const safeResolve = (val: boolean) => {
+          if (resolved) return;
+          resolved = true;
+          cleanup();
+          resolve(val);
+        };
+
+        rewardHandle = await AdMob.addListener(
           RewardAdPluginEvents.Rewarded,
-          (_info: AdMobRewardItem) => { // eslint-disable-line @typescript-eslint/no-unused-vars
-            rewardHandler.then((h) => h.remove());
-            resolve(true);
-          },
+          () => safeResolve(true),
         );
 
-        const dismissHandler = AdMob.addListener(
+        dismissHandle = await AdMob.addListener(
           RewardAdPluginEvents.Dismissed,
-          () => {
-            dismissHandler.then((h) => h.remove());
-            // Give the reward event a moment to fire before resolving false
-            setTimeout(() => resolve(false), 300);
-          },
+          () => setTimeout(() => safeResolve(false), 300),
         );
 
-        const failHandler = AdMob.addListener(
+        failHandle = await AdMob.addListener(
           RewardAdPluginEvents.FailedToLoad,
-          () => {
-            failHandler.then((h) => h.remove());
-            resolve(false);
-          },
+          () => safeResolve(false),
         );
       });
 
