@@ -66,11 +66,13 @@ interface RoomData {
             [shadows]="true"
             [dpr]="[1, 2]"
             [camera]="{ position: [5, 5, 5], fov: 45 }"
+            [frameloop]="'demand'"
           >
             <app-pain-cave-scene
               *canvasContent
               [items]="room()!.items"
               [inspectedItemId]="inspectedItemId()"
+              [shadowMapSize]="512"
               (itemPressed)="onItemPressed($event)"
             />
           </ngt-canvas>

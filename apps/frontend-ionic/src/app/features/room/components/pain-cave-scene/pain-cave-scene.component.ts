@@ -6,8 +6,11 @@ import {
   effect,
   signal,
   computed,
+  inject,
+  OnDestroy,
 } from '@angular/core';
 import { extend, NgtArgs, injectStore } from 'angular-three';
+import { ScreenshotService } from '@app/core/services/screenshot.service';
 import {
   Mesh,
   BoxGeometry,
@@ -111,6 +114,7 @@ export interface ItemDragEvent {
       [position]="theme().mainLight.position"
       [intensity]="theme().mainLight.intensity"
       [castShadow]="true"
+      [shadow-mapSize]="[shadowMapSize(), shadowMapSize()]"
     />
     <ngt-point-light [position]="[0, 2.5, 0]" [intensity]="theme().accentLight.intensity" [color]="theme().accentLight.color" />
 
@@ -195,13 +199,14 @@ export interface ItemDragEvent {
     }
   `,
 })
-export class PainCaveSceneComponent {
+export class PainCaveSceneComponent implements OnDestroy {
   items = input<RoomItem3D[]>([]);
   editable = input(false);
   inspectedItemId = input<string | null>(null);
   selectedItemId = input<string | null>(null);
   dimOthers = input(false);
   theme = input<RoomTheme>(DEFAULT_THEME);
+  shadowMapSize = input(1024);
 
   itemPressed = output<string>();
   itemDragged = output<ItemDragEvent>();
@@ -216,8 +221,17 @@ export class PainCaveSceneComponent {
   private rotationDragItemStartAngle = 0;
 
   private store = injectStore();
+  private screenshotService = inject(ScreenshotService);
 
   constructor() {
+    // Register Three.js context for screenshot capture
+    effect(() => {
+      const { gl, scene, camera } = this.store.snapshot;
+      if (gl && scene && camera) {
+        this.screenshotService.registerThreeContext(gl, scene, camera);
+      }
+    });
+
     effect(() => {
       const bg = this.theme().background;
       const scene = this.store.snapshot.scene;
@@ -225,6 +239,10 @@ export class PainCaveSceneComponent {
         scene.background = new Color(bg);
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.screenshotService.unregisterThreeContext();
   }
 
   // Expose constants to template

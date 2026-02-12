@@ -10,7 +10,7 @@ import {
   IonSpinner,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { closeOutline, copyOutline, shareSocialOutline, checkmarkCircleOutline } from 'ionicons/icons';
+import { closeOutline, copyOutline, shareSocialOutline, checkmarkCircleOutline, cameraOutline } from 'ionicons/icons';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
@@ -58,6 +58,23 @@ import { TranslateModule } from '@ngx-translate/core';
         <ion-button expand="block" size="large" (click)="onShare()">
           <ion-icon name="share-social-outline" slot="start" />
           {{ 'room.share' | translate }}
+        </ion-button>
+
+        <!-- Screenshot share -->
+        <ion-button
+          expand="block"
+          fill="outline"
+          (click)="shareScreenshot.emit()"
+          [disabled]="capturingScreenshot()"
+          class="screenshot-btn"
+        >
+          @if (capturingScreenshot()) {
+            <ion-spinner name="crescent" slot="start" />
+            {{ 'room.capturingScreenshot' | translate }}
+          } @else {
+            <ion-icon name="camera-outline" slot="start" />
+            {{ 'room.shareScreenshot' | translate }}
+          }
         </ion-button>
       }
     </ion-content>
@@ -128,17 +145,23 @@ import { TranslateModule } from '@ngx-translate/core';
       color: var(--ion-color-success);
       margin: 6px 0 0;
     }
+
+    .screenshot-btn {
+      margin-top: 12px;
+    }
   `,
 })
 export class ShareRoomSheetComponent {
   shareLink = input<string | null>(null);
+  capturingScreenshot = input(false);
   dismiss = output<void>();
   shareNative = output<void>();
+  shareScreenshot = output<void>();
 
   copied = signal(false);
 
   constructor() {
-    addIcons({ closeOutline, copyOutline, shareSocialOutline, checkmarkCircleOutline });
+    addIcons({ closeOutline, copyOutline, shareSocialOutline, checkmarkCircleOutline, cameraOutline });
   }
 
   onCopyLink(): void {

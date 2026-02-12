@@ -1,5 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { IonApp, IonRouterOutlet, Platform } from '@ionic/angular/standalone';
+import { App } from '@capacitor/app';
 import { I18nService } from './core/services/i18n.service';
 import { AdService } from './core/services/ad.service';
 import { Purchases, LOG_LEVEL } from '@revenuecat/purchases-capacitor';
@@ -19,6 +21,7 @@ export class AppComponent implements OnInit {
   private i18n = inject(I18nService);
   private platform = inject(Platform);
   private adService = inject(AdService);
+  private router = inject(Router);
 
   constructor() {
     this.platform.ready().then(async () => {
@@ -31,6 +34,18 @@ export class AppComponent implements OnInit {
 
       // Initialize AdMob
       await this.adService.initialize();
+
+      // Deep link handling on native platforms
+      if (this.platform.is('capacitor')) {
+        App.addListener('appUrlOpen', (event) => {
+          const url = new URL(event.url);
+          // wallofme://room/share/abc → host="room", pathname="/share/abc"
+          const path = url.host ? '/' + url.host + url.pathname : url.pathname;
+          if (path) {
+            this.router.navigateByUrl(path);
+          }
+        });
+      }
     });
   }
 

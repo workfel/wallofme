@@ -37,6 +37,7 @@ const LERP_SPEED = 3;
         makeDefault: true,
         enabled: enabled()
       }"
+      (changed)="onControlsChange()"
     />
   `,
 })
@@ -98,6 +99,9 @@ export class CameraControlsComponent {
         controls.update?.();
       }
 
+      // Invalidate to keep rendering during animation (needed for demand frameloop)
+      this.store.snapshot.invalidate();
+
       // Stop animating when close enough
       const posDist = camera.position.distanceTo(this.targetCamPos);
       const targetDist = controls.target
@@ -107,6 +111,11 @@ export class CameraControlsComponent {
         this.isAnimating.set(false);
       }
     });
+  }
+
+  onControlsChange(): void {
+    // Invalidate on user orbit/zoom/pan to trigger re-render in demand mode
+    this.store.snapshot.invalidate();
   }
 
   private getItemWorldPosition(item: RoomItem3D): [number, number, number] {

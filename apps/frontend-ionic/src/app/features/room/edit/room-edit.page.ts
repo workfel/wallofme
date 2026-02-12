@@ -33,6 +33,7 @@ import { TrophyService } from '@app/core/services/trophy.service';
 import { ThemeService } from '@app/core/services/theme.service';
 import { TokenService } from '@app/core/services/token.service';
 import { ShareService } from '@app/core/services/share.service';
+import { ScreenshotService } from '@app/core/services/screenshot.service';
 import { DecorationService } from '@app/core/services/decoration.service';
 import { type RoomTheme } from '@app/types/room-theme';
 
@@ -185,15 +186,17 @@ type EditorState =
     <ion-modal
       #shareModal
       [isOpen]="state().kind === 'SHARE_OPEN'"
-      [initialBreakpoint]="0.35"
-      [breakpoints]="[0, 0.35, 0.5]"
+      [initialBreakpoint]="0.45"
+      [breakpoints]="[0, 0.45, 0.6]"
       (didDismiss)="closeShare()"
     >
       <ng-template>
         <app-share-room-sheet
           [shareLink]="shareLink()"
+          [capturingScreenshot]="screenshotService.capturing()"
           (dismiss)="closeShare()"
           (shareNative)="onShareNative()"
+          (shareScreenshot)="onShareScreenshot()"
         />
       </ng-template>
     </ion-modal>
@@ -242,6 +245,7 @@ export class RoomEditPage implements OnInit {
   themeService = inject(ThemeService);
   tokenService = inject(TokenService);
   private shareService = inject(ShareService);
+  screenshotService = inject(ScreenshotService);
   private trophyService = inject(TrophyService);
   private decorationService = inject(DecorationService);
   private router = inject(Router);
@@ -496,6 +500,58 @@ export class RoomEditPage implements OnInit {
       } catch {
         // Silently fail
       }
+    }
+  }
+
+  async onShareScreenshot(): Promise<void> {
+    try {
+      const blob = await this.screenshotService.captureRoom();
+      const file = new File([blob], 'pain-cave.png', { type: 'image/png' });
+
+      // Try native Capacitor share first
+      try {
+        const { Share } = await import('@capacitor/share');
+
+        // Convert blob to data URI for native sharing
+        const reader = new FileReader();
+        const dataUri = await new Promise<string>((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+
+        // Write to a temp file and share
+        const { Filesystem, Directory } = await import('@capacitor/filesystem');
+        const base64Data = dataUri.split(',')[1];
+        const tempFile = await Filesystem.writeFile({
+          path: 'pain-cave.png',
+          data: base64Data,
+          directory: Directory.Cache,
+        });
+
+        await Share.share({
+          title: 'My Pain Cave',
+          files: [tempFile.uri],
+        });
+        return;
+      } catch {
+        // Fall through to web fallback
+      }
+
+      // Web fallback: navigator.share with file or download
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ title: 'My Pain Cave', files: [file] });
+      } else {
+        // Download fallback
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'pain-cave.png';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch {
+      // User cancelled or capture failed
     }
   }
 

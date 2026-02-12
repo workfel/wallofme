@@ -77,7 +77,54 @@ export const rooms = new Hono<{ Variables: Variables }>()
   // Get room by share slug (public)
   .get("/share/:slug", async (c) => {
     const slug = c.req.param("slug");
+    const ua = c.req.header("user-agent") ?? "";
 
+    const isCrawler = /facebookexternalhit|Twitterbot|WhatsApp|LinkedInBot|Slackbot|Discordbot|Googlebot/i.test(ua);
+
+    if (isCrawler) {
+      const userRoom = await db.query.room.findFirst({
+        where: eq(room.shareSlug, slug),
+        with: {
+          user: true,
+          items: {
+            with: { trophy: true },
+          },
+        },
+      });
+
+      if (!userRoom) {
+        return c.html("<!DOCTYPE html><html><head><title>Room not found</title></head><body></body></html>", 404);
+      }
+
+      const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const displayName = esc(userRoom.user?.displayName ?? userRoom.user?.name ?? "An athlete");
+      const title = `${displayName}'s Pain Cave`;
+      const description = "Check out this Pain Cave on WallOfMe!";
+      const ogImage = esc(userRoom.items.find((i) => i.trophy?.thumbnailUrl)?.trophy?.thumbnailUrl ?? "");
+      const ogUrl = esc(c.req.url);
+
+      const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>${title}</title>
+  <meta property="og:title" content="${title}" />
+  <meta property="og:description" content="${description}" />
+  <meta property="og:image" content="${ogImage}" />
+  <meta property="og:url" content="${ogUrl}" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="${title}" />
+  <meta name="twitter:description" content="${description}" />
+  <meta name="twitter:image" content="${ogImage}" />
+</head>
+<body></body>
+</html>`;
+
+      return c.html(html);
+    }
+
+    // Normal API response for app clients
     const userRoom = await db.query.room.findFirst({
       where: eq(room.shareSlug, slug),
       with: {
