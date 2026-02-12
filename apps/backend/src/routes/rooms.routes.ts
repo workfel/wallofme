@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { eq } from "drizzle-orm";
+import { nanoid } from "nanoid";
 import { db } from "../db";
 import { room, roomItem } from "../db/schema";
 import { requireAuth } from "../middleware/auth";
@@ -26,7 +27,10 @@ export const rooms = new Hono<{ Variables: Variables }>()
       where: eq(room.userId, user.id),
       with: {
         items: {
-          with: { trophy: true, decoration: true },
+          with: {
+            trophy: { with: { raceResult: { with: { race: true } } } },
+            decoration: true,
+          },
         },
       },
     });
@@ -42,6 +46,57 @@ export const rooms = new Hono<{ Variables: Variables }>()
     return c.json({ data: userRoom });
   })
 
+  // Generate share link
+  .post("/me/share", requireAuth, async (c) => {
+    const user = c.get("user")!;
+
+    const userRoom = await db.query.room.findFirst({
+      where: eq(room.userId, user.id),
+    });
+
+    if (!userRoom) {
+      return c.json({ error: "Room not found" }, 404);
+    }
+
+    // Return existing slug if already generated
+    if (userRoom.shareSlug) {
+      return c.json({ data: { shareSlug: userRoom.shareSlug } });
+    }
+
+    // Generate new slug
+    const slug = nanoid(8);
+    const [updated] = await db
+      .update(room)
+      .set({ shareSlug: slug, updatedAt: new Date() })
+      .where(eq(room.id, userRoom.id))
+      .returning();
+
+    return c.json({ data: { shareSlug: updated.shareSlug } });
+  })
+
+  // Get room by share slug (public)
+  .get("/share/:slug", async (c) => {
+    const slug = c.req.param("slug");
+
+    const userRoom = await db.query.room.findFirst({
+      where: eq(room.shareSlug, slug),
+      with: {
+        items: {
+          with: {
+            trophy: { with: { raceResult: { with: { race: true } } } },
+            decoration: true,
+          },
+        },
+      },
+    });
+
+    if (!userRoom) {
+      return c.json({ error: "Room not found" }, 404);
+    }
+
+    return c.json({ data: userRoom });
+  })
+
   // Get another user's room (public visit)
   .get(
     "/user/:id",
@@ -52,7 +107,10 @@ export const rooms = new Hono<{ Variables: Variables }>()
         where: eq(room.userId, id),
         with: {
           items: {
-            with: { trophy: true, decoration: true },
+            with: {
+              trophy: { with: { raceResult: { with: { race: true } } } },
+              decoration: true,
+            },
           },
         },
       });

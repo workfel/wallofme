@@ -47,11 +47,26 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'tokens',
+    canActivate: [authGuard, onboardingGuard],
+    loadComponent: () =>
+      import('./features/tokens/get-tokens.page').then(
+        (m) => m.GetTokensPage
+      ),
+  },
+  {
     path: 'room/edit',
     canActivate: [authGuard, onboardingGuard],
     loadComponent: () =>
       import('./features/room/edit/room-edit.page').then(
         (m) => m.RoomEditPage
+      ),
+  },
+  {
+    path: 'room/share/:slug',
+    loadComponent: () =>
+      import('./features/room/share/room-share.page').then(
+        (m) => m.RoomSharePage
       ),
   },
   {

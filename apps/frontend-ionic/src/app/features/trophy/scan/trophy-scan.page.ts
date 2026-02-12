@@ -91,7 +91,7 @@ import { ScanService } from '@app/core/services/scan.service';
       } @else {
         <!-- Capture options -->
         <div class="capture-container animate-fade-in-up">
-          <div class="capture-area" (click)="capturePhoto()">
+          <div class="capture-area" role="button" tabindex="0" (click)="capturePhoto()" (keydown.enter)="capturePhoto()">
             <ion-icon name="camera" class="capture-icon" />
             <ion-text>
               <p>Tap to take a photo</p>

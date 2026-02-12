@@ -21,9 +21,11 @@ import {
   moonOutline,
   starOutline,
   personCircleOutline,
+  flameOutline,
 } from 'ionicons/icons';
 
 import { AuthService } from '@app/core/services/auth.service';
+import { TokenService } from '@app/core/services/token.service';
 
 @Component({
   selector: 'app-profile',
@@ -73,6 +75,13 @@ import { AuthService } from '@app/core/services/auth.service';
       </div>
 
       <ion-list lines="inset" class="settings-list">
+        <ion-item button [detail]="true" (click)="onGetTokens()">
+          <ion-icon slot="start" name="flame-outline" color="warning" />
+          <ion-label>
+            <h3>{{ 'tokens.title' | translate }}</h3>
+            <p>{{ tokenService.balance() }} {{ 'tokens.flames' | translate }}</p>
+          </ion-label>
+        </ion-item>
         <ion-item button [detail]="true">
           <ion-icon slot="start" name="language-outline" />
           <ion-label>{{ 'profile.language' | translate }}</ion-label>
@@ -143,6 +152,7 @@ import { AuthService } from '@app/core/services/auth.service';
 })
 export class ProfilePage {
   authService = inject(AuthService);
+  tokenService = inject(TokenService);
   private router = inject(Router);
 
   constructor() {
@@ -152,7 +162,13 @@ export class ProfilePage {
       moonOutline,
       starOutline,
       personCircleOutline,
+      flameOutline,
     });
+    this.tokenService.fetchBalance();
+  }
+
+  onGetTokens(): void {
+    this.router.navigate(['/tokens']);
   }
 
   async onLogout(): Promise<void> {

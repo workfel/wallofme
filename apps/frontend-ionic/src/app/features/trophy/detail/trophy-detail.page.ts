@@ -7,7 +7,6 @@ import {
   IonButtons,
   IonBackButton,
   IonSpinner,
-  IonText,
   IonCard,
   IonCardContent,
   IonCardHeader,
@@ -17,7 +16,7 @@ import { TranslateModule } from '@ngx-translate/core';
 
 import { ApiService } from '@app/core/services/api.service';
 
-type TrophyDetail = {
+interface TrophyDetail {
   id: string;
   type: 'medal' | 'bib';
   status: 'pending' | 'processing' | 'ready' | 'error';
@@ -26,7 +25,7 @@ type TrophyDetail = {
   originalImageUrl: string | null;
   processedImageUrl: string | null;
   createdAt: string;
-};
+}
 
 @Component({
   selector: 'app-trophy-detail',

@@ -39,6 +39,15 @@ export const resultSourceEnum = pgEnum("result_source", [
 
 export const wallEnum = pgEnum("wall", ["left", "right"]);
 
+export const tokenTransactionTypeEnum = pgEnum("token_transaction_type", [
+  "purchase",
+  "rewarded_video",
+  "spend_decoration",
+  "spend_theme",
+  "refund",
+  "bonus",
+]);
+
 // ─── BetterAuth Tables ──────────────────────────────────
 
 export const user = pgTable("user", {
@@ -56,6 +65,7 @@ export const user = pgTable("user", {
   firstName: text("first_name"),
   lastName: text("last_name"),
   country: text("country"),
+  tokenBalance: integer("token_balance").default(0).notNull(),
 });
 
 export const session = pgTable("session", {
@@ -156,7 +166,8 @@ export const room = pgTable("room", {
     .notNull()
     .unique()
     .references(() => user.id, { onDelete: "cascade" }),
-  themeId: text("theme_id"),
+  themeId: uuid("theme_id"),
+  shareSlug: text("share_slug").unique(),
   floor: text("floor"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -171,6 +182,9 @@ export const decoration = pgTable("decoration", {
   category: text("category"),
   isPremium: boolean("is_premium").default(false).notNull(),
   priceTokens: integer("price_tokens").default(0).notNull(),
+  defaultScale: real("default_scale").default(1).notNull(),
+  wallMountable: boolean("wall_mountable").default(false).notNull(),
+  floorOnly: boolean("floor_only").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -189,6 +203,9 @@ export const roomItem = pgTable("room_item", {
   positionY: real("position_y").default(0).notNull(),
   positionZ: real("position_z").default(0).notNull(),
   rotationY: real("rotation_y").default(0).notNull(),
+  scaleX: real("scale_x").default(1).notNull(),
+  scaleY: real("scale_y").default(1).notNull(),
+  scaleZ: real("scale_z").default(1).notNull(),
   wall: wallEnum("wall"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -205,6 +222,54 @@ export const userDecoration = pgTable("user_decoration", {
   acquiredAt: timestamp("acquired_at").defaultNow().notNull(),
 });
 
+// ─── Theme Tables ───────────────────────────────────────
+
+export const theme = pgTable("theme", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  description: text("description"),
+  thumbnailUrl: text("thumbnail_url"),
+  previewUrl: text("preview_url"),
+  wallColor: text("wall_color"),
+  floorColor: text("floor_color"),
+  backgroundColor: text("background_color"),
+  wallTexture: text("wall_texture"),
+  floorTexture: text("floor_texture"),
+  isFree: boolean("is_free").default(false).notNull(),
+  priceTokens: integer("price_tokens").default(0).notNull(),
+  sortOrder: integer("sort_order").default(0).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const userTheme = pgTable("user_theme", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  themeId: uuid("theme_id")
+    .notNull()
+    .references(() => theme.id, { onDelete: "cascade" }),
+  acquiredAt: timestamp("acquired_at").defaultNow().notNull(),
+});
+
+// ─── Token Economy ──────────────────────────────────────
+
+export const tokenTransaction = pgTable("token_transaction", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  type: tokenTransactionTypeEnum("type").notNull(),
+  amount: integer("amount").notNull(),
+  balance: integer("balance").notNull(),
+  referenceId: text("reference_id"),
+  referenceType: text("reference_type"),
+  metadata: text("metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // ─── Relations ──────────────────────────────────────────
 
 export const userRelations = relations(user, ({ many, one }) => ({
@@ -214,6 +279,8 @@ export const userRelations = relations(user, ({ many, one }) => ({
   trophies: many(trophy),
   room: one(room),
   userDecorations: many(userDecoration),
+  userThemes: many(userTheme),
+  tokenTransactions: many(tokenTransaction),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -273,4 +340,17 @@ export const userDecorationRelations = relations(userDecoration, ({ one }) => ({
     fields: [userDecoration.decorationId],
     references: [decoration.id],
   }),
+}));
+
+export const themeRelations = relations(theme, ({ many }) => ({
+  userThemes: many(userTheme),
+}));
+
+export const userThemeRelations = relations(userTheme, ({ one }) => ({
+  user: one(user, { fields: [userTheme.userId], references: [user.id] }),
+  theme: one(theme, { fields: [userTheme.themeId], references: [theme.id] }),
+}));
+
+export const tokenTransactionRelations = relations(tokenTransaction, ({ one }) => ({
+  user: one(user, { fields: [tokenTransaction.userId], references: [user.id] }),
 }));

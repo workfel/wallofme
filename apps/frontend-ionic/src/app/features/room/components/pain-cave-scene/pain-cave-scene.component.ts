@@ -3,9 +3,9 @@ import {
   CUSTOM_ELEMENTS_SCHEMA,
   input,
   output,
-  EventEmitter,
+  effect,
 } from '@angular/core';
-import { extend, NgtArgs } from 'angular-three';
+import { extend, NgtArgs, injectStore } from 'angular-three';
 import {
   Mesh,
   BoxGeometry,
@@ -14,11 +14,13 @@ import {
   AmbientLight,
   DirectionalLight,
   PointLight,
+  Color,
 } from 'three';
 
 import { TrophyFrameComponent } from '../trophy-frame/trophy-frame.component';
 import { DecorationModelComponent } from '../decoration-model/decoration-model.component';
 import { CameraControlsComponent } from '../camera-controls/camera-controls.component';
+import { RoomTheme, DEFAULT_THEME } from '@app/types/room-theme';
 
 // Register THREE.js elements
 extend({
@@ -37,12 +39,7 @@ const ROOM_DEPTH = 6;
 const ROOM_HEIGHT = 3;
 const WALL_THICKNESS = 0.15;
 
-// Diorama palette
-const FLOOR_COLOR = '#c9a87c';
-const LEFT_WALL_COLOR = '#faedcd';
-const BACK_WALL_COLOR = '#fefae0';
-
-export type RoomItem3D = {
+export interface RoomItem3D {
   id: string;
   trophyId: string | null;
   decorationId: string | null;
@@ -56,13 +53,25 @@ export type RoomItem3D = {
     type: 'medal' | 'bib';
     textureUrl: string | null;
     thumbnailUrl: string | null;
+    raceResult?: {
+      time: string | null;
+      ranking: number | null;
+      categoryRanking: number | null;
+      race: {
+        name: string;
+        date: string | null;
+        city: string | null;
+        country: string | null;
+        sport: string | null;
+      };
+    } | null;
   } | null;
   decoration?: {
     id: string;
     name: string;
     modelUrl: string | null;
   } | null;
-};
+}
 
 @Component({
   selector: 'app-pain-cave-scene',
@@ -71,16 +80,19 @@ export type RoomItem3D = {
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <!-- Camera controls (orbit/zoom/pan) -->
-    <app-camera-controls />
+    <app-camera-controls
+      [inspectedItemId]="inspectedItemId()"
+      [items]="items()"
+    />
 
     <!-- Lighting -->
-    <ngt-ambient-light [intensity]="1.0" />
+    <ngt-ambient-light [intensity]="theme().ambientLight.intensity" />
     <ngt-directional-light
-      [position]="[5, 8, 5]"
-      [intensity]="1.5"
+      [position]="theme().mainLight.position"
+      [intensity]="theme().mainLight.intensity"
       [castShadow]="true"
     />
-    <ngt-point-light [position]="[0, 2.5, 0]" [intensity]="0.5" color="#fff5e6" />
+    <ngt-point-light [position]="[0, 2.5, 0]" [intensity]="theme().accentLight.intensity" [color]="theme().accentLight.color" />
 
     <!-- Floor -->
     <ngt-mesh
@@ -89,7 +101,7 @@ export type RoomItem3D = {
       [receiveShadow]="true"
     >
       <ngt-box-geometry *args="[ROOM_WIDTH, ROOM_DEPTH, WALL_THICKNESS]" />
-      <ngt-mesh-standard-material [color]="FLOOR_COLOR" [roughness]="0.9" />
+      <ngt-mesh-standard-material [color]="theme().floor.color" [roughness]="theme().floor.roughness" />
     </ngt-mesh>
 
     <!-- Left Wall -->
@@ -98,7 +110,7 @@ export type RoomItem3D = {
       [receiveShadow]="true"
     >
       <ngt-box-geometry *args="[WALL_THICKNESS, ROOM_HEIGHT, ROOM_DEPTH]" />
-      <ngt-mesh-standard-material [color]="LEFT_WALL_COLOR" [roughness]="0.95" />
+      <ngt-mesh-standard-material [color]="theme().leftWall.color" [roughness]="theme().leftWall.roughness" />
     </ngt-mesh>
 
     <!-- Back Wall -->
@@ -107,7 +119,7 @@ export type RoomItem3D = {
       [receiveShadow]="true"
     >
       <ngt-box-geometry *args="[ROOM_WIDTH, ROOM_HEIGHT, WALL_THICKNESS]" />
-      <ngt-mesh-standard-material [color]="BACK_WALL_COLOR" [roughness]="0.95" />
+      <ngt-mesh-standard-material [color]="theme().backWall.color" [roughness]="theme().backWall.roughness" />
     </ngt-mesh>
 
     <!-- Trophy items on walls -->
@@ -135,7 +147,23 @@ export type RoomItem3D = {
 export class PainCaveSceneComponent {
   items = input<RoomItem3D[]>([]);
   editable = input(false);
+  inspectedItemId = input<string | null>(null);
+  dimOthers = input(false);
+  theme = input<RoomTheme>(DEFAULT_THEME);
   itemPressed = output<string>();
+
+  private store = injectStore();
+
+  constructor() {
+    // Update scene background when theme changes
+    effect(() => {
+      const bg = this.theme().background;
+      const scene = this.store.snapshot.scene;
+      if (scene) {
+        scene.background = new Color(bg);
+      }
+    });
+  }
 
   // Expose constants to template
   readonly Math = Math;
@@ -143,9 +171,6 @@ export class PainCaveSceneComponent {
   readonly ROOM_DEPTH = ROOM_DEPTH;
   readonly ROOM_HEIGHT = ROOM_HEIGHT;
   readonly WALL_THICKNESS = WALL_THICKNESS;
-  readonly FLOOR_COLOR = FLOOR_COLOR;
-  readonly LEFT_WALL_COLOR = LEFT_WALL_COLOR;
-  readonly BACK_WALL_COLOR = BACK_WALL_COLOR;
 
   trophyItems(): RoomItem3D[] {
     return this.items().filter(

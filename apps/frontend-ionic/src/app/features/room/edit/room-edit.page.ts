@@ -1,30 +1,57 @@
-import { Component, inject, signal, OnInit, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import {
+  Component,
+  inject,
+  signal,
+  computed,
+  OnInit,
+  CUSTOM_ELEMENTS_SCHEMA,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import {
   IonContent,
   IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonButtons,
-  IonBackButton,
-  IonButton,
-  IonText,
-  IonSpinner,
-  IonList,
-  IonItem,
-  IonLabel,
-  IonThumbnail,
   IonIcon,
-  IonBadge,
+  IonSpinner,
+  IonFab,
+  IonFabButton,
+  IonModal,
+  IonAlert,
 } from '@ionic/angular/standalone';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgtCanvas } from 'angular-three/dom';
 import { addIcons } from 'ionicons';
-import { trashOutline, addCircleOutline, swapHorizontalOutline } from 'ionicons/icons';
+import {
+  addOutline,
+  trashOutline,
+  refreshOutline,
+  moveOutline,
+  shareOutline,
+} from 'ionicons/icons';
 
-import { RoomService, type RoomItem } from '@app/core/services/room.service';
-import { TrophyService, type Trophy } from '@app/core/services/trophy.service';
+import { RoomService } from '@app/core/services/room.service';
+import { TrophyService } from '@app/core/services/trophy.service';
+import { ThemeService } from '@app/core/services/theme.service';
+import { TokenService } from '@app/core/services/token.service';
+import { ShareService } from '@app/core/services/share.service';
+import { type RoomTheme } from '@app/types/room-theme';
+
 import { PainCaveSceneComponent } from '../components/pain-cave-scene/pain-cave-scene.component';
+import { EditorToolbarComponent } from '../components/editor-toolbar/editor-toolbar.component';
+import { ContextActionBarComponent } from '../components/context-action-bar/context-action-bar.component';
+import { FloorPlacementPanelComponent, type FloorPlacementValues } from '../components/floor-placement-panel/floor-placement-panel.component';
+import { ThemeSelectorSheetComponent } from '../components/theme-selector-sheet/theme-selector-sheet.component';
+import { ObjectCatalogSheetComponent } from '../components/object-catalog-sheet/object-catalog-sheet.component';
+import { ShareRoomSheetComponent } from '../components/share-room-sheet/share-room-sheet.component';
+
+// ─── Editor State Machine ────────────────────────────────
+type EditorState =
+  | { kind: 'IDLE' }
+  | { kind: 'SELECTED'; itemId: string }
+  | { kind: 'CATALOG_OPEN' }
+  | { kind: 'SLOT_PICKING'; itemToPlace: string; source: 'catalog' | 'move' }
+  | { kind: 'THEME_OPEN' }
+  | { kind: 'SHARE_OPEN' }
+  | { kind: 'CONFIRM_DELETE'; itemId: string };
 
 @Component({
   selector: 'app-room-edit',
@@ -33,30 +60,30 @@ import { PainCaveSceneComponent } from '../components/pain-cave-scene/pain-cave-
     TranslateModule,
     NgtCanvas,
     PainCaveSceneComponent,
+    EditorToolbarComponent,
+    ContextActionBarComponent,
+    FloorPlacementPanelComponent,
+    ThemeSelectorSheetComponent,
+    ObjectCatalogSheetComponent,
+    ShareRoomSheetComponent,
     IonContent,
     IonHeader,
-    IonToolbar,
-    IonTitle,
-    IonButtons,
-    IonBackButton,
-    IonButton,
-    IonText,
-    IonSpinner,
-    IonList,
-    IonItem,
-    IonLabel,
-    IonThumbnail,
     IonIcon,
+    IonSpinner,
+    IonFab,
+    IonFabButton,
+    IonModal,
+    IonAlert,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
+    <!-- Toolbar -->
     <ion-header>
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-back-button defaultHref="/tabs/home" />
-        </ion-buttons>
-        <ion-title>{{ 'room.edit' | translate }}</ion-title>
-      </ion-toolbar>
+      <app-editor-toolbar
+        (preview)="onPreview()"
+        (openThemes)="openThemeSelector()"
+        (share)="onShare()"
+      />
     </ion-header>
 
     <ion-content [fullscreen]="true">
@@ -65,79 +92,111 @@ import { PainCaveSceneComponent } from '../components/pain-cave-scene/pain-cave-
           <ion-spinner name="crescent" />
         </div>
       } @else {
-        <div class="edit-layout">
-          <!-- 3D Canvas (55%) -->
+        <div class="editor-layout">
+          <!-- 3D Canvas -->
           <div class="canvas-section">
             <ngt-canvas
               [shadows]="true"
+              [dpr]="[1, 2]"
               [camera]="{ position: [5, 5, 5], fov: 45 }"
             >
               <app-pain-cave-scene
                 *canvasContent
                 [items]="roomService.room()?.items ?? []"
                 [editable]="true"
+                [theme]="themeService.activeTheme()"
                 (itemPressed)="onItemPressed($event)"
               />
             </ngt-canvas>
           </div>
 
-          <!-- Edit Panel (45%) -->
-          <div class="panel-section">
-            <!-- Selected item actions -->
-            @if (selectedItemId()) {
-              <div class="selected-actions animate-fade-in">
-                <ion-button
-                  expand="block"
-                  fill="outline"
-                  color="danger"
-                  (click)="removeItem()"
-                >
-                  <ion-icon slot="start" name="trash-outline" />
-                  {{ 'room.removeTrophy' | translate }}
-                </ion-button>
-                <ion-button
-                  expand="block"
-                  fill="outline"
-                  (click)="moveItem()"
-                >
-                  <ion-icon slot="start" name="swap-horizontal-outline" />
-                  {{ 'room.moveTo' | translate }}
-                </ion-button>
-              </div>
-            }
-
-            <!-- Unplaced trophies -->
-            <h4>{{ 'room.available' | translate }}</h4>
-            @if (availableTrophies().length === 0) {
-              <ion-text color="medium">
-                <p class="empty-hint">{{ 'room.noTrophies' | translate }}</p>
-              </ion-text>
-            }
-            <ion-list lines="inset">
-              @for (trophy of availableTrophies(); track trophy.id) {
-                <ion-item>
-                  <ion-thumbnail slot="start">
-                    @if (trophy.thumbnailUrl) {
-                      <img [src]="trophy.thumbnailUrl" [alt]="trophy.type" />
-                    }
-                  </ion-thumbnail>
-                  <ion-label>
-                    {{ trophy.type === 'medal' ? ('trophies.medal' | translate) : ('trophies.bib' | translate) }}
-                  </ion-label>
-                  <ion-button
-                    slot="end"
-                    fill="clear"
-                    (click)="addToRoom(trophy.id)"
-                  >
-                    <ion-icon slot="icon-only" name="add-circle-outline" />
-                  </ion-button>
-                </ion-item>
-              }
-            </ion-list>
-          </div>
+          <!-- Context Action Bar (shown when item selected) -->
+          @if (isDecorationSelected()) {
+            <app-floor-placement-panel
+              [positionX]="selectedItem()?.positionX ?? 0"
+              [positionZ]="selectedItem()?.positionZ ?? 0"
+              [rotationDegrees]="selectedItemRotationDeg()"
+              (changed)="onFloorPlacementChange($event)"
+              (delete)="confirmDelete()"
+            />
+          } @else if (isItemSelected()) {
+            <app-context-action-bar
+              (delete)="confirmDelete()"
+              (rotate)="rotateItem()"
+              (move)="startMove()"
+            />
+          }
         </div>
+
+        <!-- FAB: Add items -->
+        @if (state().kind === 'IDLE') {
+          <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+            <ion-fab-button (click)="openCatalog()">
+              <ion-icon name="add-outline" />
+            </ion-fab-button>
+          </ion-fab>
+        }
       }
     </ion-content>
+
+    <!-- Theme Selector Bottom Sheet -->
+    <ion-modal
+      #themeModal
+      [isOpen]="state().kind === 'THEME_OPEN'"
+      [initialBreakpoint]="0.45"
+      [breakpoints]="[0, 0.45, 0.75]"
+      (didDismiss)="closeThemeSelector()"
+    >
+      <ng-template>
+        <app-theme-selector-sheet
+          [currentTheme]="themeService.activeTheme()"
+          (preview)="onThemePreview($event)"
+          (apply)="onThemeApply($event)"
+        />
+      </ng-template>
+    </ion-modal>
+
+    <!-- Object Catalog Bottom Sheet -->
+    <ion-modal
+      #catalogModal
+      [isOpen]="state().kind === 'CATALOG_OPEN'"
+      [initialBreakpoint]="0.92"
+      [breakpoints]="[0, 0.5, 0.92]"
+      (didDismiss)="closeCatalog()"
+    >
+      <ng-template>
+        <app-object-catalog-sheet
+          (placeTrophy)="onPlaceTrophy($event)"
+          (getTokens)="onGetTokens()"
+        />
+      </ng-template>
+    </ion-modal>
+
+    <!-- Share Room Bottom Sheet -->
+    <ion-modal
+      #shareModal
+      [isOpen]="state().kind === 'SHARE_OPEN'"
+      [initialBreakpoint]="0.35"
+      [breakpoints]="[0, 0.35, 0.5]"
+      (didDismiss)="closeShare()"
+    >
+      <ng-template>
+        <app-share-room-sheet
+          [shareLink]="shareLink()"
+          (dismiss)="closeShare()"
+          (shareNative)="onShareNative()"
+        />
+      </ng-template>
+    </ion-modal>
+
+    <!-- Delete Confirmation -->
+    <ion-alert
+      [isOpen]="state().kind === 'CONFIRM_DELETE'"
+      header="Remove Item"
+      message="Are you sure you want to remove this item from your room?"
+      [buttons]="deleteAlertButtons"
+      (didDismiss)="cancelDelete()"
+    />
   `,
   styles: `
     .centered {
@@ -147,14 +206,14 @@ import { PainCaveSceneComponent } from '../components/pain-cave-scene/pain-cave-
       height: 100%;
     }
 
-    .edit-layout {
+    .editor-layout {
       display: flex;
       flex-direction: column;
       height: 100%;
     }
 
     .canvas-section {
-      flex: 0 0 55%;
+      flex: 1;
       min-height: 0;
 
       ngt-canvas {
@@ -163,112 +222,217 @@ import { PainCaveSceneComponent } from '../components/pain-cave-scene/pain-cave-
         height: 100%;
       }
     }
-
-    .panel-section {
-      flex: 0 0 45%;
-      overflow-y: auto;
-      padding: 16px;
-      border-top: 1px solid var(--ion-color-step-200);
-
-      h4 {
-        font-size: 14px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: var(--ion-color-step-500);
-        margin: 16px 0 8px;
-      }
-    }
-
-    .selected-actions {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-
-      ion-button {
-        flex: 1;
-      }
-    }
-
-    .empty-hint {
-      font-size: 13px;
-      text-align: center;
-      margin: 24px 0;
-    }
-
-    ion-thumbnail {
-      --border-radius: 8px;
-      width: 48px;
-      height: 48px;
-    }
   `,
 })
 export class RoomEditPage implements OnInit {
   roomService = inject(RoomService);
+  themeService = inject(ThemeService);
+  tokenService = inject(TokenService);
+  private shareService = inject(ShareService);
   private trophyService = inject(TrophyService);
   private router = inject(Router);
 
-  selectedItemId = signal<string | null>(null);
+  // ─── State Machine ───────────────────────────────
+  state = signal<EditorState>({ kind: 'IDLE' });
+
+  isItemSelected = computed(() => this.state().kind === 'SELECTED');
+  selectedItemId = computed(() => {
+    const s = this.state();
+    return s.kind === 'SELECTED' ? s.itemId : null;
+  });
+
+  selectedItem = computed(() => {
+    const id = this.selectedItemId();
+    if (!id) return null;
+    return this.roomService.room()?.items.find((i) => i.id === id) ?? null;
+  });
+
+  isDecorationSelected = computed(() => {
+    const item = this.selectedItem();
+    return !!item?.decorationId && !item.wall;
+  });
+
+  selectedItemRotationDeg = computed(() => {
+    const item = this.selectedItem();
+    return item ? Math.round((item.rotationY || 0) * 180 / Math.PI) : 0;
+  });
+
+  shareLink = signal<string | null>(null);
+  private previousTheme: RoomTheme | null = null;
+
+  deleteAlertButtons = [
+    { text: 'Cancel', role: 'cancel' },
+    { text: 'Delete', role: 'destructive', handler: () => this.doDelete() },
+  ];
 
   constructor() {
-    addIcons({ trashOutline, addCircleOutline, swapHorizontalOutline });
+    addIcons({ addOutline, trashOutline, refreshOutline, moveOutline, shareOutline });
   }
 
   ngOnInit(): void {
     this.roomService.fetchMyRoom();
     this.trophyService.fetchTrophies();
+    this.tokenService.fetchBalance();
   }
 
-  /**
-   * Trophies not already placed in the room
-   */
-  availableTrophies(): Trophy[] {
-    const placedTrophyIds = new Set(
-      (this.roomService.room()?.items ?? [])
-        .filter((i) => i.trophyId)
-        .map((i) => i.trophyId)
-    );
-    return this.trophyService
-      .trophies()
-      .filter(
-        (t) =>
-          t.status === 'ready' &&
-          t.textureUrl &&
-          !placedTrophyIds.has(t.id)
-      );
-  }
-
+  // ─── Item Interactions ───────────────────────────
   onItemPressed(itemId: string): void {
-    this.selectedItemId.set(
-      this.selectedItemId() === itemId ? null : itemId
-    );
+    const s = this.state();
+    if (s.kind === 'IDLE' || s.kind === 'SELECTED') {
+      if (s.kind === 'SELECTED' && s.itemId === itemId) {
+        this.state.set({ kind: 'IDLE' });
+      } else {
+        this.state.set({ kind: 'SELECTED', itemId });
+      }
+    } else if (s.kind === 'SLOT_PICKING') {
+      // Clicking an item during slot picking — ignore
+    }
   }
 
-  async addToRoom(trophyId: string): Promise<void> {
-    await this.roomService.addItemToRoom(trophyId);
+  // ─── Context Actions ─────────────────────────────
+  confirmDelete(): void {
+    const id = this.selectedItemId();
+    if (id) {
+      this.state.set({ kind: 'CONFIRM_DELETE', itemId: id });
+    }
   }
 
-  async removeItem(): Promise<void> {
+  cancelDelete(): void {
+    const s = this.state();
+    if (s.kind === 'CONFIRM_DELETE') {
+      this.state.set({ kind: 'SELECTED', itemId: s.itemId });
+    }
+  }
+
+  async doDelete(): Promise<void> {
+    const s = this.state();
+    if (s.kind === 'CONFIRM_DELETE') {
+      await this.roomService.removeItem(s.itemId);
+      this.state.set({ kind: 'IDLE' });
+    }
+  }
+
+  async rotateItem(): Promise<void> {
     const id = this.selectedItemId();
     if (!id) return;
-    await this.roomService.removeItem(id);
-    this.selectedItemId.set(null);
-  }
+    const item = this.roomService.room()?.items.find((i) => i.id === id);
+    if (!item) return;
 
-  async moveItem(): Promise<void> {
-    const id = this.selectedItemId();
-    if (!id) return;
-
-    // Move to next available slot
-    const slot = this.roomService.getNextSlot();
-    if (!slot) return;
-
+    const newRotation = (item.rotationY || 0) + Math.PI / 2;
     await this.roomService.updateItem(id, {
-      positionX: slot.positionX,
-      positionY: slot.positionY,
-      positionZ: slot.positionZ,
-      wall: slot.wall,
+      positionX: item.positionX,
+      positionY: item.positionY,
+      positionZ: item.positionZ,
+      rotationY: newRotation,
     });
-    this.selectedItemId.set(null);
   }
+
+  startMove(): void {
+    const id = this.selectedItemId();
+    if (!id) return;
+    const slot = this.roomService.getNextSlot();
+    if (slot) {
+      this.roomService.updateItem(id, {
+        positionX: slot.positionX,
+        positionY: slot.positionY,
+        positionZ: slot.positionZ,
+        wall: slot.wall,
+      });
+    }
+    this.state.set({ kind: 'IDLE' });
+  }
+
+  async onFloorPlacementChange(values: FloorPlacementValues): Promise<void> {
+    const id = this.selectedItemId();
+    if (!id) return;
+    const item = this.selectedItem();
+    if (!item) return;
+    await this.roomService.updateItem(id, {
+      positionX: values.positionX,
+      positionY: item.positionY,
+      positionZ: values.positionZ,
+      rotationY: values.rotationY,
+    });
+  }
+
+  // ─── Catalog ─────────────────────────────────────
+  openCatalog(): void {
+    this.state.set({ kind: 'CATALOG_OPEN' });
+  }
+
+  closeCatalog(): void {
+    if (this.state().kind === 'CATALOG_OPEN') {
+      this.state.set({ kind: 'IDLE' });
+    }
+  }
+
+  async onPlaceTrophy(trophyId: string): Promise<void> {
+    await this.roomService.addItemToRoom(trophyId);
+    this.state.set({ kind: 'IDLE' });
+  }
+
+  onGetTokens(): void {
+    this.state.set({ kind: 'IDLE' });
+    this.router.navigate(['/tokens']);
+  }
+
+  // ─── Theme Selector ──────────────────────────────
+  openThemeSelector(): void {
+    this.previousTheme = this.themeService.activeTheme();
+    this.state.set({ kind: 'THEME_OPEN' });
+  }
+
+  closeThemeSelector(): void {
+    if (this.state().kind === 'THEME_OPEN' && this.previousTheme) {
+      this.themeService.applyTheme(this.previousTheme);
+    }
+    this.state.set({ kind: 'IDLE' });
+  }
+
+  onThemePreview(theme: RoomTheme): void {
+    this.themeService.applyTheme(theme);
+  }
+
+  onThemeApply(theme: RoomTheme | null): void {
+    if (theme) {
+      this.themeService.applyTheme(theme);
+      this.previousTheme = null;
+    }
+    this.state.set({ kind: 'IDLE' });
+  }
+
+  // ─── Share ─────────────────────────────────────
+  async onShare(): Promise<void> {
+    this.state.set({ kind: 'SHARE_OPEN' });
+    const slug = await this.shareService.generateShareLink();
+    if (slug) {
+      this.shareLink.set(this.shareService.getShareUrl(slug));
+    }
+  }
+
+  closeShare(): void {
+    if (this.state().kind === 'SHARE_OPEN') {
+      this.state.set({ kind: 'IDLE' });
+    }
+  }
+
+  async onShareNative(): Promise<void> {
+    const link = this.shareLink();
+    if (link) {
+      try {
+        await navigator.share({ title: 'My Pain Cave', url: link });
+      } catch {
+        // User cancelled or share not supported
+      }
+    }
+  }
+
+  // ─── Toolbar Actions ─────────────────────────────
+  onPreview(): void {
+    const room = this.roomService.room();
+    if (room) {
+      this.router.navigate(['/room', room.userId]);
+    }
+  }
+
 }

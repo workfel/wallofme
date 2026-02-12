@@ -8,5 +8,12 @@
   ],
   "trustedDependencies": [
     "backend"
-  ]
+  ],
+  "dependencies": {
+    "three": "^0.178.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3",
+    "eslint": "^9.39.2"
+  }
 }

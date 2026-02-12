@@ -1,4 +1,5 @@
-import { Component, inject, signal, OnInit, input, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, input, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Router } from '@angular/router';
 import {
   IonContent,
   IonHeader,
@@ -8,20 +9,22 @@ import {
   IonBackButton,
   IonSpinner,
   IonText,
+  IonModal,
 } from '@ionic/angular/standalone';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgtCanvas } from 'angular-three/dom';
 
 import { ApiService } from '@app/core/services/api.service';
 import { PainCaveSceneComponent, type RoomItem3D } from '../components/pain-cave-scene/pain-cave-scene.component';
+import { TrophyInfoSheetComponent, type TrophyInfoData } from '../components/trophy-info-sheet/trophy-info-sheet.component';
 
-type RoomData = {
+interface RoomData {
   id: string;
   userId: string;
   themeId: string | null;
   floor: string | null;
   items: RoomItem3D[];
-};
+}
 
 @Component({
   selector: 'app-room-view',
@@ -30,6 +33,7 @@ type RoomData = {
     TranslateModule,
     NgtCanvas,
     PainCaveSceneComponent,
+    TrophyInfoSheetComponent,
     IonContent,
     IonHeader,
     IonToolbar,
@@ -38,6 +42,7 @@ type RoomData = {
     IonBackButton,
     IonSpinner,
     IonText,
+    IonModal,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
@@ -59,9 +64,15 @@ type RoomData = {
         <div class="canvas-container animate-fade-in">
           <ngt-canvas
             [shadows]="true"
+            [dpr]="[1, 2]"
             [camera]="{ position: [5, 5, 5], fov: 45 }"
           >
-            <app-pain-cave-scene *canvasContent [items]="room()!.items" />
+            <app-pain-cave-scene
+              *canvasContent
+              [items]="room()!.items"
+              [inspectedItemId]="inspectedItemId()"
+              (itemPressed)="onItemPressed($event)"
+            />
           </ngt-canvas>
         </div>
       } @else {
@@ -72,6 +83,22 @@ type RoomData = {
         </div>
       }
     </ion-content>
+
+    <!-- Trophy Info Bottom Sheet -->
+    <ion-modal
+      [isOpen]="inspectedItemId() !== null"
+      [initialBreakpoint]="0.45"
+      [breakpoints]="[0, 0.45, 0.75]"
+      (didDismiss)="clearInspection()"
+    >
+      <ng-template>
+        <app-trophy-info-sheet
+          [trophy]="inspectedTrophyData()"
+          (dismiss)="clearInspection()"
+          (viewDetails)="onViewDetails($event)"
+        />
+      </ng-template>
+    </ion-modal>
   `,
   styles: `
     .centered {
@@ -97,9 +124,31 @@ export class RoomViewPage implements OnInit {
   userId = input.required<string>();
 
   private api = inject(ApiService);
+  private router = inject(Router);
 
   room = signal<RoomData | null>(null);
   loading = signal(true);
+  inspectedItemId = signal<string | null>(null);
+
+  inspectedTrophyData = computed<TrophyInfoData | null>(() => {
+    const itemId = this.inspectedItemId();
+    if (!itemId) return null;
+    const item = this.room()?.items.find((i) => i.id === itemId);
+    if (!item?.trophy) return null;
+    return {
+      id: item.trophy.id,
+      type: item.trophy.type,
+      thumbnailUrl: item.trophy.thumbnailUrl,
+      race: item.trophy.raceResult?.race ?? null,
+      result: item.trophy.raceResult
+        ? {
+            time: item.trophy.raceResult.time,
+            ranking: item.trophy.raceResult.ranking,
+            categoryRanking: item.trophy.raceResult.categoryRanking,
+          }
+        : null,
+    };
+  });
 
   ngOnInit(): void {
     this.fetchRoom();
@@ -120,5 +169,21 @@ export class RoomViewPage implements OnInit {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  onItemPressed(itemId: string): void {
+    const item = this.room()?.items.find((i) => i.id === itemId);
+    if (item?.trophy) {
+      this.inspectedItemId.set(itemId);
+    }
+  }
+
+  clearInspection(): void {
+    this.inspectedItemId.set(null);
+  }
+
+  onViewDetails(trophyId: string): void {
+    this.inspectedItemId.set(null);
+    this.router.navigate(['/trophy', trophyId]);
   }
 }

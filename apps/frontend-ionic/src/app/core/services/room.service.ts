@@ -3,7 +3,7 @@ import { ApiService } from './api.service';
 import { getNextSlotPosition } from '@app/shared/lib/room-placement';
 import type { SlotPosition } from '@app/shared/lib/room-placement';
 
-export type RoomItem = {
+export interface RoomItem {
   id: string;
   trophyId: string | null;
   decorationId: string | null;
@@ -17,21 +17,33 @@ export type RoomItem = {
     type: 'medal' | 'bib';
     textureUrl: string | null;
     thumbnailUrl: string | null;
+    raceResult?: {
+      time: string | null;
+      ranking: number | null;
+      categoryRanking: number | null;
+      race: {
+        name: string;
+        date: string | null;
+        city: string | null;
+        country: string | null;
+        sport: string | null;
+      };
+    } | null;
   } | null;
   decoration?: {
     id: string;
     name: string;
     modelUrl: string | null;
   } | null;
-};
+}
 
-export type Room = {
+export interface Room {
   id: string;
   userId: string;
   themeId: string | null;
   floor: string | null;
   items: RoomItem[];
-};
+}
 
 @Injectable({ providedIn: 'root' })
 export class RoomService {

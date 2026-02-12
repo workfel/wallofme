@@ -21,7 +21,9 @@
             "outputPath": "www",
             "index": "src/index.html",
             "browser": "src/main.ts",
-            "polyfills": ["zone.js"],
+            "polyfills": [
+              "zone.js"
+            ],
             "tsConfig": "tsconfig.app.json",
             "assets": [
               {
@@ -85,11 +87,23 @@
             "host": "0.0.0.0",
             "port": 8100
           }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html"
+            ]
+          }
         }
       }
     }
   },
   "cli": {
-    "analytics": "15b21f8f-914a-436b-8a32-d482554ea86a"
+    "analytics": "15b21f8f-914a-436b-8a32-d482554ea86a",
+    "schematicCollections": [
+      "angular-eslint"
+    ]
   }
 }

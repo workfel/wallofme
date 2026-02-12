@@ -54,6 +54,12 @@ export const auth = betterAuth({
         type: "string",
         required: false,
       },
+      tokenBalance: {
+        type: "number",
+        required: false,
+        defaultValue: 0,
+        input: false,
+      },
     },
   },
   plugins: [capacitor({

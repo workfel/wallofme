@@ -10,6 +10,8 @@ import { decorations } from "./routes/decorations.routes";
 import { upload } from "./routes/upload.routes";
 import { scan } from "./routes/scan.routes";
 import { users } from "./routes/users.routes";
+import { tokens } from "./routes/tokens.routes";
+import { themes } from "./routes/themes.routes";
 
 type Variables = {
   user: typeof auth.$Infer.Session.user | null;
@@ -34,7 +36,7 @@ app.use(
       "x-skip-oauth-proxy",
       "capacitor-origin",
     ],
-    allowMethods: ["POST", "GET", "OPTIONS"],
+    allowMethods: ["POST", "GET", "PATCH", "DELETE", "OPTIONS"],
     exposeHeaders: ["set-auth-token"],
   }),
 );
@@ -58,7 +60,9 @@ const route = app
   .route("/api/decorations", decorations)
   .route("/api/upload", upload)
   .route("/api/scan", scan)
-  .route("/api/users", users);
+  .route("/api/users", users)
+  .route("/api/tokens", tokens)
+  .route("/api/themes", themes);
 
 export type AppType = typeof route;
 

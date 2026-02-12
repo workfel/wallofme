@@ -9,6 +9,9 @@ PODS:
     - Capacitor
   - CapacitorCamera (6.1.3):
     - Capacitor
+  - CapacitorCommunityAdmob (6.2.0):
+    - Capacitor
+    - Google-Mobile-Ads-SDK (= 11.3.0)
   - CapacitorCordova (6.2.1)
   - CapacitorHaptics (6.0.3):
     - Capacitor
@@ -20,6 +23,23 @@ PODS:
     - Capacitor
   - CapacitorStatusBar (6.0.3):
     - Capacitor
+  - Google-Mobile-Ads-SDK (11.3.0):
+    - GoogleUserMessagingPlatform (>= 1.1)
+  - GoogleUserMessagingPlatform (2.7.0)
+  - PurchasesHybridCommon (17.33.1):
+    - RevenueCat (= 5.57.2)
+  - PurchasesHybridCommonUI (17.33.1):
+    - PurchasesHybridCommon (= 17.33.1)
+    - RevenueCatUI (= 5.57.2)
+  - RevenueCat (5.57.2)
+  - RevenuecatPurchasesCapacitor (12.1.2):
+    - Capacitor
+    - PurchasesHybridCommon (= 17.33.1)
+  - RevenuecatPurchasesCapacitorUi (12.1.2):
+    - Capacitor
+    - PurchasesHybridCommonUI (= 17.33.1)
+  - RevenueCatUI (5.57.2):
+    - RevenueCat (= 5.57.2)
 
 DEPENDENCIES:
   - BetterAuthCapacitor (from `../../../../node_modules/better-auth-capacitor`)
@@ -27,12 +47,25 @@ DEPENDENCIES:
   - "CapacitorApp (from `../../../../node_modules/@capacitor/app`)"
   - "CapacitorBrowser (from `../../../../node_modules/@capacitor/browser`)"
   - "CapacitorCamera (from `../../../../node_modules/@capacitor/camera`)"
+  - "CapacitorCommunityAdmob (from `../../../../node_modules/@capacitor-community/admob`)"
   - "CapacitorCordova (from `../../../../node_modules/@capacitor/ios`)"
   - "CapacitorHaptics (from `../../../../node_modules/@capacitor/haptics`)"
   - "CapacitorNetwork (from `../../node_modules/@capacitor/network`)"
   - "CapacitorPreferences (from `../../../../node_modules/@capacitor/preferences`)"
   - "CapacitorSplashScreen (from `../../../../node_modules/@capacitor/splash-screen`)"
   - "CapacitorStatusBar (from `../../../../node_modules/@capacitor/status-bar`)"
+  - GoogleUserMessagingPlatform (~> 2.6)
+  - "RevenuecatPurchasesCapacitor (from `../../../../node_modules/@revenuecat/purchases-capacitor`)"
+  - "RevenuecatPurchasesCapacitorUi (from `../../../../node_modules/@revenuecat/purchases-capacitor-ui`)"
+
+SPEC REPOS:
+  trunk:
+    - Google-Mobile-Ads-SDK
+    - GoogleUserMessagingPlatform
+    - PurchasesHybridCommon
+    - PurchasesHybridCommonUI
+    - RevenueCat
+    - RevenueCatUI
 
 EXTERNAL SOURCES:
   BetterAuthCapacitor:
@@ -45,6 +78,8 @@ EXTERNAL SOURCES:
     :path: "../../../../node_modules/@capacitor/browser"
   CapacitorCamera:
     :path: "../../../../node_modules/@capacitor/camera"
+  CapacitorCommunityAdmob:
+    :path: "../../../../node_modules/@capacitor-community/admob"
   CapacitorCordova:
     :path: "../../../../node_modules/@capacitor/ios"
   CapacitorHaptics:
@@ -57,6 +92,10 @@ EXTERNAL SOURCES:
     :path: "../../../../node_modules/@capacitor/splash-screen"
   CapacitorStatusBar:
     :path: "../../../../node_modules/@capacitor/status-bar"
+  RevenuecatPurchasesCapacitor:
+    :path: "../../../../node_modules/@revenuecat/purchases-capacitor"
+  RevenuecatPurchasesCapacitorUi:
+    :path: "../../../../node_modules/@revenuecat/purchases-capacitor-ui"
 
 SPEC CHECKSUMS:
   BetterAuthCapacitor: 44a9b14d9c60ac5923031d1bdbe7bcc04306dc32
@@ -64,13 +103,22 @@ SPEC CHECKSUMS:
   CapacitorApp: a19ccb4f5f32d2534be5c6f524d5a9b614a1e8a7
   CapacitorBrowser: 825163a1d6adce944ac7b9e3cab101146b5a9df8
   CapacitorCamera: 5ba135b0cb55a788758139fa2404d726bf60f0f3
+  CapacitorCommunityAdmob: 52a6ebbec5e4c277d2694657becd42bcadbe369a
   CapacitorCordova: 8d93e14982f440181be7304aa9559ca631d77fff
   CapacitorHaptics: 40f83026feeee9cfe36e89e9c98a3baaaf20c450
   CapacitorNetwork: 093efa3664b692a971bdd01be70523291cd6a87f
   CapacitorPreferences: 5848e0691b36b4bb4acc98e481ab56d451578d30
   CapacitorSplashScreen: ef140a8b1ea7244e0c245ce2dd4ce5251e7ab86a
   CapacitorStatusBar: 149cde8f1328ec3aa6cbdd872a55137ae3f98b16
+  Google-Mobile-Ads-SDK: 301a16c461c331ba34ff4dab40a22ab7c147af61
+  GoogleUserMessagingPlatform: a8b56893477f67212fbc8411c139e61d463349f5
+  PurchasesHybridCommon: 9031a433025f7a835f7002e132e3320f41c63b21
+  PurchasesHybridCommonUI: 7145d23243a3cc88b21529e39c362d4aadf067c1
+  RevenueCat: 85df7fb6409e6823e24768e8cabf55d03a497355
+  RevenuecatPurchasesCapacitor: 42d1409b3d2e824de72ccdff70534bb5678af32e
+  RevenuecatPurchasesCapacitorUi: 0fde1d619d3dc37f8028d864d4d3236fa7469eb0
+  RevenueCatUI: 14f85d0b998ceeaa405c6d785455fa9d1f11ee0f
 
-PODFILE CHECKSUM: 774440d58684737d6be89cd2ce5a756aa70324c6
+PODFILE CHECKSUM: f89b7bbf651a2d4660083b96a09203d4f8ee1475
 
 COCOAPODS: 1.16.2

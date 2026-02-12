@@ -5,7 +5,7 @@ import { RoomService } from './room.service';
 
 export type ScanStep = 'idle' | 'processing' | 'details' | 'search' | 'done';
 
-export type ScanAnalysis = {
+export interface ScanAnalysis {
   imageKind: 'medal' | 'bib' | 'unknown';
   raceName: string | null;
   date: string | null;
@@ -14,21 +14,21 @@ export type ScanAnalysis = {
   sportKind: string | null;
   distance: string | null;
   hasPornContent: boolean;
-};
+}
 
-export type ProcessedUrls = {
+export interface ProcessedUrls {
   processedImageUrl: string;
   textureUrl: string;
   thumbnailUrl: string;
-};
+}
 
-export type SearchResult = {
+export interface SearchResult {
   found: boolean;
   time: string | null;
   ranking: number | null;
   categoryRanking: number | null;
   totalParticipants: number | null;
-};
+}
 
 @Injectable({ providedIn: 'root' })
 export class ScanService {

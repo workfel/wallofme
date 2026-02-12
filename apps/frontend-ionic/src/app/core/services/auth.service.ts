@@ -4,7 +4,7 @@ import { createAuthClient } from 'better-auth/client';
 import { withCapacitor, isNativePlatform } from 'better-auth-capacitor/client';
 import { environment } from '@env/environment';
 
-export type User = {
+export interface User {
   id: string;
   name: string;
   email: string;
@@ -17,14 +17,14 @@ export type User = {
   country: string | null;
   createdAt: Date;
   updatedAt: Date;
-};
+}
 
-export type Session = {
+export interface Session {
   id: string;
   token: string;
   userId: string;
   expiresAt: Date;
-};
+}
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -136,7 +136,7 @@ export class AuthService {
     country?: string;
     displayName?: string;
   }): Promise<void> {
-    const result = await this.authClient.updateUser(data as any);
+    const result = await this.authClient.updateUser(data as Record<string, unknown>);
     if (result.error) {
       throw new Error(result.error.message);
     }

@@ -21,13 +21,13 @@ import { add, camera, create } from 'ionicons/icons';
 import { ApiService } from '@app/core/services/api.service';
 import { PainCaveSceneComponent, type RoomItem3D } from '../../room/components/pain-cave-scene/pain-cave-scene.component';
 
-type RoomData = {
+interface RoomData {
   id: string;
   userId: string;
   themeId: string | null;
   floor: string | null;
   items: RoomItem3D[];
-};
+}
 
 @Component({
   selector: 'app-home',
@@ -88,6 +88,7 @@ type RoomData = {
         <div class="canvas-container animate-fade-in">
           <ngt-canvas
             [shadows]="true"
+            [dpr]="[1, 2]"
             [camera]="{ position: [5, 5, 5], fov: 45 }"
           >
             <app-pain-cave-scene *canvasContent [items]="room()!.items" />

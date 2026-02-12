@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { ApiService } from './api.service';
 
-export type Trophy = {
+export interface Trophy {
   id: string;
   userId: string;
   type: 'medal' | 'bib';
@@ -15,7 +15,7 @@ export type Trophy = {
   raceResultId: string | null;
   createdAt: string;
   updatedAt: string;
-};
+}
 
 @Injectable({ providedIn: 'root' })
 export class TrophyService {

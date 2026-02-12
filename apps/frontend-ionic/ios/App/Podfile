@@ -11,6 +11,7 @@ install! 'cocoapods', :disable_input_output_paths => true
 def capacitor_pods
   pod 'Capacitor', :path => '../../../../node_modules/@capacitor/ios'
   pod 'CapacitorCordova', :path => '../../../../node_modules/@capacitor/ios'
+  pod 'CapacitorCommunityAdmob', :path => '../../../../node_modules/@capacitor-community/admob'
   pod 'CapacitorApp', :path => '../../../../node_modules/@capacitor/app'
   pod 'CapacitorBrowser', :path => '../../../../node_modules/@capacitor/browser'
   pod 'CapacitorCamera', :path => '../../../../node_modules/@capacitor/camera'
@@ -19,13 +20,18 @@ def capacitor_pods
   pod 'CapacitorPreferences', :path => '../../../../node_modules/@capacitor/preferences'
   pod 'CapacitorSplashScreen', :path => '../../../../node_modules/@capacitor/splash-screen'
   pod 'CapacitorStatusBar', :path => '../../../../node_modules/@capacitor/status-bar'
-  pod 'BetterAuthCapacitor', :path => '../../../../node_modules/better-auth-capacitor'
+  pod 'RevenuecatPurchasesCapacitor', :path => '../../../../node_modules/@revenuecat/purchases-capacitor'
+  pod 'RevenuecatPurchasesCapacitorUi', :path => '../../../../node_modules/@revenuecat/purchases-capacitor-ui'
 end
 
 target 'App' do
   capacitor_pods
   # BetterAuth Capacitor native plugin (not auto-detected due to exports field)
   pod 'BetterAuthCapacitor', :path => '../../../../node_modules/better-auth-capacitor'
+
+  # Pin UMP SDK to 2.x — @capacitor-community/admob@6.2 uses old UMPConsentStatus API
+  # removed in GoogleUserMessagingPlatform 3.x
+  pod 'GoogleUserMessagingPlatform', '~> 2.6'
 end
 
 post_install do |installer|

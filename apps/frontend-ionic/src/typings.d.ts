@@ -9,12 +9,10 @@ declare module '@ai-sdk/openai' {
 
 declare module 'ai' {
   export type LanguageModel = unknown;
-  // eslint-disable-next-line @typescript-eslint/no-empty-interface
-  export interface Output<T = unknown> {
-    (config: unknown): unknown;
-  }
+   
+  export type Output = (config: unknown) => unknown;
   export namespace Output {
-    export function object<T>(config: unknown): Output<T>;
+    export function object(config: unknown): Output;
   }
   export function generateObject(config: unknown): Promise<{ object: unknown }>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

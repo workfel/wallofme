@@ -24,14 +24,14 @@ import { camera, ribbonOutline, documentTextOutline } from 'ionicons/icons';
 
 import { ApiService } from '@app/core/services/api.service';
 
-type Trophy = {
+interface Trophy {
   id: string;
   type: 'medal' | 'bib';
   status: 'pending' | 'processing' | 'ready' | 'error';
   thumbnailUrl: string | null;
   textureUrl: string | null;
   createdAt: string;
-};
+}
 
 @Component({
   selector: 'app-trophies',
