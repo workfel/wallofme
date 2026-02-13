@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { eq } from "drizzle-orm";
+import { eq, sql, desc, ilike, or, and, gt } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { db } from "../db";
-import { room, roomItem } from "../db/schema";
+import { room, roomItem, user, trophy, roomLike, roomView } from "../db/schema";
 import { requireAuth } from "../middleware/auth";
 import { idParamSchema } from "../validators/common.validator";
 import {
@@ -11,6 +11,8 @@ import {
   placeItemSchema,
   moveItemSchema,
 } from "../validators/room.validator";
+import { exploreQuerySchema } from "../validators/explore.validator";
+import { getPublicUrl } from "../lib/storage";
 import type { auth } from "../lib/auth";
 
 type Variables = {
@@ -19,6 +21,106 @@ type Variables = {
 };
 
 export const rooms = new Hono<{ Variables: Variables }>()
+  // Explore rooms feed (public, user-aware)
+  .get(
+    "/explore",
+    zValidator("query", exploreQuerySchema),
+    async (c) => {
+      const { sort, sport, country, search, page, limit } = c.req.valid("query");
+      const offset = (page - 1) * limit;
+
+      // Subquery: count trophies with status 'ready' per user
+      const trophyCountSq = db
+        .select({
+          userId: trophy.userId,
+          count: sql<number>`count(*)::int`.as("trophy_count"),
+        })
+        .from(trophy)
+        .where(eq(trophy.status, "ready"))
+        .groupBy(trophy.userId)
+        .as("trophy_count_sq");
+
+      // Build WHERE conditions
+      const conditions = [gt(trophyCountSq.count, 0)];
+
+      if (search) {
+        conditions.push(
+          or(
+            ilike(user.displayName, `%${search}%`),
+            ilike(user.firstName, `%${search}%`),
+            ilike(user.lastName, `%${search}%`),
+          )!,
+        );
+      }
+
+      if (country) {
+        conditions.push(eq(user.country, country));
+      }
+
+      if (sport) {
+        // user.sports is a JSON text column (e.g. '["running","trail"]')
+        conditions.push(sql`${user.sports} LIKE ${"%" + sport + "%"}`);
+      }
+
+      const whereClause = and(...conditions);
+
+      // Sort order
+      const orderBy =
+        sort === "popular"
+          ? desc(room.viewCount)
+          : sort === "liked"
+            ? desc(room.likeCount)
+            : desc(room.updatedAt);
+
+      // Main query
+      const rows = await db
+        .select({
+          id: room.id,
+          userId: room.userId,
+          displayName: user.displayName,
+          firstName: user.firstName,
+          image: user.image,
+          sports: user.sports,
+          country: user.country,
+          thumbnailUrl: room.thumbnailUrl,
+          likeCount: room.likeCount,
+          viewCount: room.viewCount,
+          trophyCount: trophyCountSq.count,
+          isPro: user.isPro,
+          updatedAt: room.updatedAt,
+        })
+        .from(room)
+        .innerJoin(user, eq(room.userId, user.id))
+        .innerJoin(trophyCountSq, eq(user.id, trophyCountSq.userId))
+        .where(whereClause)
+        .orderBy(orderBy)
+        .limit(limit)
+        .offset(offset);
+
+      // Total count for pagination
+      const [{ total }] = await db
+        .select({ total: sql<number>`count(*)::int` })
+        .from(room)
+        .innerJoin(user, eq(room.userId, user.id))
+        .innerJoin(trophyCountSq, eq(user.id, trophyCountSq.userId))
+        .where(whereClause);
+
+      const rooms = rows.map((r) => ({
+        ...r,
+        sports: r.sports ? JSON.parse(r.sports) : [],
+        thumbnailUrl: r.thumbnailUrl ? getPublicUrl(r.thumbnailUrl) : null,
+      }));
+
+      return c.json({
+        data: {
+          rooms,
+          total,
+          hasMore: offset + limit < total,
+        },
+      });
+    },
+  )
+
   // Get current user's room (create if not exists)
   .get("/me", requireAuth, async (c) => {
     const user = c.get("user")!;

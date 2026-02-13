@@ -4,6 +4,7 @@ import {
   signal,
   computed,
   OnInit,
+  OnDestroy,
   CUSTOM_ELEMENTS_SCHEMA,
 } from '@angular/core';
 import { Router } from '@angular/router';
@@ -34,6 +35,7 @@ import { ThemeService } from '@app/core/services/theme.service';
 import { TokenService } from '@app/core/services/token.service';
 import { ShareService } from '@app/core/services/share.service';
 import { ScreenshotService } from '@app/core/services/screenshot.service';
+import { UploadService } from '@app/core/services/upload.service';
 import { DecorationService } from '@app/core/services/decoration.service';
 import { type RoomTheme, type CustomThemeColors, CUSTOM_THEME_ID } from '@app/types/room-theme';
 
@@ -276,15 +278,18 @@ type EditorState =
     }
   `,
 })
-export class RoomEditPage implements OnInit {
+export class RoomEditPage implements OnInit, OnDestroy {
   roomService = inject(RoomService);
   themeService = inject(ThemeService);
   tokenService = inject(TokenService);
   private shareService = inject(ShareService);
   screenshotService = inject(ScreenshotService);
+  private uploadService = inject(UploadService);
   private trophyService = inject(TrophyService);
   private decorationService = inject(DecorationService);
   private router = inject(Router);
+
+  private thumbnailCaptured = false;
 
   // ─── State Machine ───────────────────────────────
   state = signal<EditorState>({ kind: 'IDLE' });
@@ -671,12 +676,37 @@ export class RoomEditPage implements OnInit {
     }
   }
 
+  ngOnDestroy(): void {
+    this.captureThumbnail();
+  }
+
   // ─── Toolbar Actions ─────────────────────────────
   onPreview(): void {
+    this.captureThumbnail();
     const room = this.roomService.room();
     if (room) {
       this.router.navigate(['/room', room.userId]);
     }
+  }
+
+  // ─── Thumbnail Capture ─────────────────────────────
+  private captureThumbnail(): void {
+    if (this.thumbnailCaptured) return;
+    this.thumbnailCaptured = true;
+
+    // Fire and forget — don't block navigation
+    this.screenshotService.captureRoom().then(async (blob) => {
+      const result = await this.uploadService.uploadFile(
+        blob,
+        'trophy-photo',
+        'image/png'
+      );
+      if (result?.key) {
+        await this.roomService.updateRoom({ thumbnailUrl: result.key });
+      }
+    }).catch(() => {
+      // Silently fail — thumbnail is non-critical
+    });
   }
 
   // ─── Haptics ──────────────────────────────────────

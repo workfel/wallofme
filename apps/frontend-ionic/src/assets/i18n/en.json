@@ -37,7 +37,17 @@
   },
   "explore": {
     "title": "Explore",
-    "subtitle": "Discover other athletes' Pain Caves"
+    "subtitle": "Discover other athletes' Pain Caves",
+    "searchPlaceholder": "Search athletes...",
+    "noResults": "No rooms found",
+    "noResultsSubtitle": "Try adjusting your filters or search",
+    "recent": "Recent",
+    "popular": "Popular",
+    "mostLiked": "Most Liked",
+    "rooms": "rooms",
+    "likes": "likes",
+    "views": "views",
+    "athlete": "Athlete"
   },
   "trophies": {
     "title": "My Trophies",

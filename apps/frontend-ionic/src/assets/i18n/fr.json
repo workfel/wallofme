@@ -37,7 +37,17 @@
   },
   "explore": {
     "title": "Explorer",
-    "subtitle": "Découvrez les Pain Caves d'autres athlètes"
+    "subtitle": "Découvrez les Pain Caves d'autres athlètes",
+    "searchPlaceholder": "Rechercher des athlètes...",
+    "noResults": "Aucune salle trouvée",
+    "noResultsSubtitle": "Essayez d'ajuster vos filtres ou votre recherche",
+    "recent": "Récents",
+    "popular": "Populaires",
+    "mostLiked": "Plus aimés",
+    "rooms": "salles",
+    "likes": "j'aime",
+    "views": "vues",
+    "athlete": "Athlète"
   },
   "trophies": {
     "title": "Mes Trophées",

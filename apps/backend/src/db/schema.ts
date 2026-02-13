@@ -182,6 +182,7 @@ export const room = pgTable("room", {
   themeId: text("theme_id"),
   customTheme: text("custom_theme"),
   shareSlug: text("share_slug").unique(),
+  thumbnailUrl: text("thumbnail_url"),
   floor: text("floor"),
   likeCount: integer("like_count").default(0).notNull(),
   viewCount: integer("view_count").default(0).notNull(),
