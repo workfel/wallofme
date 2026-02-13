@@ -698,11 +698,11 @@ export class RoomEditPage implements OnInit, OnDestroy {
     this.screenshotService.captureRoom().then(async (blob) => {
       const result = await this.uploadService.uploadFile(
         blob,
-        'trophy-photo',
+        'room-thumbnail',
         'image/png'
       );
       if (result?.key) {
-        await this.roomService.updateRoom({ thumbnailUrl: result.key });
+        await this.roomService.updateRoom({ thumbnailKey: result.key });
       }
     }).catch(() => {
       // Silently fail — thumbnail is non-critical

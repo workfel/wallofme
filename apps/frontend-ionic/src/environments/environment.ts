@@ -3,7 +3,6 @@
 export const environment = {
   production: false,
   apiUrl: "http://localhost:3333",
-  r2PublicUrl: "http://localhost:3333/cdn",
   revenueCat: {
     apiKey: "test_QEJHSVEYBAtNAnbuxKcQMkSRUqW",       // Capacitor iOS (Apple IAP)
     webApiKey: "rcb_sb_YzwEVuZjxZTuatoqNHjplHBus", // Web Billing (Stripe)

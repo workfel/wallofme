@@ -11,7 +11,7 @@ export const updateRoomSchema = z.object({
   themeId: z.string().nullable().optional(),
   floor: z.string().optional(),
   customTheme: customThemeSchema.optional(),
-  thumbnailUrl: z.string().optional(),
+  thumbnailKey: z.string().min(1).optional(),
 });
 
 export const placeItemSchema = z.object({

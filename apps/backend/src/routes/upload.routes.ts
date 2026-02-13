@@ -16,7 +16,7 @@ type Variables = {
 };
 
 const presignedUrlSchema = z.object({
-  type: z.enum(["trophy-photo", "avatar"]),
+  type: z.enum(["trophy-photo", "avatar", "room-thumbnail"]),
   contentType: z.string().regex(/^image\/(jpeg|png|webp)$/),
 });
 

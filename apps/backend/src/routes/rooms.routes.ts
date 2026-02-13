@@ -108,7 +108,7 @@ export const rooms = new Hono<{ Variables: Variables }>()
       const rooms = rows.map((r) => ({
         ...r,
         sports: r.sports ? JSON.parse(r.sports) : [],
-        thumbnailUrl: r.thumbnailUrl ? getPublicUrl(r.thumbnailUrl) : null,
+        thumbnailUrl: r.thumbnailUrl,
       }));
 
       return c.json({
@@ -281,9 +281,13 @@ export const rooms = new Hono<{ Variables: Variables }>()
       const user = c.get("user")!;
       const body = c.req.valid("json");
 
-      const updateData: Record<string, unknown> = { ...body, updatedAt: new Date() };
-      if (body.customTheme !== undefined) {
-        updateData.customTheme = body.customTheme ? JSON.stringify(body.customTheme) : null;
+      const { thumbnailKey, ...rest } = body;
+      const updateData: Record<string, unknown> = { ...rest, updatedAt: new Date() };
+      if (rest.customTheme !== undefined) {
+        updateData.customTheme = rest.customTheme ? JSON.stringify(rest.customTheme) : null;
+      }
+      if (thumbnailKey) {
+        updateData.thumbnailUrl = getPublicUrl(thumbnailKey);
       }
 
       const [updated] = await db

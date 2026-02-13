@@ -77,7 +77,7 @@ export class RoomService {
     return null;
   }
 
-  async updateRoom(data: { themeId?: string | null; customTheme?: { leftWallColor: string; backWallColor: string; floorColor: string; background: string } | null; thumbnailUrl?: string }): Promise<boolean> {
+  async updateRoom(data: { themeId?: string | null; customTheme?: { leftWallColor: string; backWallColor: string; floorColor: string; background: string } | null; thumbnailKey?: string }): Promise<boolean> {
     try {
       const res = await this.api.client.api.rooms.me.$patch({
         json: data,
