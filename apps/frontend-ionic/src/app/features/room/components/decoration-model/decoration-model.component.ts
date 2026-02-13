@@ -121,16 +121,25 @@ const LONG_PRESS_MS = 400;
           </ngt-mesh>
         </ngt-group>
 
-        <!-- Rotation arc (curved arrow at base) — clickable hitbox -->
-        <ngt-group [position]="[0, 0.05, 0]">
+        <!-- Rotation arc (180° with arrow tips on both ends) — clickable hitbox -->
+        <ngt-group [position]="[0, -0.15, 0]">
+          <!-- 180° arc from +X through +Z to -X -->
           <ngt-mesh [rotation]="[Math.PI / 2, 0, 0]">
-            <ngt-torus-geometry *args="[gizmoRingRadius(), 0.03, 8, 24, Math.PI * 1.5]" />
+            <ngt-torus-geometry *args="[gizmoRingRadius(), 0.03, 8, 24, Math.PI]" />
             <ngt-mesh-basic-material [color]="(rotationGizmoHovered() || activeDragType() === 'rotation') ? gizmoHover : gizmoGreen" [side]="doubleSide" />
           </ngt-mesh>
-          <!-- Arrow tip on the rotation arc -->
+          <!-- Arrow tip at +X end (pointing toward +Z) -->
           <ngt-mesh
             [position]="[gizmoRingRadius(), 0, 0]"
-            [rotation]="[0, 0, -Math.PI / 2]"
+            [rotation]="[-Math.PI / 2, 0, 0]"
+          >
+            <ngt-cone-geometry *args="[0.08, 0.16, 8]" />
+            <ngt-mesh-basic-material [color]="(rotationGizmoHovered() || activeDragType() === 'rotation') ? gizmoHover : gizmoGreen" />
+          </ngt-mesh>
+          <!-- Arrow tip at -X end (pointing toward -Z) -->
+          <ngt-mesh
+            [position]="[-gizmoRingRadius(), 0, 0]"
+            [rotation]="[Math.PI / 2, 0, 0]"
           >
             <ngt-cone-geometry *args="[0.08, 0.16, 8]" />
             <ngt-mesh-basic-material [color]="(rotationGizmoHovered() || activeDragType() === 'rotation') ? gizmoHover : gizmoGreen" />
@@ -143,7 +152,7 @@ const LONG_PRESS_MS = 400;
             (pointerover)="rotationGizmoHovered.set(true)"
             (pointerout)="rotationGizmoHovered.set(false)"
           >
-            <ngt-torus-geometry *args="[gizmoRingRadius(), 0.15, 8, 24, Math.PI * 2]" />
+            <ngt-torus-geometry *args="[gizmoRingRadius(), 0.18, 8, 24, Math.PI]" />
             <ngt-mesh-basic-material [transparent]="true" [opacity]="0" [depthWrite]="false" />
           </ngt-mesh>
         </ngt-group>
@@ -225,17 +234,17 @@ export class DecorationModelComponent implements OnDestroy {
     return b ? b.depth + 0.15 : 1.6;
   });
 
-  /** Vertical arrow starts at top of the bounding box */
+  /** Vertical arrow starts above the bounding box with a small gap */
   gizmoArrowBaseY = computed(() => {
     const b = this.bbox();
-    return b ? b.height - b.minY : 1.5;
+    return b ? b.height - b.minY + 0.25 : 1.5;
   });
 
-  /** Rotation ring radius — slightly wider than the model */
+  /** Rotation ring radius — wider than the model for clear separation */
   gizmoRingRadius = computed(() => {
     const b = this.bbox();
-    if (!b) return 0.9;
-    return Math.max(b.width, b.depth) / 2 + 0.2;
+    if (!b) return 1.2;
+    return Math.max(b.width, b.depth) / 2 + 0.6;
   });
 
   /** Stop click from propagating (used on gizmo hitboxes) */
