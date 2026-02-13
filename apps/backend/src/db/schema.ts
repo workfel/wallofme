@@ -78,6 +78,7 @@ export const user = pgTable("user", {
   lastName: text("last_name"),
   country: text("country"),
   tokenBalance: integer("token_balance").default(0).notNull(),
+  sports: text("sports"),
 });
 
 export const session = pgTable("session", {

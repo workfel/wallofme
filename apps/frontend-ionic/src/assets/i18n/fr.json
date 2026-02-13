@@ -156,7 +156,11 @@
     "lastName": "Nom de famille",
     "country": "Pays (ex: FR)",
     "continue": "Continuer",
-    "fieldsRequired": "Le prénom et le nom sont requis"
+    "back": "Retour",
+    "fieldsRequired": "Le prénom et le nom sont requis",
+    "sportsTitle": "Quel est votre sport ?",
+    "sportsSubtitle": "Sélectionnez les sports que vous pratiquez. Cela nous aide à personnaliser votre expérience.",
+    "sportsRequired": "Veuillez sélectionner au moins un sport"
   },
   "scan": {
     "permissionRequired": "L'accès à la caméra est nécessaire pour scanner vos trophées",
@@ -165,7 +169,15 @@
     "gallery": "Galerie",
     "retake": "Reprendre",
     "continue": "Continuer",
-    "uploading": "Upload de votre trophée..."
+    "uploading": "Upload de votre trophée...",
+    "remaining": "{{count}} scans restants",
+    "remainingToast": "{{count}} scans restants ce mois-ci",
+    "unlimited": "Illimité",
+    "limitReached": "Limite de scans",
+    "limitReachedTitle": "Limite mensuelle atteinte",
+    "limitReachedMessage": "Les comptes gratuits ont 3 scans par mois. Passez à Pro pour des scans illimités !",
+    "resetsIn": "Réinitialisation dans {{days}} jours",
+    "tapToPhoto": "Appuyez pour prendre une photo"
   },
   "review": {
     "processing": "Traitement de l'image...",
@@ -206,6 +218,13 @@
     "oneLike": "1 j'aime",
     "oneView": "1 vue"
   },
+  "profileEdit": {
+    "title": "Modifier le profil",
+    "changePhoto": "Changer la photo",
+    "displayName": "Nom d'affichage",
+    "sports": "Mes sports",
+    "saved": "Profil enregistré !"
+  },
   "sports": {
     "running": "Course à pied",
     "trail": "Trail",
@@ -213,6 +232,13 @@
     "cycling": "Cyclisme",
     "swimming": "Natation",
     "obstacle": "Obstacle",
+    "crossfit": "CrossFit",
+    "ocr": "OCR",
+    "duathlon": "Duathlon",
+    "hyrox": "Hyrox",
+    "ironman": "Ironman",
+    "marathon": "Marathon",
+    "ultra": "Ultra",
     "other": "Autre"
   }
 }

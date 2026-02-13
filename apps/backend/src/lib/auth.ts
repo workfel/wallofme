@@ -60,6 +60,11 @@ export const auth = betterAuth({
         defaultValue: 0,
         input: false,
       },
+      sports: {
+        type: "string",
+        required: false,
+        input: false,
+      },
     },
   },
   plugins: [capacitor({

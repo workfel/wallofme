@@ -1,7 +1,10 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
+import { ToastController } from '@ionic/angular/standalone';
+import { TranslateService } from '@ngx-translate/core';
 import { ApiService } from './api.service';
 import { UploadService } from './upload.service';
 import { RoomService } from './room.service';
+import { UserService } from './user.service';
 
 export type ScanStep = 'idle' | 'processing' | 'details' | 'search' | 'done';
 
@@ -35,6 +38,9 @@ export class ScanService {
   private api = inject(ApiService);
   private uploadService = inject(UploadService);
   private roomService = inject(RoomService);
+  private userService = inject(UserService);
+  private toastController = inject(ToastController);
+  private translate = inject(TranslateService);
 
   readonly step = signal<ScanStep>('idle');
   readonly trophyId = signal<string | null>(null);
@@ -105,6 +111,20 @@ export class ScanService {
       const analyzeRes = await this.api.client.api.scan.analyze.$post({
         json: { trophyId: tId },
       });
+
+      // Handle scan limit reached (403)
+      if (analyzeRes.status === 403) {
+        const errJson = (await analyzeRes.json()) as { error?: string };
+        if (errJson.error === 'scan_limit_reached') {
+          this.error.set('scan.limitReachedTitle');
+          this.step.set('idle');
+          // Refresh profile to get accurate remaining count
+          this.userService.fetchProfile();
+          return;
+        }
+        throw new Error(errJson.error ?? 'Forbidden');
+      }
+
       if (analyzeRes.ok) {
         const analyzeJson = (await analyzeRes.json()) as {
           data: ScanAnalysis;
@@ -115,10 +135,26 @@ export class ScanService {
           return;
         }
         this.analysis.set(analyzeJson.data);
+      } else {
+        throw new Error('Analysis failed');
       }
 
       // Move to details step
       this.step.set('details');
+
+      // Update scan count and show toast
+      this.userService.decrementScansRemaining();
+      const remaining = this.userService.scansRemaining();
+      if (remaining !== null) {
+        const message = this.translate.instant('scan.remainingToast', { count: remaining });
+        const toast = await this.toastController.create({
+          message,
+          duration: 3000,
+          position: 'bottom',
+          color: remaining === 0 ? 'warning' : 'success',
+        });
+        await toast.present();
+      }
     } catch (e) {
       this.error.set(e instanceof Error ? e.message : 'Processing failed');
       this.step.set('idle');

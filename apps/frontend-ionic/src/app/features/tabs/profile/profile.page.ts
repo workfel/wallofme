@@ -6,6 +6,7 @@ import {
   IonToolbar,
   IonTitle,
   IonButton,
+  IonButtons,
   IonText,
   IonList,
   IonItem,
@@ -24,6 +25,7 @@ import {
   flameOutline,
   eyeOutline,
   heartOutline,
+  createOutline,
 } from 'ionicons/icons';
 
 import { AuthService } from '@app/core/services/auth.service';
@@ -40,6 +42,7 @@ import { RoomService } from '@app/core/services/room.service';
     IonToolbar,
     IonTitle,
     IonButton,
+    IonButtons,
     IonText,
     IonList,
     IonItem,
@@ -51,6 +54,11 @@ import { RoomService } from '@app/core/services/room.service';
     <ion-header>
       <ion-toolbar>
         <ion-title>{{ 'profile.title' | translate }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="onEditProfile()">
+            <ion-icon name="create-outline" />
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
@@ -207,9 +215,14 @@ export class ProfilePage {
       flameOutline,
       eyeOutline,
       heartOutline,
+      createOutline,
     });
     this.tokenService.fetchBalance();
     this.roomService.fetchMyRoom();
+  }
+
+  onEditProfile(): void {
+    this.router.navigate(['/profile/edit']);
   }
 
   onGetTokens(): void {

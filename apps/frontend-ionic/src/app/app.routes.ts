@@ -47,6 +47,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'profile/edit',
+    canActivate: [authGuard, onboardingGuard],
+    loadComponent: () =>
+      import('./features/profile-edit/profile-edit.page').then(
+        (m) => m.ProfileEditPage
+      ),
+  },
+  {
     path: 'tokens',
     canActivate: [authGuard, onboardingGuard],
     loadComponent: () =>

@@ -21,6 +21,7 @@ import { camera, images, refreshOutline, arrowForward } from 'ionicons/icons';
 import { Capacitor } from '@capacitor/core';
 
 import { ScanService } from '@app/core/services/scan.service';
+import { UserService } from '@app/core/services/user.service';
 
 @Component({
   selector: 'app-trophy-scan',
@@ -94,7 +95,7 @@ import { ScanService } from '@app/core/services/scan.service';
           <div class="capture-area" role="button" tabindex="0" (click)="capturePhoto()" (keydown.enter)="capturePhoto()">
             <ion-icon name="camera" class="capture-icon" />
             <ion-text>
-              <p>Tap to take a photo</p>
+              <p>{{ 'scan.tapToPhoto' | translate }}</p>
             </ion-text>
           </div>
 
@@ -181,6 +182,7 @@ import { ScanService } from '@app/core/services/scan.service';
 export class TrophyScanPage {
   private router = inject(Router);
   private scanService = inject(ScanService);
+  private userService = inject(UserService);
 
   imagePreview = signal<string | null>(null);
   imageBlob = signal<Blob | null>(null);
@@ -246,9 +248,21 @@ export class TrophyScanPage {
     const blob = this.imageBlob();
     if (!blob) return;
 
+    // Check scan limit before proceeding
+    const remaining = this.userService.scansRemaining();
+    if (remaining !== null && remaining <= 0 && !this.userService.isPro()) {
+      this.router.navigate(['/tabs/home']);
+      return;
+    }
+
     this.uploading.set(true);
     try {
       await this.scanService.uploadAndProcess(blob, this.trophyType());
+      if (this.scanService.error()) {
+        // Error occurred (e.g. scan limit reached server-side) — stay on page
+        this.uploading.set(false);
+        return;
+      }
       this.router.navigate(['/trophy/review']);
     } catch {
       this.uploading.set(false);

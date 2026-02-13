@@ -13,6 +13,7 @@ import {
 import { analyzeImage, searchRaceResults } from "../lib/ai-analyzer";
 import { processTrophyImage } from "../lib/image-processor";
 import { downloadBuffer } from "../lib/storage";
+import { FREE_SCAN_LIMIT, getMonthlyScansUsed } from "../lib/scan-limit";
 import type { auth } from "../lib/auth";
 
 type Variables = {
@@ -29,6 +30,17 @@ export const scan = new Hono<{ Variables: Variables }>()
     async (c) => {
       const currentUser = c.get("user")!;
       const { trophyId } = c.req.valid("json");
+
+      // Check scan limit for free users
+      if (!currentUser.isPro) {
+        const used = await getMonthlyScansUsed(currentUser.id);
+        if (used >= FREE_SCAN_LIMIT) {
+          return c.json(
+            { error: "scan_limit_reached", scansRemaining: 0 },
+            403,
+          );
+        }
+      }
 
       const item = await db.query.trophy.findFirst({
         where: eq(trophy.id, trophyId),
