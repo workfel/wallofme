@@ -104,7 +104,9 @@ npm install                 # Install all workspace dependencies
 /trophy/scan     Camera capture (modal)
 /trophy/review   AI analysis + review (modal)
 /trophy/:id      Trophy detail
+/tokens          Token store
 /room/edit       Edit Pain Cave room
+/room/share/:slug  Shared room (public, no auth)
 /room/:userId    View user's room
 ```
 
@@ -141,6 +143,10 @@ src/app/
 | `upload.routes.ts` | `POST /upload/presigned-url` (auth), `POST /upload/confirm/:id` (auth) |
 | `scan.routes.ts` | `POST /scan/analyze` (auth), `POST /scan/remove-background` (auth), `POST /scan/validate` (auth), `POST /scan/search-results` (auth) |
 | `users.routes.ts` | `GET /users/me` (auth), `POST /users/onboarding` (auth) |
+| `tokens.routes.ts` | Token economy endpoints (auth) |
+| `themes.routes.ts` | Theme catalog and acquisition endpoints |
+| `webhooks.routes.ts` | External webhook handlers (e.g., RevenueCat) |
+| `social.routes.ts` | Room likes, views, and social interactions |
 
 **Variables type**: Every route file must declare the Hono `Variables` type locally:
 ```ts
@@ -173,11 +179,11 @@ The backend exports `AppType` from chained route definitions in `src/index.ts`. 
 **Schema**: `src/db/schema.ts`. **Connection**: `src/db/index.ts` (node-postgres Pool). **Config**: `drizzle.config.ts`.
 
 **BetterAuth-managed tables** (text PKs): `user`, `session`, `account`, `verification`
-**Custom user fields**: `displayName`, `isPro` (boolean), `locale`, `firstName`, `lastName`, `country`
+**Custom user fields**: `displayName`, `isPro` (boolean), `locale`, `firstName`, `lastName`, `country`, `tokenBalance` (integer)
 
-**Domain tables** (UUID PKs with `defaultRandom()`): `race`, `race_result`, `trophy`, `room` (one per user, unique userId), `decoration`, `room_item`, `user_decoration`
+**Domain tables** (UUID PKs with `defaultRandom()`): `race`, `race_result`, `trophy`, `room` (one per user, unique userId), `decoration`, `room_item`, `user_decoration`, `theme`, `user_theme`, `token_transaction`, `room_like` (unique per room+user), `room_view`, `device_token`, `notification`
 
-**Enums**: `sport`, `trophy_type` (medal/bib), `trophy_status` (pending/processing/ready/error), `result_source` (manual/ai/scraped), `wall` (left/right)
+**Enums**: `sport`, `trophy_type` (medal/bib), `trophy_status` (pending/processing/ready/error), `result_source` (manual/ai/scraped), `wall` (left/right), `token_transaction_type` (purchase/rewarded_video/spend_decoration/spend_theme/refund/bonus), `device_platform` (ios/android/web), `notification_type` (room_liked)
 
 **Relations** defined via Drizzle `relations()` API — enables `db.query.*.findMany({ with: { ... } })` relational queries.
 

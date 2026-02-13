@@ -22,10 +22,13 @@ import {
   starOutline,
   personCircleOutline,
   flameOutline,
+  eyeOutline,
+  heartOutline,
 } from 'ionicons/icons';
 
 import { AuthService } from '@app/core/services/auth.service';
 import { TokenService } from '@app/core/services/token.service';
+import { RoomService } from '@app/core/services/room.service';
 
 @Component({
   selector: 'app-profile',
@@ -72,6 +75,26 @@ import { TokenService } from '@app/core/services/token.service';
         <ion-text color="medium">
           <p class="email">{{ authService.user()?.email }}</p>
         </ion-text>
+
+        <!-- Social stats -->
+        @if (roomService.room(); as room) {
+          @if (room.viewCount > 0 || room.likeCount > 0) {
+            <div class="social-stats">
+              @if (room.viewCount > 0) {
+                <span class="stat">
+                  <ion-icon name="eye-outline" />
+                  {{ room.viewCount }}
+                </span>
+              }
+              @if (room.likeCount > 0) {
+                <span class="stat">
+                  <ion-icon name="heart-outline" />
+                  {{ room.likeCount }}
+                </span>
+              }
+            </div>
+          }
+        }
       </div>
 
       <ion-list lines="inset" class="settings-list">
@@ -141,6 +164,24 @@ import { TokenService } from '@app/core/services/token.service';
       margin: 0;
     }
 
+    .social-stats {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 14px;
+      color: var(--ion-color-medium);
+
+      ion-icon {
+        font-size: 16px;
+      }
+    }
+
     .settings-list {
       margin-top: 16px;
     }
@@ -153,6 +194,7 @@ import { TokenService } from '@app/core/services/token.service';
 export class ProfilePage {
   authService = inject(AuthService);
   tokenService = inject(TokenService);
+  roomService = inject(RoomService);
   private router = inject(Router);
 
   constructor() {
@@ -163,8 +205,11 @@ export class ProfilePage {
       starOutline,
       personCircleOutline,
       flameOutline,
+      eyeOutline,
+      heartOutline,
     });
     this.tokenService.fetchBalance();
+    this.roomService.fetchMyRoom();
   }
 
   onGetTokens(): void {

@@ -13,6 +13,7 @@ import { users } from "./routes/users.routes";
 import { tokens } from "./routes/tokens.routes";
 import { themes } from "./routes/themes.routes";
 import { webhooks } from "./routes/webhooks.routes";
+import { social } from "./routes/social.routes";
 
 type Variables = {
   user: typeof auth.$Infer.Session.user | null;
@@ -64,7 +65,8 @@ const route = app
   .route("/api/users", users)
   .route("/api/tokens", tokens)
   .route("/api/themes", themes)
-  .route("/api/webhooks", webhooks);
+  .route("/api/webhooks", webhooks)
+  .route("/api/social", social);
 
 export type AppType = typeof route;
 

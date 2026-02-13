@@ -1,4 +1,4 @@
-import { Injectable, signal, computed, inject, NgZone } from '@angular/core';
+import { Injectable, signal, computed, inject, NgZone, Injector } from '@angular/core';
 import { Router } from '@angular/router';
 import { createAuthClient } from 'better-auth/client';
 import { withCapacitor, isNativePlatform } from 'better-auth-capacitor/client';
@@ -33,6 +33,7 @@ export class AuthService {
   private readonly _isPending = signal(true);
   private router = inject(Router);
   private zone = inject(NgZone);
+  private injector = inject(Injector);
 
   readonly user = this._user.asReadonly();
   readonly session = this._session.asReadonly();
@@ -64,6 +65,7 @@ export class AuthService {
       if (session.data) {
         this._user.set(session.data.user as unknown as User);
         this._session.set(session.data.session as unknown as Session);
+        this.initPushNotifications();
       } else {
         this._user.set(null);
         this._session.set(null);
@@ -74,6 +76,14 @@ export class AuthService {
     } finally {
       this._isPending.set(false);
     }
+  }
+
+  private initPushNotifications(): void {
+    // Lazy import to avoid circular dependency
+    import('./push-notification.service').then(({ PushNotificationService }) => {
+      const pushService = this.injector.get(PushNotificationService);
+      pushService.initialize();
+    });
   }
 
   async signInEmail(email: string, password: string): Promise<void> {

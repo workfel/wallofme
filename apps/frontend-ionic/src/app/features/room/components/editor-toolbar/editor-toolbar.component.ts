@@ -1,4 +1,4 @@
-import { Component, output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import {
   IonToolbar,
   IonButtons,
@@ -12,6 +12,7 @@ import {
   eyeOutline,
   colorPaletteOutline,
   shareOutline,
+  heartOutline,
 } from 'ionicons/icons';
 import { TranslateModule } from '@ngx-translate/core';
 
@@ -34,6 +35,22 @@ import { TranslateModule } from '@ngx-translate/core';
       </ion-buttons>
       <ion-title>{{ 'room.edit' | translate }}</ion-title>
       <ion-buttons slot="end">
+        @if (viewCount() > 0 || likeCount() > 0) {
+          <div class="stats-badges">
+            @if (viewCount() > 0) {
+              <span class="stat-badge">
+                <ion-icon name="eye-outline" />
+                {{ viewCount() }}
+              </span>
+            }
+            @if (likeCount() > 0) {
+              <span class="stat-badge">
+                <ion-icon name="heart-outline" />
+                {{ likeCount() }}
+              </span>
+            }
+          </div>
+        }
         <ion-button (click)="preview.emit()" title="Preview">
           <ion-icon slot="icon-only" name="eye-outline" />
         </ion-button>
@@ -46,13 +63,36 @@ import { TranslateModule } from '@ngx-translate/core';
       </ion-buttons>
     </ion-toolbar>
   `,
+  styles: `
+    .stats-badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-right: 4px;
+    }
+
+    .stat-badge {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 12px;
+      color: var(--ion-color-medium);
+
+      ion-icon {
+        font-size: 14px;
+      }
+    }
+  `,
 })
 export class EditorToolbarComponent {
+  viewCount = input(0);
+  likeCount = input(0);
+
   preview = output<void>();
   openThemes = output<void>();
   share = output<void>();
 
   constructor() {
-    addIcons({ eyeOutline, colorPaletteOutline, shareOutline });
+    addIcons({ eyeOutline, colorPaletteOutline, shareOutline, heartOutline });
   }
 }

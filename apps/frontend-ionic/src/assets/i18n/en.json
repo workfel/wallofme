@@ -196,6 +196,14 @@
     "step3": "Search",
     "step4": "Done"
   },
+  "social": {
+    "like": "Like",
+    "unlike": "Unlike",
+    "likesCount": "{{count}} likes",
+    "viewsCount": "{{count}} views",
+    "oneLike": "1 like",
+    "oneView": "1 view"
+  },
   "sports": {
     "running": "Running",
     "trail": "Trail",

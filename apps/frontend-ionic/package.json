@@ -36,6 +36,7 @@
     "@capacitor/ios": "6.2.1",
     "@capacitor/network": "^6.0.0",
     "@capacitor/preferences": "^6.0.4",
+    "@capacitor/push-notifications": "^8.0.1",
     "@capacitor/share": "^8.0.0",
     "@capacitor/splash-screen": "^6.0.0",
     "@capacitor/status-bar": "^6.0.0",

@@ -85,6 +85,8 @@ type EditorState =
     <!-- Toolbar -->
     <ion-header>
       <app-editor-toolbar
+        [viewCount]="roomService.room()?.viewCount ?? 0"
+        [likeCount]="roomService.room()?.likeCount ?? 0"
         (preview)="onPreview()"
         (openThemes)="openThemeSelector()"
         (share)="onShare()"

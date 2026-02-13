@@ -46,6 +46,8 @@ export interface Room {
   themeId: string | null;
   customTheme: string | null;
   floor: string | null;
+  likeCount: number;
+  viewCount: number;
   items: RoomItem[];
 }
 

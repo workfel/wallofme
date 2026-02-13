@@ -196,6 +196,14 @@
     "step3": "Recherche",
     "step4": "Terminé"
   },
+  "social": {
+    "like": "Aimer",
+    "unlike": "Ne plus aimer",
+    "likesCount": "{{count}} j'aime",
+    "viewsCount": "{{count}} vues",
+    "oneLike": "1 j'aime",
+    "oneView": "1 vue"
+  },
   "sports": {
     "running": "Course à pied",
     "trail": "Trail",

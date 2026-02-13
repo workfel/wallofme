@@ -10,11 +10,19 @@ import {
   IonSpinner,
   IonText,
   IonModal,
+  IonFab,
+  IonFabButton,
+  IonIcon,
+  IonBadge,
 } from '@ionic/angular/standalone';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgtCanvas } from 'angular-three/dom';
+import { addIcons } from 'ionicons';
+import { heart, heartOutline } from 'ionicons/icons';
 
 import { ApiService } from '@app/core/services/api.service';
+import { AuthService } from '@app/core/services/auth.service';
+import { SocialService } from '@app/core/services/social.service';
 import { ThemeService } from '@app/core/services/theme.service';
 import { PainCaveSceneComponent, type RoomItem3D } from '../components/pain-cave-scene/pain-cave-scene.component';
 import { TrophyInfoSheetComponent, type TrophyInfoData } from '../components/trophy-info-sheet/trophy-info-sheet.component';
@@ -27,6 +35,8 @@ interface RoomData {
   themeId: string | null;
   customTheme: string | null;
   floor: string | null;
+  likeCount: number;
+  viewCount: number;
   items: RoomItem3D[];
 }
 
@@ -47,6 +57,10 @@ interface RoomData {
     IonSpinner,
     IonText,
     IonModal,
+    IonFab,
+    IonFabButton,
+    IonIcon,
+    IonBadge,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
@@ -82,6 +96,23 @@ interface RoomData {
             />
           </ngt-canvas>
         </div>
+
+        <!-- Like FAB (only for authenticated users viewing others' rooms) -->
+        @if (canLike()) {
+          <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+            <ion-fab-button
+              [color]="liked() ? 'danger' : 'medium'"
+              (click)="onToggleLike()"
+            >
+              <ion-icon [name]="liked() ? 'heart' : 'heart-outline'" />
+            </ion-fab-button>
+            @if (likeCount() > 0) {
+              <ion-badge class="like-badge" color="danger">
+                {{ likeCount() }}
+              </ion-badge>
+            }
+          </ion-fab>
+        }
       } @else {
         <div class="centered">
           <ion-text color="medium">
@@ -125,6 +156,15 @@ interface RoomData {
       width: 100%;
       height: 100%;
     }
+
+    .like-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      font-size: 11px;
+      min-width: 20px;
+      border-radius: 10px;
+    }
   `,
 })
 export class RoomViewPage implements OnInit {
@@ -133,10 +173,21 @@ export class RoomViewPage implements OnInit {
   private api = inject(ApiService);
   private router = inject(Router);
   private themeService = inject(ThemeService);
+  private authService = inject(AuthService);
+  private socialService = inject(SocialService);
 
   room = signal<RoomData | null>(null);
   loading = signal(true);
   inspectedItemId = signal<string | null>(null);
+
+  canLike = computed(() => {
+    const user = this.authService.user();
+    const r = this.room();
+    return !!user && !!r && r.userId !== user.id;
+  });
+
+  liked = signal(false);
+  likeCount = signal(0);
 
   resolvedTheme = computed<RoomTheme>(() => {
     const r = this.room();
@@ -164,6 +215,10 @@ export class RoomViewPage implements OnInit {
     };
   });
 
+  constructor() {
+    addIcons({ heart, heartOutline });
+  }
+
   ngOnInit(): void {
     this.fetchRoom();
   }
@@ -177,12 +232,38 @@ export class RoomViewPage implements OnInit {
       if (res.ok) {
         const json = (await res.json()) as { data: RoomData };
         this.room.set(json.data);
+
+        // Track view and fetch like status
+        this.socialService.recordView(json.data.id);
+        const likeState = this.socialService.getLikeState(json.data.id);
+        this.socialService.fetchLikeStatus(json.data.id).then(() => {
+          this.liked.set(likeState.liked());
+          this.likeCount.set(likeState.likeCount());
+        });
       }
     } catch {
       // silently fail
     } finally {
       this.loading.set(false);
     }
+  }
+
+  async onToggleLike(): Promise<void> {
+    const r = this.room();
+    if (!r) return;
+
+    // Haptic feedback
+    try {
+      const { Haptics, ImpactStyle } = await import('@capacitor/haptics');
+      Haptics.impact({ style: ImpactStyle.Light });
+    } catch {
+      // Haptics not available
+    }
+
+    await this.socialService.toggleLike(r.id);
+    const likeState = this.socialService.getLikeState(r.id);
+    this.liked.set(likeState.liked());
+    this.likeCount.set(likeState.likeCount());
   }
 
   onItemPressed(itemId: string): void {
