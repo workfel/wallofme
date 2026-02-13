@@ -65,6 +65,11 @@ export const auth = betterAuth({
         required: false,
         input: false,
       },
+      proExpiresAt: {
+        type: "date",
+        required: false,
+        input: false,
+      },
     },
   },
   plugins: [capacitor({

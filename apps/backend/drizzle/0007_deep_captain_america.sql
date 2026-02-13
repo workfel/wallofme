@@ -1,0 +1,1 @@
+ALTER TABLE "user" ADD COLUMN "pro_expires_at" timestamp;

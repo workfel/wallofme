@@ -9,6 +9,7 @@ import {
   IonBadge,
   IonIcon,
   IonAlert,
+  IonModal,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { checkmarkOutline, lockClosedOutline, flameOutline, colorPaletteOutline } from 'ionicons/icons';
@@ -16,7 +17,9 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ThemeService } from '@app/core/services/theme.service';
 import { TokenService } from '@app/core/services/token.service';
 import { ApiService } from '@app/core/services/api.service';
+import { AuthService } from '@app/core/services/auth.service';
 import { RoomTheme, BUILT_IN_THEMES, CUSTOM_THEME_ID } from '@app/types/room-theme';
+import { UpgradePromptComponent } from '@app/shared/components/upgrade-prompt/upgrade-prompt.component';
 
 @Component({
   selector: 'app-theme-selector-sheet',
@@ -31,7 +34,9 @@ import { RoomTheme, BUILT_IN_THEMES, CUSTOM_THEME_ID } from '@app/types/room-the
     IonBadge,
     IonIcon,
     IonAlert,
+    IonModal,
     TranslateModule,
+    UpgradePromptComponent,
   ],
   template: `
     <ion-header>
@@ -109,6 +114,16 @@ import { RoomTheme, BUILT_IN_THEMES, CUSTOM_THEME_ID } from '@app/types/room-the
       [buttons]="unlockButtons"
       (didDismiss)="showUnlockAlert.set(false)"
     />
+
+    <!-- Upgrade prompt for non-Pro users -->
+    <ion-modal [isOpen]="showUpgradePrompt()" (didDismiss)="showUpgradePrompt.set(false)">
+      <ng-template>
+        <app-upgrade-prompt
+          [feature]="'pro.featureThemes' | translate"
+          (dismiss)="showUpgradePrompt.set(false)"
+        />
+      </ng-template>
+    </ion-modal>
   `,
   styles: `
     :host {
@@ -238,6 +253,7 @@ export class ThemeSelectorSheetComponent implements OnInit {
   private tokenService = inject(TokenService);
   private api = inject(ApiService);
   private translate = inject(TranslateService);
+  private authService = inject(AuthService);
 
   currentTheme = input<RoomTheme>();
 
@@ -250,6 +266,7 @@ export class ThemeSelectorSheetComponent implements OnInit {
   ownedThemeSlugs = signal<Set<string>>(new Set());
 
   showUnlockAlert = signal(false);
+  showUpgradePrompt = signal(false);
   unlockMessage = signal('');
   private pendingUnlockTheme: RoomTheme | null = null;
 
@@ -293,6 +310,11 @@ export class ThemeSelectorSheetComponent implements OnInit {
 
   selectTheme(t: RoomTheme): void {
     if (!t.isFree && !this.isOwned(t)) {
+      // Show upgrade prompt for non-Pro users instead of token unlock
+      if (!this.authService.user()?.isPro) {
+        this.showUpgradePrompt.set(true);
+        return;
+      }
       this.pendingUnlockTheme = t;
       this.unlockMessage.set(
         this.translate.instant('room.unlockThemeMessage', {

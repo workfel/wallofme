@@ -305,6 +305,6 @@ export class HomePage implements OnInit {
 
   onUpgrade(): void {
     this.showUpgradeModal.set(false);
-    // TODO: Navigate to Pro upgrade page when available
+    this.router.navigate(['/pro']);
   }
 }

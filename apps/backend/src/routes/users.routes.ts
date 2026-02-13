@@ -100,4 +100,26 @@ export const users = new Hono<{ Variables: Variables }>()
 
       return c.json({ data: updated });
     },
-  );
+  )
+
+  // Get current user's subscription info
+  .get("/me/subscription", requireAuth, async (c) => {
+    const currentUser = c.get("user")!;
+
+    const profile = await db.query.user.findFirst({
+      where: eq(user.id, currentUser.id),
+      columns: { isPro: true, proExpiresAt: true },
+    });
+
+    if (!profile) {
+      return c.json({ error: "Not found" }, 404);
+    }
+
+    return c.json({
+      data: {
+        isPro: profile.isPro,
+        proExpiresAt: profile.proExpiresAt,
+        managementUrl: null,
+      },
+    });
+  });

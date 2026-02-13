@@ -43,6 +43,7 @@ import {
   type ExploreRoom,
   type ExploreSortBy,
 } from '@app/core/services/explore.service';
+import { ProBadgeComponent } from '@app/shared/components/pro-badge/pro-badge.component';
 
 const SPORT_FILTERS = [
   'running',
@@ -96,6 +97,7 @@ const GRADIENT_PALETTES = [
     IonInfiniteScrollContent,
     IonRefresher,
     IonRefresherContent,
+    ProBadgeComponent,
   ],
   template: `
     <ion-header>
@@ -188,7 +190,9 @@ const GRADIENT_PALETTES = [
                     />
                   }
                   @if (room.isPro) {
-                    <ion-badge color="warning" class="pro-badge">PRO</ion-badge>
+                    <div class="pro-badge">
+                      <app-pro-badge size="small" />
+                    </div>
                   }
                 </div>
                 <ion-card-content class="card-body">
@@ -323,13 +327,7 @@ const GRADIENT_PALETTES = [
         position: absolute;
         top: 8px;
         right: 8px;
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 0.5px;
-        --padding-start: 6px;
-        --padding-end: 6px;
-        --padding-top: 2px;
-        --padding-bottom: 2px;
+        z-index: 1;
       }
     }
 

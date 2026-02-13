@@ -31,6 +31,7 @@ import {
 import { AuthService } from '@app/core/services/auth.service';
 import { TokenService } from '@app/core/services/token.service';
 import { RoomService } from '@app/core/services/room.service';
+import { ProBadgeComponent } from '@app/shared/components/pro-badge/pro-badge.component';
 
 @Component({
   selector: 'app-profile',
@@ -49,6 +50,7 @@ import { RoomService } from '@app/core/services/room.service';
     IonLabel,
     IonIcon,
     IonAvatar,
+    ProBadgeComponent,
   ],
   template: `
     <ion-header>
@@ -79,6 +81,9 @@ import { RoomService } from '@app/core/services/room.service';
         </ion-avatar>
         <h2 class="name">
           {{ authService.user()?.displayName || authService.user()?.name }}
+          @if (authService.user()?.isPro) {
+            <app-pro-badge size="medium" />
+          }
         </h2>
         <ion-text color="medium">
           <p class="email">{{ authService.user()?.email }}</p>
@@ -122,7 +127,7 @@ import { RoomService } from '@app/core/services/room.service';
           <ion-label>{{ 'profile.theme' | translate }}</ion-label>
         </ion-item>
         @if (!authService.user()?.isPro) {
-          <ion-item button [detail]="true">
+          <ion-item button [detail]="true" (click)="onUpgradePro()">
             <ion-icon slot="start" name="star-outline" color="warning" />
             <ion-label color="warning">{{ 'profile.pro' | translate }}</ion-label>
           </ion-item>
@@ -227,6 +232,10 @@ export class ProfilePage {
 
   onGetTokens(): void {
     this.router.navigate(['/tokens']);
+  }
+
+  onUpgradePro(): void {
+    this.router.navigate(['/pro']);
   }
 
   async onLogout(): Promise<void> {

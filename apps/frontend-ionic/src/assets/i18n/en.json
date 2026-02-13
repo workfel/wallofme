@@ -7,7 +7,8 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "confirm": "Confirm",
-    "apply": "Apply"
+    "apply": "Apply",
+    "yes": "Yes"
   },
   "auth": {
     "login": "Log In",
@@ -250,5 +251,42 @@
     "marathon": "Marathon",
     "ultra": "Ultra",
     "other": "Other"
+  },
+  "pro": {
+    "title": "WallOfMe Pro",
+    "heroTitle": "Unlock Your Full Potential",
+    "heroSubtitle": "Get unlimited scans, premium themes, and more",
+    "whatsIncluded": "What's Included",
+    "featureScans": "Monthly Scans",
+    "freeScans": "3 per month",
+    "proScans": "Unlimited",
+    "featureThemes": "Premium Themes",
+    "freeThemes": "Locked",
+    "proThemes": "All Included",
+    "featureColors": "Custom Colors",
+    "featureAds": "Ads",
+    "freeAds": "Rewarded",
+    "proAds": "Ad-free",
+    "featureBonus": "Monthly Bonus",
+    "proBonus": "100 tokens/month",
+    "featureBadge": "Pro Badge",
+    "choosePlan": "Choose Your Plan",
+    "monthly": "Monthly",
+    "annual": "Annual",
+    "perMonth": "/month",
+    "perYear": "/year",
+    "bestValue": "Best Value",
+    "save50": "Save 50%",
+    "subscribe": "Subscribe Now",
+    "restorePurchases": "Restore Purchases",
+    "termsFooter": "Subscription automatically renews unless cancelled at least 24 hours before the end of the current period. Manage your subscription in your device settings.",
+    "purchaseSuccess": "Welcome to WallOfMe Pro!",
+    "unavailable": "This plan is not available right now",
+    "restoreSuccess": "Purchases restored successfully",
+    "restoreFailed": "No purchases to restore",
+    "upgradeRequired": "Pro Feature",
+    "unlockFeature": "Unlock This Feature",
+    "featureRequiresPro": "{{feature}} requires WallOfMe Pro. Upgrade to unlock all premium features.",
+    "viewPlans": "View Pro Plans"
   }
 }

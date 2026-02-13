@@ -63,6 +63,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'pro',
+    canActivate: [authGuard, onboardingGuard],
+    loadComponent: () =>
+      import('./features/pro/pro-upgrade.page').then(
+        (m) => m.ProUpgradePage
+      ),
+  },
+  {
     path: 'room/edit',
     canActivate: [authGuard, onboardingGuard],
     loadComponent: () =>
