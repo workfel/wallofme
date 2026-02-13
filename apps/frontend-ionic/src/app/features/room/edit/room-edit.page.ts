@@ -279,6 +279,10 @@ type EditorState =
   `,
 })
 export class RoomEditPage implements OnInit, OnDestroy {
+  // Ionic lifecycle — fires BEFORE component/canvas destruction
+  ionViewWillLeave(): void {
+    this.captureThumbnail();
+  }
   roomService = inject(RoomService);
   themeService = inject(ThemeService);
   tokenService = inject(TokenService);
@@ -677,12 +681,12 @@ export class RoomEditPage implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.captureThumbnail();
+    // Thumbnail already captured in ionViewWillLeave
   }
 
   // ─── Toolbar Actions ─────────────────────────────
   onPreview(): void {
-    this.captureThumbnail();
+    // Thumbnail captured by ionViewWillLeave — just navigate
     const room = this.roomService.room();
     if (room) {
       this.router.navigate(['/room', room.userId]);
