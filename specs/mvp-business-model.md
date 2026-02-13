@@ -194,13 +194,19 @@ New User (free)
 9. **#18 Pro badge** — Visual badge on profile + rooms
 10. **#21 Upgrade prompts** — Contextual CTAs at limit points
 
-### Sprint 4 — Production & Launch
+### Sprint 4 — Amélioration tech
 
-11. **#25 Production environment** — Prod configs, real ad units, SSL, domain
-12. **#35 I18n** Traductions de l'application homogène.
-12. App Store submission (iOS + Android)
-13. Web deployment (custom domain)
-14. Monitoring & analytics setup
+
+11. **#35 I18n** Traductions de l'application homogène.
+12. **#36 PWA** — Progressive Web App pour une expérience web optimisée.
+
+### Sprint 5 — Production & Launch
+
+13. **#25 Production environment** — Prod configs, real ad units, SSL, domain
+15. **#35 I18n** Traductions de l'application homogène.
+15. App Store submission (iOS + Android)
+16. Web deployment (custom domain)
+17. Monitoring & analytics setup
 
 ---
 

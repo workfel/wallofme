@@ -18,7 +18,7 @@ import {
   IonModal,
   IonAlert,
 } from '@ionic/angular/standalone';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { NgtCanvas } from 'angular-three/dom';
 import { addIcons } from 'ionicons';
 import {
@@ -241,8 +241,8 @@ type EditorState =
     <!-- Delete Confirmation -->
     <ion-alert
       [isOpen]="state().kind === 'CONFIRM_DELETE'"
-      header="Remove Item"
-      message="Are you sure you want to remove this item from your room?"
+      [header]="'room.removeItem' | translate"
+      [message]="'room.removeItemMessage' | translate"
       [buttons]="deleteAlertButtons"
       (didDismiss)="cancelDelete()"
     />
@@ -292,6 +292,7 @@ export class RoomEditPage implements OnInit, OnDestroy {
   private trophyService = inject(TrophyService);
   private decorationService = inject(DecorationService);
   private router = inject(Router);
+  private translate = inject(TranslateService);
 
   private thumbnailCaptured = false;
 
@@ -334,8 +335,8 @@ export class RoomEditPage implements OnInit, OnDestroy {
   private previousTheme: RoomTheme | null = null;
 
   deleteAlertButtons = [
-    { text: 'Cancel', role: 'cancel' },
-    { text: 'Delete', role: 'destructive', handler: () => this.doDelete() },
+    { text: this.translate.instant('common.cancel'), role: 'cancel' },
+    { text: this.translate.instant('common.delete'), role: 'destructive', handler: () => this.doDelete() },
   ];
 
   constructor() {
@@ -613,15 +614,15 @@ export class RoomEditPage implements OnInit, OnDestroy {
     try {
       const { Share } = await import('@capacitor/share');
       await Share.share({
-        title: 'My Pain Cave',
-        text: 'Check out my Pain Cave!',
+        title: this.translate.instant('room.shareTitle'),
+        text: this.translate.instant('room.shareText'),
         url: link,
-        dialogTitle: 'Share your Pain Cave',
+        dialogTitle: this.translate.instant('room.shareMessage'),
       });
     } catch {
       // User cancelled or share not supported — try web fallback
       try {
-        await navigator.share({ title: 'My Pain Cave', url: link });
+        await navigator.share({ title: this.translate.instant('room.shareTitle'), url: link });
       } catch {
         // Silently fail
       }
@@ -655,7 +656,7 @@ export class RoomEditPage implements OnInit, OnDestroy {
         });
 
         await Share.share({
-          title: 'My Pain Cave',
+          title: this.translate.instant('room.shareTitle'),
           files: [tempFile.uri],
         });
         return;
@@ -665,7 +666,7 @@ export class RoomEditPage implements OnInit, OnDestroy {
 
       // Web fallback: navigator.share with file or download
       if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ title: 'My Pain Cave', files: [file] });
+        await navigator.share({ title: this.translate.instant('room.shareTitle'), files: [file] });
       } else {
         // Download fallback
         const url = URL.createObjectURL(blob);

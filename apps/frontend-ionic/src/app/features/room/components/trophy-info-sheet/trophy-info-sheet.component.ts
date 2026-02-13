@@ -170,7 +170,7 @@ const SPORT_ICON_MAP: Record<string, string> = {
             }
           </ion-list>
         } @else {
-          <p class="no-info">No race information available</p>
+          <p class="no-info">{{ 'room.noRaceInfo' | translate }}</p>
         }
 
         <ion-button expand="block" (click)="viewDetails.emit(t.id)" class="details-btn">

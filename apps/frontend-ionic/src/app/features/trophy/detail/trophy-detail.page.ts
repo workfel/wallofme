@@ -50,7 +50,7 @@ interface TrophyDetail {
         <ion-buttons slot="start">
           <ion-back-button defaultHref="/tabs/trophies" />
         </ion-buttons>
-        <ion-title>Trophy</ion-title>
+        <ion-title>{{ 'trophies.detail' | translate }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -82,7 +82,7 @@ interface TrophyDetail {
               </ion-card-title>
             </ion-card-header>
             <ion-card-content>
-              <p>Status: {{ trophy()!.status }}</p>
+              <p>{{ 'trophies.status' | translate }}: {{ trophy()!.status }}</p>
             </ion-card-content>
           </ion-card>
         </div>

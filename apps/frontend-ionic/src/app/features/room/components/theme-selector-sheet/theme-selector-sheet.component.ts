@@ -77,7 +77,7 @@ import { UpgradePromptComponent } from '@app/shared/components/upgrade-prompt/up
             </div>
             <span class="theme-name">{{ t.name }}</span>
             @if (t.isFree || isOwned(t)) {
-              <ion-badge color="success">FREE</ion-badge>
+              <ion-badge color="success">{{ 'room.free' | translate }}</ion-badge>
             } @else {
               <ion-badge color="warning">
                 <ion-icon name="flame-outline" /> {{ t.priceTokens }}
@@ -99,7 +99,7 @@ import { UpgradePromptComponent } from '@app/shared/components/upgrade-prompt/up
             <ion-icon name="color-palette-outline" class="custom-icon" />
           </div>
           <span class="theme-name">{{ 'room.custom' | translate }}</span>
-          <ion-badge color="success">FREE</ion-badge>
+          <ion-badge color="success">{{ 'room.free' | translate }}</ion-badge>
           @if (isCustomSelected()) {
             <ion-icon name="checkmark-outline" color="primary" class="check" />
           }

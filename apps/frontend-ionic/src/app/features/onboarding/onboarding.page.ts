@@ -281,6 +281,7 @@ export class OnboardingPage implements OnInit {
   private authService = inject(AuthService);
   private apiService = inject(ApiService);
   private router = inject(Router);
+  private translate = inject(TranslateService);
 
   firstName = '';
   lastName = '';
@@ -314,7 +315,7 @@ export class OnboardingPage implements OnInit {
 
   onNextStep(): void {
     if (!this.firstName.trim() || !this.lastName.trim()) {
-      this.errorMessage.set('onboarding.fieldsRequired');
+      this.errorMessage.set(this.translate.instant('onboarding.fieldsRequired'));
       return;
     }
     this.errorMessage.set('');
@@ -340,7 +341,7 @@ export class OnboardingPage implements OnInit {
 
   async onContinue(): Promise<void> {
     if (this.selectedSports().length === 0) {
-      this.errorMessage.set('onboarding.sportsRequired');
+      this.errorMessage.set(this.translate.instant('onboarding.sportsRequired'));
       return;
     }
 
@@ -365,7 +366,7 @@ export class OnboardingPage implements OnInit {
       this.router.navigate(['/tabs']);
     } catch (e: unknown) {
       this.errorMessage.set(
-        e instanceof Error ? e.message : 'Update failed'
+        e instanceof Error ? e.message : this.translate.instant('common.updateFailed')
       );
     } finally {
       this.isLoading.set(false);

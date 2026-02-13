@@ -8,7 +8,9 @@
     "delete": "Supprimer",
     "confirm": "Confirmer",
     "apply": "Appliquer",
-    "yes": "Oui"
+    "yes": "Oui",
+    "no": "Non",
+    "updateFailed": "Échec de la mise à jour"
   },
   "auth": {
     "login": "Se connecter",
@@ -24,7 +26,12 @@
     "apple": "Continuer avec Apple",
     "verifyEmail": "Vérifiez votre email",
     "otpSent": "Nous avons envoyé un code à votre email",
-    "otpPlaceholder": "Entrez le code de vérification"
+    "otpPlaceholder": "Entrez le code de vérification",
+    "appSubtitle": "Le Métavers de l'Athlète",
+    "loginFailed": "Échec de connexion",
+    "socialLoginFailed": "Échec de connexion sociale",
+    "registrationFailed": "Échec de l'inscription",
+    "verificationFailed": "Échec de la vérification"
   },
   "tabs": {
     "home": "Accueil",
@@ -57,7 +64,9 @@
     "medal": "Médaille",
     "bib": "Dossard",
     "processing": "En traitement...",
-    "ready": "Prêt"
+    "ready": "Prêt",
+    "detail": "Trophée",
+    "status": "Statut"
   },
   "profile": {
     "title": "Profil",
@@ -129,7 +138,12 @@
     "custom": "Personnalisé",
     "customTheme": "Thème personnalisé",
     "floor": "Sol",
-    "background": "Arrière-plan"
+    "background": "Arrière-plan",
+    "removeItem": "Retirer l'objet",
+    "removeItemMessage": "Voulez-vous vraiment retirer cet objet de votre salle ?",
+    "shareText": "Découvrez ma Pain Cave !",
+    "noRaceInfo": "Aucune information de course disponible",
+    "place": "Placer"
   },
   "tokens": {
     "title": "Obtenir des Tokens",
@@ -219,7 +233,8 @@
     "step1": "Traitement",
     "step2": "Détails",
     "step3": "Recherche",
-    "step4": "Terminé"
+    "step4": "Terminé",
+    "title": "Vérification"
   },
   "social": {
     "like": "Aimer",

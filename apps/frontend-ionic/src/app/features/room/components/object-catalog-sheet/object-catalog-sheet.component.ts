@@ -76,7 +76,7 @@ import { ThumbnailGeneratorService } from '@app/core/services/thumbnail-generato
                 <span class="card-name">
                   {{ trophy.type === 'medal' ? ('trophies.medal' | translate) : ('trophies.bib' | translate) }}
                 </span>
-                <ion-badge color="success">Place</ion-badge>
+                <ion-badge color="success">{{ 'room.place' | translate }}</ion-badge>
               </button>
             }
           </div>
@@ -106,7 +106,7 @@ import { ThumbnailGeneratorService } from '@app/core/services/thumbnail-generato
                       <span class="card-description">{{ deco.description }}</span>
                     }
                     @if (deco.priceTokens > 0) {
-                      <ion-badge color="warning">{{ deco.priceTokens }} tokens</ion-badge>
+                      <ion-badge color="warning">{{ deco.priceTokens }} {{ 'tokens.flames' | translate }}</ion-badge>
                     } @else {
                       <ion-badge color="success">{{ 'room.free' | translate }}</ion-badge>
                     }

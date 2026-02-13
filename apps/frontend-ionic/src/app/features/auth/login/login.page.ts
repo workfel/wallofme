@@ -15,6 +15,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { addIcons } from 'ionicons';
 import { logoGoogle, logoApple } from 'ionicons/icons';
 
+import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from '@app/core/services/auth.service';
 
 @Component({
@@ -38,7 +39,7 @@ import { AuthService } from '@app/core/services/auth.service';
       <div class="login-container animate-fade-in-up">
         <div class="logo-section">
           <h1 class="app-title">WallOfMe</h1>
-          <p class="app-subtitle">The Metaverse of the Athlete</p>
+          <p class="app-subtitle">{{ 'auth.appSubtitle' | translate }}</p>
         </div>
 
         <div class="form-section">
@@ -213,6 +214,7 @@ import { AuthService } from '@app/core/services/auth.service';
 export class LoginPage {
   private authService = inject(AuthService);
   private router = inject(Router);
+  private translate = inject(TranslateService);
 
   email = '';
   password = '';
@@ -234,7 +236,7 @@ export class LoginPage {
       this.navigateAfterAuth();
     } catch (e: unknown) {
       this.errorMessage.set(
-        e instanceof Error ? e.message : 'Login failed'
+        e instanceof Error ? e.message : this.translate.instant('auth.loginFailed')
       );
     } finally {
       this.isLoading.set(false);
@@ -251,7 +253,7 @@ export class LoginPage {
       this.navigateAfterAuth();
     } catch (e: unknown) {
       this.errorMessage.set(
-        e instanceof Error ? e.message : 'Social login failed'
+        e instanceof Error ? e.message : this.translate.instant('auth.socialLoginFailed')
       );
     } finally {
       this.isLoading.set(false);

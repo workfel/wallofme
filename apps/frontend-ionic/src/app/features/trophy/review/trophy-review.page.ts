@@ -66,7 +66,7 @@ import { ScanService } from '@app/core/services/scan.service';
         <ion-buttons slot="start">
           <ion-back-button defaultHref="/tabs/trophies" />
         </ion-buttons>
-        <ion-title>Review</ion-title>
+        <ion-title>{{ 'review.title' | translate }}</ion-title>
       </ion-toolbar>
     </ion-header>
 

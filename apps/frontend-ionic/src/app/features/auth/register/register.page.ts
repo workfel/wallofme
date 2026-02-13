@@ -15,6 +15,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { addIcons } from 'ionicons';
 import { logoGoogle, logoApple } from 'ionicons/icons';
 
+import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from '@app/core/services/auth.service';
 
 @Component({
@@ -222,6 +223,7 @@ import { AuthService } from '@app/core/services/auth.service';
 export class RegisterPage {
   private authService = inject(AuthService);
   private router = inject(Router);
+  private translate = inject(TranslateService);
 
   name = '';
   email = '';
@@ -244,7 +246,7 @@ export class RegisterPage {
       this.router.navigate(['/onboarding']);
     } catch (e: unknown) {
       this.errorMessage.set(
-        e instanceof Error ? e.message : 'Registration failed'
+        e instanceof Error ? e.message : this.translate.instant('auth.registrationFailed')
       );
     } finally {
       this.isLoading.set(false);
@@ -258,7 +260,7 @@ export class RegisterPage {
       await this.authService.signInSocial(provider);
     } catch (e: unknown) {
       this.errorMessage.set(
-        e instanceof Error ? e.message : 'Social login failed'
+        e instanceof Error ? e.message : this.translate.instant('auth.socialLoginFailed')
       );
     } finally {
       this.isLoading.set(false);

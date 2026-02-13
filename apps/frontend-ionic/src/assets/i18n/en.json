@@ -8,7 +8,9 @@
     "delete": "Delete",
     "confirm": "Confirm",
     "apply": "Apply",
-    "yes": "Yes"
+    "yes": "Yes",
+    "no": "No",
+    "updateFailed": "Update failed"
   },
   "auth": {
     "login": "Log In",
@@ -24,7 +26,12 @@
     "apple": "Continue with Apple",
     "verifyEmail": "Verify your email",
     "otpSent": "We sent a code to your email",
-    "otpPlaceholder": "Enter verification code"
+    "otpPlaceholder": "Enter verification code",
+    "appSubtitle": "The Metaverse of the Athlete",
+    "loginFailed": "Login failed",
+    "socialLoginFailed": "Social login failed",
+    "registrationFailed": "Registration failed",
+    "verificationFailed": "Verification failed"
   },
   "tabs": {
     "home": "Home",
@@ -57,7 +64,9 @@
     "medal": "Medal",
     "bib": "Bib",
     "processing": "Processing...",
-    "ready": "Ready"
+    "ready": "Ready",
+    "detail": "Trophy",
+    "status": "Status"
   },
   "profile": {
     "title": "Profile",
@@ -129,7 +138,12 @@
     "custom": "Custom",
     "customTheme": "Custom Theme",
     "floor": "Floor",
-    "background": "Background"
+    "background": "Background",
+    "removeItem": "Remove Item",
+    "removeItemMessage": "Are you sure you want to remove this item from your room?",
+    "shareText": "Check out my Pain Cave!",
+    "noRaceInfo": "No race information available",
+    "place": "Place"
   },
   "tokens": {
     "title": "Get Tokens",
@@ -219,7 +233,8 @@
     "step1": "Processing",
     "step2": "Details",
     "step3": "Search",
-    "step4": "Done"
+    "step4": "Done",
+    "title": "Review"
   },
   "social": {
     "like": "Like",

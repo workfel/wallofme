@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   IonContent,
@@ -9,7 +9,7 @@ import {
   IonText,
   IonSpinner,
 } from '@ionic/angular/standalone';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-otp',
@@ -110,6 +110,8 @@ import { TranslateModule } from '@ngx-translate/core';
   `,
 })
 export class OtpPage {
+  private translate = inject(TranslateService);
+
   otpCode = '';
   isLoading = signal(false);
   errorMessage = signal('');
@@ -124,7 +126,7 @@ export class OtpPage {
       // TODO: Implement OTP verification
     } catch (e: unknown) {
       this.errorMessage.set(
-        e instanceof Error ? e.message : 'Verification failed'
+        e instanceof Error ? e.message : this.translate.instant('auth.verificationFailed')
       );
     } finally {
       this.isLoading.set(false);
