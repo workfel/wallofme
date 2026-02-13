@@ -132,8 +132,14 @@ interface RoomData {
       <ng-template>
         <app-trophy-info-sheet
           [trophy]="inspectedTrophyData()"
+          [trophyIndex]="currentTrophyIndex()"
+          [totalTrophies]="trophyItems().length"
+          [hasPrev]="currentTrophyIndex() > 0"
+          [hasNext]="currentTrophyIndex() < trophyItems().length - 1"
           (dismiss)="clearInspection()"
           (viewDetails)="onViewDetails($event)"
+          (navigatePrev)="navigatePrev()"
+          (navigateNext)="navigateNext()"
         />
       </ng-template>
     </ion-modal>
@@ -193,6 +199,18 @@ export class RoomSharePage implements OnInit {
     const r = this.room();
     if (!r) return DEFAULT_THEME;
     return this.themeService.resolveThemeFromRoom(r);
+  });
+
+  trophyItems = computed(() => {
+    return (this.room()?.items ?? []).filter(
+      (item) => item.trophyId && item.trophy
+    );
+  });
+
+  currentTrophyIndex = computed(() => {
+    const itemId = this.inspectedItemId();
+    if (!itemId) return -1;
+    return this.trophyItems().findIndex((i) => i.id === itemId);
   });
 
   inspectedTrophyData = computed<TrophyInfoData | null>(() => {
@@ -275,6 +293,22 @@ export class RoomSharePage implements OnInit {
 
   clearInspection(): void {
     this.inspectedItemId.set(null);
+  }
+
+  navigatePrev(): void {
+    const idx = this.currentTrophyIndex();
+    const items = this.trophyItems();
+    if (idx > 0) {
+      this.inspectedItemId.set(items[idx - 1].id);
+    }
+  }
+
+  navigateNext(): void {
+    const idx = this.currentTrophyIndex();
+    const items = this.trophyItems();
+    if (idx < items.length - 1) {
+      this.inspectedItemId.set(items[idx + 1].id);
+    }
   }
 
   onViewDetails(trophyId: string): void {

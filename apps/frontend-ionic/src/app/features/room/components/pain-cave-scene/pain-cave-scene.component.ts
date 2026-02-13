@@ -10,6 +10,7 @@ import {
   OnDestroy,
 } from '@angular/core';
 import { extend, NgtArgs, injectStore } from 'angular-three';
+import { textureResource } from 'angular-three-soba/loaders';
 import { ScreenshotService } from '@app/core/services/screenshot.service';
 import {
   Mesh,
@@ -22,7 +23,10 @@ import {
   SpotLight,
   PointLight,
   Color,
+  RepeatWrapping,
+  SRGBColorSpace,
 } from 'three';
+import { RoundedBoxGeometry } from 'three-stdlib';
 
 import { TrophyFrameComponent } from '../trophy-frame/trophy-frame.component';
 import { DecorationModelComponent } from '../decoration-model/decoration-model.component';
@@ -34,6 +38,7 @@ extend({
   Mesh,
   BoxGeometry,
   PlaneGeometry,
+  RoundedBoxGeometry,
   MeshStandardMaterial,
   MeshBasicMaterial,
   HemisphereLight,
@@ -46,11 +51,18 @@ extend({
 const ROOM_WIDTH = 6;
 const ROOM_DEPTH = 6;
 const ROOM_HEIGHT = 3;
-const WALL_THICKNESS = 0.15;
+const WALL_THICKNESS = 0.55;
 
 // Floor bounds for drag clamping
-const FLOOR_HALF_X = ROOM_WIDTH / 2 - 0.3;
-const FLOOR_HALF_Z = ROOM_DEPTH / 2 - 0.3;
+const FLOOR_HALF_X = ROOM_WIDTH / 2 - 0.45;
+const FLOOR_HALF_Z = ROOM_DEPTH / 2 - 0.45;
+
+// Wall bounds for trophy drag clamping
+const WALL_MARGIN = 0.3;
+const WALL_MIN_Y = WALL_MARGIN;
+const WALL_MAX_Y = ROOM_HEIGHT - WALL_MARGIN;
+const WALL_MIN_AXIS = -(ROOM_DEPTH / 2 - WALL_MARGIN);
+const WALL_MAX_AXIS = ROOM_DEPTH / 2 - WALL_MARGIN;
 
 export interface RoomItem3D {
   id: string;
@@ -159,9 +171,14 @@ export interface ItemDragEvent {
       [rotation]="[-Math.PI / 2, 0, 0]"
       [position]="[0, 0, 0]"
       [receiveShadow]="true"
+      (click)="onFloorClicked()"
     >
-      <ngt-box-geometry *args="[ROOM_WIDTH, ROOM_DEPTH, WALL_THICKNESS]" />
-      <ngt-mesh-standard-material [color]="theme().floor.color" [roughness]="theme().floor.roughness" />
+      <ngt-rounded-box-geometry *args="[ROOM_WIDTH, ROOM_DEPTH, WALL_THICKNESS, 4, 0.05]" />
+      <ngt-mesh-standard-material
+        [color]="floorTexLoaded() ? '#ffffff' : theme().floor.color"
+        [roughness]="theme().floor.roughness"
+        [map]="floorTexLoaded()"
+      />
     </ngt-mesh>
 
     <!-- Invisible floor drag plane — captures XZ drag events -->
@@ -188,13 +205,44 @@ export interface ItemDragEvent {
       <ngt-mesh-basic-material />
     </ngt-mesh>
 
+    <!-- Invisible left wall drag plane — captures YZ drag events for left wall trophies.
+         Positioned at the wall SURFACE (not center) so it's in front of the wall mesh
+         and reliably receives pointer events. -->
+    <ngt-mesh
+      [position]="[-ROOM_WIDTH / 2 + WALL_THICKNESS / 2 + 0.005, ROOM_HEIGHT / 2, 0]"
+      [rotation]="[0, Math.PI / 2, 0]"
+      [visible]="false"
+      (pointermove)="onWallDragMove($event, 'left')"
+      (pointerup)="onDragEnd($event)"
+    >
+      <ngt-plane-geometry *args="[20, 20]" />
+      <ngt-mesh-basic-material />
+    </ngt-mesh>
+
+    <!-- Invisible back wall drag plane — captures XY drag events for back wall trophies.
+         Same surface-level positioning. -->
+    <ngt-mesh
+      [position]="[0, ROOM_HEIGHT / 2, -ROOM_DEPTH / 2 + WALL_THICKNESS / 2 + 0.005]"
+      [rotation]="[0, 0, 0]"
+      [visible]="false"
+      (pointermove)="onWallDragMove($event, 'right')"
+      (pointerup)="onDragEnd($event)"
+    >
+      <ngt-plane-geometry *args="[20, 20]" />
+      <ngt-mesh-basic-material />
+    </ngt-mesh>
+
     <!-- Left Wall -->
     <ngt-mesh
       [position]="[-ROOM_WIDTH / 2, ROOM_HEIGHT / 2, 0]"
       [receiveShadow]="true"
     >
-      <ngt-box-geometry *args="[WALL_THICKNESS, ROOM_HEIGHT, ROOM_DEPTH]" />
-      <ngt-mesh-standard-material [color]="theme().leftWall.color" [roughness]="theme().leftWall.roughness" />
+      <ngt-rounded-box-geometry *args="[WALL_THICKNESS, ROOM_HEIGHT, ROOM_DEPTH, 4, 0.05]" />
+      <ngt-mesh-standard-material
+        [color]="leftWallTexLoaded() ? '#ffffff' : theme().leftWall.color"
+        [roughness]="theme().leftWall.roughness"
+        [map]="leftWallTexLoaded()"
+      />
     </ngt-mesh>
 
     <!-- Back Wall -->
@@ -202,8 +250,12 @@ export interface ItemDragEvent {
       [position]="[0, ROOM_HEIGHT / 2, -ROOM_DEPTH / 2]"
       [receiveShadow]="true"
     >
-      <ngt-box-geometry *args="[ROOM_WIDTH, ROOM_HEIGHT, WALL_THICKNESS]" />
-      <ngt-mesh-standard-material [color]="theme().backWall.color" [roughness]="theme().backWall.roughness" />
+      <ngt-rounded-box-geometry *args="[ROOM_WIDTH, ROOM_HEIGHT, WALL_THICKNESS, 4, 0.05]" />
+      <ngt-mesh-standard-material
+        [color]="backWallTexLoaded() ? '#ffffff' : theme().backWall.color"
+        [roughness]="theme().backWall.roughness"
+        [map]="backWallTexLoaded()"
+      />
     </ngt-mesh>
 
     <!-- Trophy items on walls -->
@@ -214,7 +266,9 @@ export interface ItemDragEvent {
         [position]="getWallPosition(item).position"
         [rotation]="getWallPosition(item).rotation"
         [editable]="editable()"
-        (pressed)="itemPressed.emit(item.id)"
+        [selected]="item.id === selectedItemId()"
+        (pressed)="onTrophyTapped(item.id)"
+        (dragStart)="onTrophyDragStart(item.id, $event)"
       />
     }
 
@@ -227,8 +281,9 @@ export interface ItemDragEvent {
         [scale]="item.scaleX ?? 0.5"
         [editable]="editable()"
         [selected]="item.id === selectedItemId()"
+        [activeDragType]="getDecorationDragType(item.id)"
         (pressed)="onDecorationTapped(item.id)"
-        (dragStart)="onLongPressStart(item.id, $event)"
+        (dragStart)="onDecorationDragStart(item.id, $event)"
         (heightDragStart)="onHeightDragStart(item.id, $event)"
         (rotationDragStart)="onRotationDragStart(item.id, $event)"
       />
@@ -249,15 +304,72 @@ export class PainCaveSceneComponent implements OnDestroy {
   itemDragEnd = output<ItemDragEvent>();
 
   isDragging = signal(false);
-  private dragMode: 'none' | 'floor' | 'height' | 'rotation' = 'none';
-  private dragItemId: string | null = null;
+  dragModeSignal = signal<'none' | 'floor' | 'height' | 'rotation' | 'wall'>('none');
+  dragItemIdSignal = signal<string | null>(null);
   private lastDragPosition = { x: 0, y: 0, z: 0 };
   private lastDragRotationY = 0;
   private rotationDragStartAngle = 0;
   private rotationDragItemStartAngle = 0;
+  private dragWall: 'left' | 'right' | null = null;
+  private boundFinishDrag = () => this.finishDrag();
+
+  /** Deferred deselection — allows a same-frame item click to cancel it */
+  private pendingDeselect: ReturnType<typeof requestAnimationFrame> | null = null;
 
   private store = injectStore();
   private screenshotService = inject(ScreenshotService);
+
+  // Texture resources for walls and floor (reactive to theme changes).
+  // Pass a placeholder transparent pixel when no texture is set to avoid
+  // network errors from loading an empty URL.
+  private static readonly NO_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+
+  private floorTex = textureResource(
+    () => this.theme().floor.texture || PainCaveSceneComponent.NO_TEX,
+    {
+      onLoad: (tex) => {
+        tex.colorSpace = SRGBColorSpace;
+        tex.wrapS = tex.wrapT = RepeatWrapping;
+        tex.repeat.set(2, 2);
+      },
+    },
+  );
+  private leftWallTex = textureResource(
+    () => this.theme().leftWall.texture || PainCaveSceneComponent.NO_TEX,
+    {
+      onLoad: (tex) => {
+        tex.colorSpace = SRGBColorSpace;
+        tex.wrapS = tex.wrapT = RepeatWrapping;
+        tex.repeat.set(2, 1);
+      },
+    },
+  );
+  private backWallTex = textureResource(
+    () => this.theme().backWall.texture || PainCaveSceneComponent.NO_TEX,
+    {
+      onLoad: (tex) => {
+        tex.colorSpace = SRGBColorSpace;
+        tex.wrapS = tex.wrapT = RepeatWrapping;
+        tex.repeat.set(2, 1);
+      },
+    },
+  );
+
+  floorTexLoaded = computed(() => {
+    if (!this.theme().floor.texture) return null;
+    if (this.floorTex.status() !== 'resolved') return null;
+    try { return this.floorTex.value(); } catch { return null; }
+  });
+  leftWallTexLoaded = computed(() => {
+    if (!this.theme().leftWall.texture) return null;
+    if (this.leftWallTex.status() !== 'resolved') return null;
+    try { return this.leftWallTex.value(); } catch { return null; }
+  });
+  backWallTexLoaded = computed(() => {
+    if (!this.theme().backWall.texture) return null;
+    if (this.backWallTex.status() !== 'resolved') return null;
+    try { return this.backWallTex.value(); } catch { return null; }
+  });
 
   constructor() {
     // Register Three.js context for screenshot capture
@@ -279,6 +391,8 @@ export class PainCaveSceneComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.screenshotService.unregisterThreeContext();
+    document.removeEventListener('pointerup', this.boundFinishDrag);
+    this.cancelPendingDeselect();
   }
 
   // Expose constants to template
@@ -287,6 +401,13 @@ export class PainCaveSceneComponent implements OnDestroy {
   readonly ROOM_DEPTH = ROOM_DEPTH;
   readonly ROOM_HEIGHT = ROOM_HEIGHT;
   readonly WALL_THICKNESS = WALL_THICKNESS;
+
+  getDecorationDragType(itemId: string): 'none' | 'floor' | 'height' | 'rotation' {
+    if (itemId !== this.dragItemIdSignal()) return 'none';
+    const mode = this.dragModeSignal();
+    if (mode === 'wall') return 'none';
+    return mode;
+  }
 
   trophyItems(): RoomItem3D[] {
     return this.items().filter(
@@ -320,48 +441,73 @@ export class PainCaveSceneComponent implements OnDestroy {
     };
   }
 
+  // ─── Floor click: deselect (deferred to allow item click to cancel) ───
+  onFloorClicked(): void {
+    if (this.isDragging()) return;
+    // Defer deselection to next animation frame so that a same-frame
+    // decoration/trophy click can cancel it.  angular-three fires click
+    // on ALL raycasted meshes independently — the floor always receives
+    // the click even when a decoration was also hit.
+    this.pendingDeselect = requestAnimationFrame(() => {
+      this.pendingDeselect = null;
+      this.itemPressed.emit('__deselect__');
+    });
+  }
+
+  /** Cancel any pending deselection (called when an item is tapped) */
+  private cancelPendingDeselect(): void {
+    if (this.pendingDeselect !== null) {
+      cancelAnimationFrame(this.pendingDeselect);
+      this.pendingDeselect = null;
+    }
+  }
+
   // ─── Tap: select item and show bottom sheet ─────
   onDecorationTapped(itemId: string): void {
+    this.cancelPendingDeselect();
     this.itemPressed.emit(itemId);
   }
 
-  // ─── Long press: enter floor drag mode ──────────
-  onLongPressStart(itemId: string, _event: any): void {
-    this.dragItemId = itemId;
-    this.dragMode = 'floor';
-    this.isDragging.set(true);
+  // ─── Tap: select trophy ──────────────────────────
+  onTrophyTapped(itemId: string): void {
+    this.cancelPendingDeselect();
     this.itemPressed.emit(itemId);
+  }
+
+  // ─── Shared: begin any drag and register document-level pointerup fallback ──
+  private beginDrag(itemId: string, mode: 'floor' | 'height' | 'rotation' | 'wall'): void {
+    this.dragItemIdSignal.set(itemId);
+    this.dragModeSignal.set(mode);
+    this.isDragging.set(true);
 
     const item = this.items().find((i) => i.id === itemId);
     if (item) {
       this.lastDragPosition = { x: item.positionX, y: item.positionY, z: item.positionZ };
       this.lastDragRotationY = item.rotationY;
     }
+
+    // Fallback: end drag on document pointerup.
+    // During floor drag the hitbox follows the pointer and intercepts
+    // the drag plane's pointerup — this listener guarantees drag end.
+    document.addEventListener('pointerup', this.boundFinishDrag, { once: true });
+  }
+
+  // ─── Drag start: enter floor drag mode ──────────
+  onDecorationDragStart(itemId: string, _event: any): void {
+    this.beginDrag(itemId, 'floor');
   }
 
   // ─── Height gizmo: enter height drag mode ─────
   onHeightDragStart(itemId: string, _event: any): void {
-    this.dragItemId = itemId;
-    this.dragMode = 'height';
-    this.isDragging.set(true);
-
-    const item = this.items().find((i) => i.id === itemId);
-    if (item) {
-      this.lastDragPosition = { x: item.positionX, y: item.positionY, z: item.positionZ };
-      this.lastDragRotationY = item.rotationY;
-    }
+    this.beginDrag(itemId, 'height');
   }
 
   // ─── Rotation gizmo: enter rotation drag mode ──
   onRotationDragStart(itemId: string, event: any): void {
-    this.dragItemId = itemId;
-    this.dragMode = 'rotation';
-    this.isDragging.set(true);
+    this.beginDrag(itemId, 'rotation');
 
     const item = this.items().find((i) => i.id === itemId);
     if (item) {
-      this.lastDragPosition = { x: item.positionX, y: item.positionY, z: item.positionZ };
-      this.lastDragRotationY = item.rotationY;
       this.rotationDragItemStartAngle = item.rotationY;
 
       // Compute initial angle from item center to pointer on the floor plane
@@ -375,16 +521,24 @@ export class PainCaveSceneComponent implements OnDestroy {
     }
   }
 
+  // ─── Trophy drag start: enter wall drag mode ───
+  onTrophyDragStart(itemId: string, _event: any): void {
+    const item = this.items().find((i) => i.id === itemId);
+    if (!item) return;
+    this.dragWall = item.wall;
+    this.beginDrag(itemId, 'wall');
+  }
+
   // ─── Floor drag plane: XZ movement ─────────────
   onDragMove(event: any): void {
-    if (!this.isDragging() || !this.dragItemId) return;
-    if (this.dragMode === 'height') return; // ignore floor plane for height drag
+    if (!this.isDragging() || !this.dragItemIdSignal()) return;
+    if (this.dragModeSignal() === 'height' || this.dragModeSignal() === 'wall') return;
     event?.stopPropagation?.();
 
     const point = event.point;
     if (!point) return;
 
-    if (this.dragMode === 'floor') {
+    if (this.dragModeSignal() === 'floor') {
       const x = Math.max(-FLOOR_HALF_X, Math.min(FLOOR_HALF_X, point.x));
       const z = Math.max(-FLOOR_HALF_Z, Math.min(FLOOR_HALF_Z, point.z));
       const rx = Math.round(x * 10) / 10;
@@ -393,13 +547,13 @@ export class PainCaveSceneComponent implements OnDestroy {
       if (rx !== this.lastDragPosition.x || rz !== this.lastDragPosition.z) {
         this.lastDragPosition = { ...this.lastDragPosition, x: rx, z: rz };
         this.itemDragged.emit({
-          itemId: this.dragItemId,
+          itemId: this.dragItemIdSignal()!,
           positionX: rx,
           positionZ: rz,
         });
       }
-    } else if (this.dragMode === 'rotation') {
-      const item = this.items().find((i) => i.id === this.dragItemId);
+    } else if (this.dragModeSignal() === 'rotation') {
+      const item = this.items().find((i) => i.id === this.dragItemIdSignal());
       if (!item) return;
       const currentAngle = Math.atan2(
         point.x - item.positionX,
@@ -412,7 +566,7 @@ export class PainCaveSceneComponent implements OnDestroy {
       if (rounded !== this.lastDragRotationY) {
         this.lastDragRotationY = rounded;
         this.itemDragged.emit({
-          itemId: this.dragItemId,
+          itemId: this.dragItemIdSignal()!,
           positionX: this.lastDragPosition.x,
           positionZ: this.lastDragPosition.z,
           rotationY: rounded,
@@ -423,8 +577,8 @@ export class PainCaveSceneComponent implements OnDestroy {
 
   // ─── Vertical drag plane: Y movement ───────────
   onVerticalDragMove(event: any): void {
-    if (!this.isDragging() || !this.dragItemId) return;
-    if (this.dragMode !== 'height') return;
+    if (!this.isDragging() || !this.dragItemIdSignal()) return;
+    if (this.dragModeSignal() !== 'height') return;
     event?.stopPropagation?.();
 
     const point = event.point;
@@ -436,7 +590,7 @@ export class PainCaveSceneComponent implements OnDestroy {
     if (ry !== this.lastDragPosition.y) {
       this.lastDragPosition = { ...this.lastDragPosition, y: ry };
       this.itemDragged.emit({
-        itemId: this.dragItemId,
+        itemId: this.dragItemIdSignal()!,
         positionX: this.lastDragPosition.x,
         positionY: ry,
         positionZ: this.lastDragPosition.z,
@@ -444,12 +598,63 @@ export class PainCaveSceneComponent implements OnDestroy {
     }
   }
 
-  onDragEnd(event: any): void {
-    if (!this.isDragging() || !this.dragItemId) return;
+  // ─── Wall drag planes: YZ or XY movement for trophies ───
+  onWallDragMove(event: any, wall: 'left' | 'right'): void {
+    if (!this.isDragging() || !this.dragItemIdSignal()) return;
+    if (this.dragModeSignal() !== 'wall') return;
+    if (this.dragWall !== wall) return;
     event?.stopPropagation?.();
 
+    const point = event.point;
+    if (!point) return;
+
+    const y = Math.max(WALL_MIN_Y, Math.min(WALL_MAX_Y, point.y));
+    const ry = Math.round(y * 10) / 10;
+
+    if (wall === 'left') {
+      const z = Math.max(WALL_MIN_AXIS, Math.min(WALL_MAX_AXIS, point.z));
+      const rz = Math.round(z * 10) / 10;
+
+      if (ry !== this.lastDragPosition.y || rz !== this.lastDragPosition.z) {
+        this.lastDragPosition = { ...this.lastDragPosition, y: ry, z: rz };
+        this.itemDragged.emit({
+          itemId: this.dragItemIdSignal()!,
+          positionX: this.lastDragPosition.x,
+          positionY: ry,
+          positionZ: rz,
+        });
+      }
+    } else {
+      const x = Math.max(WALL_MIN_AXIS, Math.min(WALL_MAX_AXIS, point.x));
+      const rx = Math.round(x * 10) / 10;
+
+      if (ry !== this.lastDragPosition.y || rx !== this.lastDragPosition.x) {
+        this.lastDragPosition = { ...this.lastDragPosition, y: ry, x: rx };
+        this.itemDragged.emit({
+          itemId: this.dragItemIdSignal()!,
+          positionX: rx,
+          positionY: ry,
+          positionZ: this.lastDragPosition.z,
+        });
+      }
+    }
+  }
+
+  /** Called by the drag plane's (pointerup) — works for height/rotation gizmos */
+  onDragEnd(event: any): void {
+    event?.stopPropagation?.();
+    this.finishDrag();
+  }
+
+  /** Shared drag-end logic — called by drag plane OR document pointerup fallback */
+  finishDrag(): void {
+    if (!this.isDragging() || !this.dragItemIdSignal()) return;
+
+    // Remove document listener if it hasn't fired yet
+    document.removeEventListener('pointerup', this.boundFinishDrag);
+
     this.itemDragEnd.emit({
-      itemId: this.dragItemId,
+      itemId: this.dragItemIdSignal()!,
       positionX: this.lastDragPosition.x,
       positionY: this.lastDragPosition.y,
       positionZ: this.lastDragPosition.z,
@@ -457,7 +662,8 @@ export class PainCaveSceneComponent implements OnDestroy {
     });
 
     this.isDragging.set(false);
-    this.dragMode = 'none';
-    this.dragItemId = null;
+    this.dragModeSignal.set('none');
+    this.dragItemIdSignal.set(null);
+    this.dragWall = null;
   }
 }

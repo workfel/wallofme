@@ -102,6 +102,8 @@
     "raceCategoryRanking": "Category Ranking",
     "inspecting": "Tap outside to close",
     "floorPlacement": "Floor Placement",
+    "wallPlacement": "Wall Placement",
+    "wallDragHint": "Long-press to drag on wall",
     "position": "Position",
     "positionX": "Position X",
     "positionZ": "Position Z",

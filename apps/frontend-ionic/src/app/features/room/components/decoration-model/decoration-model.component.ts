@@ -33,6 +33,7 @@ extend({
 });
 
 const GIZMO_GREEN = new Color(0x44cc44);
+const GIZMO_HOVER = new Color(0xffcc44);
 const HIGHLIGHT_COLOR = new Color(0x4fc3f7);
 const LONG_PRESS_MS = 400;
 
@@ -54,6 +55,7 @@ const LONG_PRESS_MS = 400;
       <!-- Hitbox for tap / long-press detection -->
       <ngt-mesh
         [position]="[0, hitboxY(), 0]"
+        (click)="onClick($event)"
         (pointerdown)="onPointerDown($event)"
         (pointerup)="onPointerUp($event)"
         (pointerleave)="onPointerCancel()"
@@ -67,6 +69,19 @@ const LONG_PRESS_MS = 400;
           [depthWrite]="false"
         />
       </ngt-mesh>
+
+      <!-- Hover overlay (visible when hovered, not selected, in edit mode) -->
+      @if (hovered() && editable() && !selected()) {
+        <ngt-mesh [position]="[0, hitboxY(), 0]">
+          <ngt-box-geometry *args="[gizmoBoxWidth(), hitboxHeight(), gizmoBoxDepth()]" />
+          <ngt-mesh-basic-material
+            [color]="highlightColor"
+            [transparent]="true"
+            [opacity]="0.12"
+            [depthWrite]="false"
+          />
+        </ngt-mesh>
+      }
 
       <!-- ═══ Selection gizmos (only when selected) ═══ -->
       @if (selected()) {
@@ -86,17 +101,20 @@ const LONG_PRESS_MS = 400;
           <!-- Shaft -->
           <ngt-mesh [position]="[0, 0.4, 0]">
             <ngt-cylinder-geometry *args="[0.04, 0.04, 0.8, 8]" />
-            <ngt-mesh-basic-material [color]="gizmoGreen" />
+            <ngt-mesh-basic-material [color]="(heightGizmoHovered() || activeDragType() === 'height') ? gizmoHover : gizmoGreen" />
           </ngt-mesh>
           <!-- Arrow tip -->
           <ngt-mesh [position]="[0, 0.9, 0]">
             <ngt-cone-geometry *args="[0.1, 0.2, 8]" />
-            <ngt-mesh-basic-material [color]="gizmoGreen" />
+            <ngt-mesh-basic-material [color]="(heightGizmoHovered() || activeDragType() === 'height') ? gizmoHover : gizmoGreen" />
           </ngt-mesh>
           <!-- Invisible hitbox for the whole arrow -->
           <ngt-mesh
             [position]="[0, 0.5, 0]"
+            (click)="onClickStop($event)"
             (pointerdown)="onHeightGizmoDown($event)"
+            (pointerover)="heightGizmoHovered.set(true)"
+            (pointerout)="heightGizmoHovered.set(false)"
           >
             <ngt-cylinder-geometry *args="[0.2, 0.2, 1.2, 8]" />
             <ngt-mesh-basic-material [transparent]="true" [opacity]="0" [depthWrite]="false" />
@@ -107,7 +125,7 @@ const LONG_PRESS_MS = 400;
         <ngt-group [position]="[0, 0.05, 0]">
           <ngt-mesh [rotation]="[Math.PI / 2, 0, 0]">
             <ngt-torus-geometry *args="[gizmoRingRadius(), 0.03, 8, 24, Math.PI * 1.5]" />
-            <ngt-mesh-basic-material [color]="gizmoGreen" [side]="doubleSide" />
+            <ngt-mesh-basic-material [color]="(rotationGizmoHovered() || activeDragType() === 'rotation') ? gizmoHover : gizmoGreen" [side]="doubleSide" />
           </ngt-mesh>
           <!-- Arrow tip on the rotation arc -->
           <ngt-mesh
@@ -115,12 +133,15 @@ const LONG_PRESS_MS = 400;
             [rotation]="[0, 0, -Math.PI / 2]"
           >
             <ngt-cone-geometry *args="[0.08, 0.16, 8]" />
-            <ngt-mesh-basic-material [color]="gizmoGreen" />
+            <ngt-mesh-basic-material [color]="(rotationGizmoHovered() || activeDragType() === 'rotation') ? gizmoHover : gizmoGreen" />
           </ngt-mesh>
           <!-- Invisible hitbox torus (thicker for easier clicking) -->
           <ngt-mesh
             [rotation]="[Math.PI / 2, 0, 0]"
+            (click)="onClickStop($event)"
             (pointerdown)="onRotationGizmoDown($event)"
+            (pointerover)="rotationGizmoHovered.set(true)"
+            (pointerout)="rotationGizmoHovered.set(false)"
           >
             <ngt-torus-geometry *args="[gizmoRingRadius(), 0.15, 8, 24, Math.PI * 2]" />
             <ngt-mesh-basic-material [transparent]="true" [opacity]="0" [depthWrite]="false" />
@@ -137,6 +158,7 @@ export class DecorationModelComponent implements OnDestroy {
   scale = input(0.5);
   editable = input(false);
   selected = input(false);
+  activeDragType = input<'none' | 'floor' | 'height' | 'rotation'>('none');
 
   pressed = output<void>();
   dragStart = output<any>();
@@ -144,7 +166,10 @@ export class DecorationModelComponent implements OnDestroy {
   rotationDragStart = output<any>();
 
   hovered = signal(false);
+  heightGizmoHovered = signal(false);
+  rotationGizmoHovered = signal(false);
   readonly gizmoGreen = GIZMO_GREEN;
+  readonly gizmoHover = GIZMO_HOVER;
   readonly highlightColor = HIGHLIGHT_COLOR;
   readonly doubleSide = DoubleSide;
   readonly Math = Math;
@@ -156,7 +181,10 @@ export class DecorationModelComponent implements OnDestroy {
 
   scene = computed(() => {
     try {
-      return this.gltf.value()?.scene ?? null;
+      const s = this.gltf.value()?.scene;
+      // Clone to avoid shared-reference issues: a Three.js Object3D can only
+      // have one parent, and gltfResource may cache scenes by URL.
+      return s?.clone(true) ?? null;
     } catch {
       return null;
     }
@@ -210,25 +238,52 @@ export class DecorationModelComponent implements OnDestroy {
     return Math.max(b.width, b.depth) / 2 + 0.2;
   });
 
+  /** Stop click from propagating (used on gizmo hitboxes) */
+  onClickStop(event: any): void {
+    event?.stopPropagation?.();
+  }
+
+  /** Click = selection (or no-op if long-press drag occurred).
+   *  We use click instead of pointerup because angular-three
+   *  does not reliably fire pointerup on meshes. */
+  onClick(event: any): void {
+    event?.stopPropagation?.();
+
+    // Clear any pending long-press (in case pointerup didn't fire)
+    if (this.longPressTimer) {
+      clearTimeout(this.longPressTimer);
+      this.longPressTimer = null;
+    }
+
+    // If it wasn't a long-press, it's a tap → select/deselect
+    if (!this.didLongPress) {
+      this.pressed.emit();
+    }
+  }
+
   onPointerDown(event: any): void {
     if (!this.editable()) return;
     event?.stopPropagation?.();
 
     this.didLongPress = false;
-    this.longPressTimer = setTimeout(() => {
-      this.didLongPress = true;
-      this.longPressTimer = null;
-      this.dragStart.emit(event);
-    }, LONG_PRESS_MS);
+
+    // Long-press starts floor drag (only on already-selected items)
+    if (this.selected()) {
+      this.longPressTimer = setTimeout(() => {
+        this.didLongPress = true;
+        this.longPressTimer = null;
+        this.dragStart.emit(event);
+      }, LONG_PRESS_MS);
+    }
   }
 
   onPointerUp(event: any): void {
     event?.stopPropagation?.();
 
+    // Clear any pending long-press
     if (this.longPressTimer) {
       clearTimeout(this.longPressTimer);
       this.longPressTimer = null;
-      this.pressed.emit();
     }
   }
 

@@ -45,11 +45,13 @@ import { ThemeSelectorSheetComponent } from '../components/theme-selector-sheet/
 import { CustomThemeEditorComponent } from '../components/custom-theme-editor/custom-theme-editor.component';
 import { ObjectCatalogSheetComponent } from '../components/object-catalog-sheet/object-catalog-sheet.component';
 import { ShareRoomSheetComponent } from '../components/share-room-sheet/share-room-sheet.component';
+import { WallPlacementPanelComponent, type WallPlacementValues } from '../components/wall-placement-panel/wall-placement-panel.component';
 
 // ─── Editor State Machine ────────────────────────────────
 type EditorState =
   | { kind: 'IDLE' }
   | { kind: 'SELECTED'; itemId: string }
+  | { kind: 'DRAGGING'; itemId: string }
   | { kind: 'CATALOG_OPEN' }
   | { kind: 'SLOT_PICKING'; itemToPlace: string; source: 'catalog' | 'move' }
   | { kind: 'THEME_OPEN' }
@@ -71,6 +73,7 @@ type EditorState =
     CustomThemeEditorComponent,
     ObjectCatalogSheetComponent,
     ShareRoomSheetComponent,
+    WallPlacementPanelComponent,
     IonContent,
     IonHeader,
     IonIcon,
@@ -132,6 +135,16 @@ type EditorState =
             [scale]="selectedItem()?.scaleX ?? 0.5"
             [name]="selectedItem()?.decoration?.name ?? null"
             (changed)="onFloorPlacementChange($event)"
+            (delete)="confirmDelete()"
+          />
+        } @else if (isTrophySelected()) {
+          <app-wall-placement-panel
+            [wall]="selectedItem()?.wall ?? 'left'"
+            [positionX]="selectedItem()?.positionX ?? 0"
+            [positionY]="selectedItem()?.positionY ?? 1.5"
+            [positionZ]="selectedItem()?.positionZ ?? 0"
+            [name]="selectedItem()?.trophy?.raceResult?.race?.name ?? null"
+            (changed)="onWallPlacementChange($event)"
             (delete)="confirmDelete()"
           />
         } @else if (isItemSelected()) {
@@ -253,6 +266,7 @@ type EditorState =
     .canvas-section {
       flex: 1;
       min-height: 0;
+      transition: flex 0.2s ease-out;
 
       ngt-canvas {
         display: block;
@@ -279,6 +293,7 @@ export class RoomEditPage implements OnInit {
   selectedItemId = computed(() => {
     const s = this.state();
     if (s.kind === 'SELECTED') return s.itemId;
+    if (s.kind === 'DRAGGING') return s.itemId;
     if (s.kind === 'CONFIRM_DELETE') return s.itemId;
     return null;
   });
@@ -289,9 +304,16 @@ export class RoomEditPage implements OnInit {
     return this.roomService.room()?.items.find((i) => i.id === id) ?? null;
   });
 
+  isDragging = computed(() => this.state().kind === 'DRAGGING');
+
   isDecorationSelected = computed(() => {
     const item = this.selectedItem();
     return !!item?.decorationId && !item.wall;
+  });
+
+  isTrophySelected = computed(() => {
+    const item = this.selectedItem();
+    return !!item?.trophyId && !!item.wall;
   });
 
   selectedItemRotationDeg = computed(() => {
@@ -332,12 +354,19 @@ export class RoomEditPage implements OnInit {
 
   // ─── Item Interactions ───────────────────────────
   onItemPressed(itemId: string): void {
+    // Floor tap → deselect
+    if (itemId === '__deselect__') {
+      this.state.set({ kind: 'IDLE' });
+      return;
+    }
+
     const s = this.state();
     if (s.kind === 'IDLE' || s.kind === 'SELECTED') {
       if (s.kind === 'SELECTED' && s.itemId === itemId) {
         this.state.set({ kind: 'IDLE' });
       } else {
         this.state.set({ kind: 'SELECTED', itemId });
+        this.hapticLight();
       }
     } else if (s.kind === 'SLOT_PICKING') {
       // Clicking an item during slot picking — ignore
@@ -414,8 +443,25 @@ export class RoomEditPage implements OnInit {
     });
   }
 
+  async onWallPlacementChange(values: WallPlacementValues): Promise<void> {
+    const id = this.selectedItemId();
+    if (!id) return;
+    await this.roomService.updateItem(id, {
+      positionX: values.positionX,
+      positionY: values.positionY,
+      positionZ: values.positionZ,
+    });
+  }
+
   // ─── Drag ─────────────────────────────────────────
   onItemDragged(event: ItemDragEvent): void {
+    // Enter DRAGGING state to hide bottom bar
+    const s = this.state();
+    if (s.kind === 'SELECTED') {
+      this.state.set({ kind: 'DRAGGING', itemId: s.itemId });
+      this.hapticMedium();
+    }
+
     // Optimistic local update during drag (no API call)
     const room = this.roomService.room();
     if (!room) return;
@@ -433,6 +479,12 @@ export class RoomEditPage implements OnInit {
   }
 
   async onItemDragEnd(event: ItemDragEvent): Promise<void> {
+    // Return to SELECTED state
+    const s = this.state();
+    if (s.kind === 'DRAGGING') {
+      this.state.set({ kind: 'SELECTED', itemId: s.itemId });
+    }
+
     // Persist final position to server
     const item = this.roomService.room()?.items.find((i) => i.id === event.itemId);
     if (!item) return;
@@ -458,6 +510,7 @@ export class RoomEditPage implements OnInit {
   async onPlaceTrophy(trophyId: string): Promise<void> {
     await this.roomService.addItemToRoom(trophyId);
     this.state.set({ kind: 'IDLE' });
+    this.hapticSuccess();
   }
 
   async onPlaceDecoration(decorationId: string): Promise<void> {
@@ -468,6 +521,7 @@ export class RoomEditPage implements OnInit {
     }
     await this.roomService.addDecorationToRoom(decorationId);
     this.state.set({ kind: 'IDLE' });
+    this.hapticSuccess();
   }
 
   onGetTokens(): void {
@@ -623,6 +677,28 @@ export class RoomEditPage implements OnInit {
     if (room) {
       this.router.navigate(['/room', room.userId]);
     }
+  }
+
+  // ─── Haptics ──────────────────────────────────────
+  private async hapticLight(): Promise<void> {
+    try {
+      const { Haptics, ImpactStyle } = await import('@capacitor/haptics');
+      Haptics.impact({ style: ImpactStyle.Light });
+    } catch { /* not available */ }
+  }
+
+  private async hapticMedium(): Promise<void> {
+    try {
+      const { Haptics, ImpactStyle } = await import('@capacitor/haptics');
+      Haptics.impact({ style: ImpactStyle.Medium });
+    } catch { /* not available */ }
+  }
+
+  private async hapticSuccess(): Promise<void> {
+    try {
+      const { Haptics, NotificationType } = await import('@capacitor/haptics');
+      Haptics.notification({ type: NotificationType.Success });
+    } catch { /* not available */ }
   }
 
 }

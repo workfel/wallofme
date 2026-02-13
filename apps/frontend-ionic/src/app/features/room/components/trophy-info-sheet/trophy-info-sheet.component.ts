@@ -15,6 +15,8 @@ import {
 import { addIcons } from 'ionicons';
 import {
   closeOutline,
+  chevronBackOutline,
+  chevronForwardOutline,
   trophyOutline,
   calendarOutline,
   locationOutline,
@@ -68,8 +70,22 @@ const SPORT_ICON_MAP: Record<string, string> = {
   template: `
     <ion-header>
       <ion-toolbar>
-        <ion-title>{{ 'room.trophyInfo' | translate }}</ion-title>
+        <ion-buttons slot="start">
+          <ion-button [disabled]="!hasPrev()" (click)="navigatePrev.emit()">
+            <ion-icon slot="icon-only" name="chevron-back-outline" />
+          </ion-button>
+        </ion-buttons>
+        <ion-title>
+          @if (totalTrophies() > 1) {
+            {{ trophyIndex() + 1 }} / {{ totalTrophies() }}
+          } @else {
+            {{ 'room.trophyInfo' | translate }}
+          }
+        </ion-title>
         <ion-buttons slot="end">
+          <ion-button [disabled]="!hasNext()" (click)="navigateNext.emit()">
+            <ion-icon slot="icon-only" name="chevron-forward-outline" />
+          </ion-button>
           <ion-button (click)="dismiss.emit()">
             <ion-icon slot="icon-only" name="close-outline" />
           </ion-button>
@@ -217,8 +233,14 @@ const SPORT_ICON_MAP: Record<string, string> = {
 })
 export class TrophyInfoSheetComponent {
   trophy = input<TrophyInfoData | null>(null);
+  trophyIndex = input(0);
+  totalTrophies = input(0);
+  hasPrev = input(false);
+  hasNext = input(false);
   dismiss = output<void>();
   viewDetails = output<string>();
+  navigatePrev = output<void>();
+  navigateNext = output<void>();
 
   sportIcon = computed(() => {
     const sport = this.trophy()?.race?.sport;
@@ -228,7 +250,8 @@ export class TrophyInfoSheetComponent {
 
   constructor() {
     addIcons({
-      closeOutline, trophyOutline, calendarOutline, locationOutline,
+      closeOutline, chevronBackOutline, chevronForwardOutline,
+      trophyOutline, calendarOutline, locationOutline,
       timerOutline, podiumOutline, walkOutline, bicycleOutline,
       fitnessOutline, waterOutline, trailSignOutline, barbellOutline, ellipseOutline,
     });

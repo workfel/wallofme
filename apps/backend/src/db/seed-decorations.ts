@@ -36,6 +36,28 @@ const decorations = [
     floorOnly: true,
     wallMountable: false,
   },
+  {
+    name: "Chair",
+    description: "A comfy recovery chair for post-race rest",
+    modelUrl: "/assets/models/Chair.glb",
+    category: "furniture",
+    isPremium: false,
+    priceTokens: 5,
+    defaultScale: 0.5,
+    floorOnly: true,
+    wallMountable: false,
+  },
+  {
+    name: "Window",
+    description: "Let some light into your Pain Cave",
+    modelUrl: "/assets/models/Window.glb",
+    category: "furniture",
+    isPremium: false,
+    priceTokens: 10,
+    defaultScale: 0.5,
+    floorOnly: false,
+    wallMountable: true,
+  },
 ];
 
 export async function seedDecorations() {

@@ -102,6 +102,8 @@
     "raceCategoryRanking": "Classement catégorie",
     "inspecting": "Appuyez à l'extérieur pour fermer",
     "floorPlacement": "Placement au sol",
+    "wallPlacement": "Placement mural",
+    "wallDragHint": "Appui long pour déplacer sur le mur",
     "position": "Position",
     "positionX": "Position X",
     "positionZ": "Position Z",

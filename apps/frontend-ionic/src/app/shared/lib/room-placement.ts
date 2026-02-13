@@ -4,7 +4,7 @@ const ROOM_DEPTH = 6;
 const ROOM_HEIGHT = 3;
 
 // Wall offset from center
-const WALL_OFFSET = 0.16; // wall thickness / 2 + small gap
+const WALL_OFFSET = 0.30; // wall thickness / 2 + small gap (WALL_THICKNESS=0.55)
 
 // Grid: 9 columns x 6 rows = 54 slots per wall, 108 total
 const COLUMNS = 9;
