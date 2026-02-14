@@ -233,9 +233,22 @@
     "finish": "Done",
     "step1": "Processing",
     "step2": "Details",
-    "step3": "Search",
-    "step4": "Done",
-    "title": "Review"
+    "step3": "Matching",
+    "step4": "Search",
+    "step5": "Done",
+    "title": "Review",
+    "matchingTitle": "Is this the same race?",
+    "matchingSubtitle": "We found similar races already in our database.",
+    "finishersCount": "{{count}} finishers",
+    "createNewRace": "No, create a new race"
+  },
+  "finishers": {
+    "title": "Finisher's Club",
+    "club": "Finisher's Club",
+    "seeFinishers": "See {{count}} Finishers",
+    "totalCount": "{{count}} finishers",
+    "noTime": "No time recorded",
+    "empty": "You're the first!"
   },
   "social": {
     "like": "Like",

@@ -157,6 +157,7 @@ interface RoomData {
             [hasNext]="trophyItems().length > 1"
             (dismiss)="clearInspection()"
             (viewDetails)="onViewDetails($event)"
+            (seeFinishers)="onSeeFinishers($event)"
             (navigatePrev)="navigatePrev()"
             (navigateNext)="navigateNext()"
           />
@@ -383,6 +384,11 @@ export class HomePage implements OnInit {
   onViewDetails(trophyId: string): void {
     this.inspectedItemId.set(null);
     this.router.navigate(['/trophy', trophyId]);
+  }
+
+  onSeeFinishers(raceId: string): void {
+    this.inspectedItemId.set(null);
+    this.router.navigate(['/race', raceId, 'finishers']);
   }
 
   onScanTap(): void {

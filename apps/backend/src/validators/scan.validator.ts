@@ -28,6 +28,7 @@ export const validateSchema = z.object({
     .nullable()
     .optional(),
   distance: z.string().nullable().optional(),
+  raceId: z.string().uuid().optional(),
 });
 
 export const searchResultsSchema = z.object({

@@ -71,6 +71,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'race/:raceId/finishers',
+    canActivate: [authGuard, onboardingGuard],
+    loadComponent: () =>
+      import('./features/race/finishers/race-finishers.page').then(
+        (m) => m.RaceFinishersPage
+      ),
+  },
+  {
     path: 'room/edit',
     canActivate: [authGuard, onboardingGuard],
     loadComponent: () =>

@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { db } from "../db";
-import { trophy } from "../db/schema";
+import { trophy, raceResult } from "../db/schema";
 import { requireAuth } from "../middleware/auth";
 import { idParamSchema, paginationSchema } from "../validators/common.validator";
 import {
@@ -48,7 +48,20 @@ export const trophies = new Hono<{ Variables: Variables }>()
       return c.json({ error: "Not found" }, 404);
     }
 
-    return c.json({ data: item });
+    // Count finishers for the associated race
+    let finisherCount = 0;
+    const raceId = item.raceResult?.race?.id;
+    if (raceId) {
+      const [countResult] = await db
+        .select({
+          count: sql<number>`count(distinct ${raceResult.userId})`,
+        })
+        .from(raceResult)
+        .where(eq(raceResult.raceId, raceId));
+      finisherCount = Number(countResult.count);
+    }
+
+    return c.json({ data: { ...item, finisherCount } });
   })
 
   // Create trophy

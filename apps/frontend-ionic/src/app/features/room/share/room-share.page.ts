@@ -139,6 +139,7 @@ interface RoomData {
           [isAuthenticated]="!!authService.user()"
           (dismiss)="clearInspection()"
           (viewDetails)="onViewDetails($event)"
+          (seeFinishers)="onSeeFinishers($event)"
           (navigatePrev)="navigatePrev()"
           (navigateNext)="navigateNext()"
         />
@@ -315,5 +316,10 @@ export class RoomSharePage implements OnInit {
   onViewDetails(trophyId: string): void {
     this.inspectedItemId.set(null);
     this.router.navigate(['/trophy', trophyId]);
+  }
+
+  onSeeFinishers(raceId: string): void {
+    this.inspectedItemId.set(null);
+    this.router.navigate(['/race', raceId, 'finishers']);
   }
 }

@@ -6,7 +6,17 @@ import { UploadService } from './upload.service';
 import { RoomService } from './room.service';
 import { UserService } from './user.service';
 
-export type ScanStep = 'idle' | 'processing' | 'details' | 'search' | 'done';
+export type ScanStep = 'idle' | 'processing' | 'details' | 'matching' | 'search' | 'done';
+
+export interface MatchedRace {
+  id: string;
+  name: string;
+  date: string | null;
+  location: string | null;
+  distance: string | null;
+  sport: string | null;
+  finisherCount: number;
+}
 
 export interface ScanAnalysis {
   imageKind: 'medal' | 'bib' | 'unknown';
@@ -48,6 +58,8 @@ export class ScanService {
   readonly analysis = signal<ScanAnalysis | null>(null);
   readonly processedUrls = signal<ProcessedUrls | null>(null);
   readonly searchResult = signal<SearchResult | null>(null);
+  readonly matchedRaces = signal<MatchedRace[]>([]);
+  readonly selectedRaceId = signal<string | null>(null);
   readonly error = signal<string | null>(null);
   readonly processingMessage = signal('');
   readonly isProcessing = computed(() => this.step() === 'processing');
@@ -59,6 +71,8 @@ export class ScanService {
     this.analysis.set(null);
     this.processedUrls.set(null);
     this.searchResult.set(null);
+    this.matchedRaces.set([]);
+    this.selectedRaceId.set(null);
     this.error.set(null);
     this.processingMessage.set('');
   }
@@ -162,6 +176,33 @@ export class ScanService {
   }
 
   /**
+   * Search for matching races in the database
+   */
+  async searchMatchingRaces(
+    raceName: string,
+    date?: string,
+    sport?: string
+  ): Promise<MatchedRace[]> {
+    try {
+      const res = await this.api.client.api.races.search.$get({
+        query: {
+          q: raceName,
+          date,
+          sport: sport as 'running' | 'trail' | 'triathlon' | 'cycling' | 'swimming' | 'obstacle' | 'other' | undefined,
+        },
+      });
+
+      if (res.ok) {
+        const json = (await res.json()) as { data: MatchedRace[] };
+        return json.data;
+      }
+    } catch {
+      // silently fail — matching is optional
+    }
+    return [];
+  }
+
+  /**
    * Step 1 → 2: Validate race details, create race + result, then search
    */
   async validateAndSearch(details: {
@@ -172,6 +213,7 @@ export class ScanService {
     country?: string;
     distance?: string;
     sport?: 'running' | 'trail' | 'triathlon' | 'cycling' | 'swimming' | 'obstacle' | 'other';
+    raceId?: string;
   }): Promise<void> {
     const tId = this.trophyId();
     if (!tId) return;
@@ -181,7 +223,7 @@ export class ScanService {
     this.processingMessage.set('Searching for results...');
 
     try {
-      // Validate: creates race + race_result in DB
+      // Validate: creates race + race_result in DB (or reuses existing race)
       const validateRes = await this.api.client.api.scan.validate.$post({
         json: {
           trophyId: tId,
@@ -192,6 +234,7 @@ export class ScanService {
           country: details.country,
           distance: details.distance,
           sport: details.sport,
+          raceId: details.raceId,
         },
       });
 

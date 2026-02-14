@@ -1,4 +1,5 @@
 import { Component, inject, signal, OnInit, input } from '@angular/core';
+import { Router } from '@angular/router';
 import {
   IonContent,
   IonHeader,
@@ -11,8 +12,12 @@ import {
   IonCardContent,
   IonCardHeader,
   IonCardTitle,
+  IonButton,
+  IonIcon,
 } from '@ionic/angular/standalone';
 import { TranslateModule } from '@ngx-translate/core';
+import { addIcons } from 'ionicons';
+import { peopleOutline } from 'ionicons/icons';
 
 import { ApiService } from '@app/core/services/api.service';
 
@@ -25,6 +30,22 @@ interface TrophyDetail {
   originalImageUrl: string | null;
   processedImageUrl: string | null;
   createdAt: string;
+  finisherCount?: number;
+  raceResult?: {
+    id: string;
+    time: string | null;
+    ranking: number | null;
+    categoryRanking: number | null;
+    totalParticipants: number | null;
+    race: {
+      id: string;
+      name: string;
+      date: string | null;
+      location: string | null;
+      distance: string | null;
+      sport: string | null;
+    };
+  } | null;
 }
 
 @Component({
@@ -43,6 +64,8 @@ interface TrophyDetail {
     IonCardContent,
     IonCardHeader,
     IonCardTitle,
+    IonButton,
+    IonIcon,
   ],
   template: `
     <ion-header>
@@ -85,6 +108,41 @@ interface TrophyDetail {
               <p>{{ 'trophies.status' | translate }}: {{ trophy()!.status }}</p>
             </ion-card-content>
           </ion-card>
+
+          @if (trophy()!.raceResult?.race; as raceInfo) {
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>{{ raceInfo.name }}</ion-card-title>
+              </ion-card-header>
+              <ion-card-content>
+                @if (raceInfo.location) {
+                  <p>{{ raceInfo.location }}</p>
+                }
+                @if (raceInfo.distance) {
+                  <p>{{ raceInfo.distance }}</p>
+                }
+                @if (trophy()!.raceResult!.time) {
+                  <p><strong>{{ 'review.time' | translate }}:</strong> {{ trophy()!.raceResult!.time }}</p>
+                }
+                @if (trophy()!.raceResult!.ranking) {
+                  <p>
+                    <strong>{{ 'review.ranking' | translate }}:</strong>
+                    #{{ trophy()!.raceResult!.ranking }}
+                    @if (trophy()!.raceResult!.totalParticipants) {
+                      / {{ trophy()!.raceResult!.totalParticipants }}
+                    }
+                  </p>
+                }
+              </ion-card-content>
+            </ion-card>
+
+            @if (trophy()!.finisherCount && trophy()!.finisherCount! > 0) {
+              <ion-button expand="block" (click)="onSeeFinishers(raceInfo.id)">
+                <ion-icon slot="start" name="people-outline" />
+                {{ 'finishers.seeFinishers' | translate:{ count: trophy()!.finisherCount } }}
+              </ion-button>
+            }
+          }
         </div>
       }
     </ion-content>
@@ -114,9 +172,14 @@ export class TrophyDetailPage implements OnInit {
   id = input.required<string>();
 
   private api = inject(ApiService);
+  private router = inject(Router);
 
   trophy = signal<TrophyDetail | null>(null);
   loading = signal(true);
+
+  constructor() {
+    addIcons({ peopleOutline });
+  }
 
   ngOnInit(): void {
     this.fetchTrophy();
@@ -137,5 +200,9 @@ export class TrophyDetailPage implements OnInit {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  onSeeFinishers(raceId: string): void {
+    this.router.navigate(['/race', raceId, 'finishers']);
   }
 }

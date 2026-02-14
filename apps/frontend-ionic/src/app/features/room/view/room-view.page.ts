@@ -136,8 +136,10 @@ interface RoomData {
           [totalTrophies]="trophyItems().length"
           [hasPrev]="trophyItems().length > 1"
           [hasNext]="trophyItems().length > 1"
+          [isAuthenticated]="!!authService.user()"
           (dismiss)="clearInspection()"
           (viewDetails)="onViewDetails($event)"
+          (seeFinishers)="onSeeFinishers($event)"
           (navigatePrev)="navigatePrev()"
           (navigateNext)="navigateNext()"
         />
@@ -179,7 +181,7 @@ export class RoomViewPage implements OnInit {
   private api = inject(ApiService);
   private router = inject(Router);
   private themeService = inject(ThemeService);
-  private authService = inject(AuthService);
+  authService = inject(AuthService);
   private socialService = inject(SocialService);
 
   room = signal<RoomData | null>(null);
@@ -222,7 +224,16 @@ export class RoomViewPage implements OnInit {
       id: item.trophy.id,
       type: item.trophy.type,
       thumbnailUrl: item.trophy.thumbnailUrl,
-      race: item.trophy.raceResult?.race ?? null,
+      race: item.trophy.raceResult?.race
+        ? {
+            id: item.trophy.raceResult.race.id,
+            name: item.trophy.raceResult.race.name,
+            date: item.trophy.raceResult.race.date,
+            city: item.trophy.raceResult.race.city ?? null,
+            country: item.trophy.raceResult.race.country ?? null,
+            sport: item.trophy.raceResult.race.sport,
+          }
+        : null,
       result: item.trophy.raceResult
         ? {
             time: item.trophy.raceResult.time,
@@ -314,5 +325,10 @@ export class RoomViewPage implements OnInit {
   onViewDetails(trophyId: string): void {
     this.inspectedItemId.set(null);
     this.router.navigate(['/trophy', trophyId]);
+  }
+
+  onSeeFinishers(raceId: string): void {
+    this.inspectedItemId.set(null);
+    this.router.navigate(['/race', raceId, 'finishers']);
   }
 }

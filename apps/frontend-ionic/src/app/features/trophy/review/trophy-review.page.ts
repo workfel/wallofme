@@ -1,6 +1,7 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { DatePipe } from '@angular/common';
 import {
   IonContent,
   IonHeader,
@@ -27,7 +28,7 @@ import {
 } from '@ionic/angular/standalone';
 import { TranslateModule } from '@ngx-translate/core';
 import { addIcons } from 'ionicons';
-import { checkmarkCircle, searchOutline, trophyOutline } from 'ionicons/icons';
+import { checkmarkCircle, searchOutline, trophyOutline, addCircleOutline, peopleOutline } from 'ionicons/icons';
 
 import { ScanService } from '@app/core/services/scan.service';
 
@@ -36,6 +37,7 @@ import { ScanService } from '@app/core/services/scan.service';
   standalone: true,
   imports: [
     FormsModule,
+    DatePipe,
     TranslateModule,
     IonContent,
     IonHeader,
@@ -192,7 +194,47 @@ import { ScanService } from '@app/core/services/scan.service';
         </div>
       }
 
-      <!-- Step 2: Searching -->
+      <!-- Step 2: Matching -->
+      @if (scan.step() === 'matching') {
+        <div class="matching-section animate-fade-in-up">
+          <h3>{{ 'review.matchingTitle' | translate }}</h3>
+          <p class="matching-subtitle">{{ 'review.matchingSubtitle' | translate }}</p>
+
+          @for (r of scan.matchedRaces(); track r.id) {
+            <ion-card
+              button
+              (click)="onSelectRace(r.id)"
+              class="match-card"
+            >
+              <ion-card-content>
+                <div class="match-name">{{ r.name }}</div>
+                <div class="match-meta">
+                  @if (r.location) {
+                    <span>{{ r.location }}</span>
+                  }
+                  @if (r.date) {
+                    <span>{{ r.date | date:'mediumDate' }}</span>
+                  }
+                  @if (r.distance) {
+                    <span>{{ r.distance }}</span>
+                  }
+                </div>
+                <div class="match-finishers">
+                  <ion-icon name="people-outline" />
+                  {{ 'review.finishersCount' | translate:{ count: r.finisherCount } }}
+                </div>
+              </ion-card-content>
+            </ion-card>
+          }
+
+          <ion-button expand="block" fill="outline" (click)="onCreateNewRace()">
+            <ion-icon slot="start" name="add-circle-outline" />
+            {{ 'review.createNewRace' | translate }}
+          </ion-button>
+        </div>
+      }
+
+      <!-- Step 3: Searching -->
       @if (scan.step() === 'search') {
         <div class="centered animate-fade-in">
           <ion-spinner name="crescent" />
@@ -350,6 +392,59 @@ import { ScanService } from '@app/core/services/scan.service';
       margin: 0;
     }
 
+    .matching-section {
+      padding-bottom: 24px;
+
+      h3 {
+        font-size: 18px;
+        font-weight: 700;
+        margin: 0 0 4px;
+      }
+
+      .matching-subtitle {
+        color: var(--ion-color-medium);
+        font-size: 14px;
+        margin: 0 0 16px;
+      }
+
+      .match-card {
+        margin: 0 0 8px;
+        --background: var(--ion-color-step-50);
+      }
+
+      .match-name {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .match-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--ion-color-medium);
+        margin-bottom: 6px;
+      }
+
+      .match-finishers {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--ion-color-primary);
+
+        ion-icon {
+          font-size: 16px;
+        }
+      }
+
+      ion-button {
+        margin-top: 16px;
+      }
+    }
+
     .done-section {
       display: flex;
       flex-direction: column;
@@ -407,22 +502,24 @@ export class TrophyReviewPage {
   steps = [
     { key: 'processing', label: 'review.step1' },
     { key: 'details', label: 'review.step2' },
-    { key: 'search', label: 'review.step3' },
-    { key: 'done', label: 'review.step4' },
+    { key: 'matching', label: 'review.step3' },
+    { key: 'search', label: 'review.step4' },
+    { key: 'done', label: 'review.step5' },
   ];
 
   stepIndex = computed(() => {
     const map: Record<string, number> = {
       processing: 0,
       details: 1,
-      search: 2,
-      done: 3,
+      matching: 2,
+      search: 3,
+      done: 4,
     };
     return map[this.scan.step()] ?? 0;
   });
 
   constructor() {
-    addIcons({ checkmarkCircle, searchOutline, trophyOutline });
+    addIcons({ checkmarkCircle, searchOutline, trophyOutline, addCircleOutline, peopleOutline });
 
     // Pre-fill form from AI analysis when available
     const analysis = this.scan.analysis();
@@ -446,6 +543,32 @@ export class TrophyReviewPage {
     }
     this.formError.set('');
 
+    // Search for matching races first
+    const matches = await this.scan.searchMatchingRaces(
+      this.raceName.trim(),
+      this.raceDate || undefined,
+      this.sport || undefined,
+    );
+
+    if (matches.length > 0) {
+      this.scan.matchedRaces.set(matches);
+      this.scan.step.set('matching');
+    } else {
+      await this.doValidateAndSearch();
+    }
+  }
+
+  async onSelectRace(raceId: string): Promise<void> {
+    this.scan.selectedRaceId.set(raceId);
+    await this.doValidateAndSearch(raceId);
+  }
+
+  async onCreateNewRace(): Promise<void> {
+    this.scan.selectedRaceId.set(null);
+    await this.doValidateAndSearch();
+  }
+
+  private async doValidateAndSearch(raceId?: string): Promise<void> {
     await this.scan.validateAndSearch({
       type: this.formType(),
       raceName: this.raceName.trim(),
@@ -454,6 +577,7 @@ export class TrophyReviewPage {
       country: this.country.trim().toUpperCase() || undefined,
       distance: this.distance.trim() || undefined,
       sport: (this.sport as 'running' | 'trail' | 'triathlon' | 'cycling' | 'swimming' | 'obstacle' | 'other') || undefined,
+      raceId,
     });
   }
 

@@ -10,7 +10,7 @@ import {
   validateSchema,
   searchResultsSchema,
 } from "../validators/scan.validator";
-import { analyzeImage, searchRaceResults } from "../lib/ai-analyzer";
+import { analyzeImage, searchRaceDate, searchRaceResults } from "../lib/ai-analyzer";
 import { processTrophyImage } from "../lib/image-processor";
 import { downloadBuffer } from "../lib/storage";
 import { FREE_SCAN_LIMIT, getMonthlyScansUsed } from "../lib/scan-limit";
@@ -58,6 +58,21 @@ export const scan = new Hono<{ Variables: Variables }>()
 
       if (analysis.hasPornContent) {
         return c.json({ error: "Inappropriate content detected" }, 422);
+      }
+
+      // If date is January 1st (likely a default), search for the real date
+      if (analysis.date && analysis.date.endsWith("-01-01") && analysis.raceName) {
+        const year = analysis.date.substring(0, 4);
+        const refinedDate = await searchRaceDate(
+          analysis.raceName,
+          year,
+          analysis.sportKind,
+          analysis.city,
+          analysis.country,
+        );
+        if (refinedDate) {
+          analysis.date = refinedDate;
+        }
       }
 
       // Update trophy with AI-identified race info
@@ -150,25 +165,37 @@ export const scan = new Hono<{ Variables: Variables }>()
         return c.json({ error: "Not found" }, 404);
       }
 
-      // Create race
-      const [newRace] = await db
-        .insert(race)
-        .values({
-          name: body.raceName,
-          date: body.date ? new Date(body.date) : null,
-          location:
-            [body.city, body.country].filter(Boolean).join(", ") || null,
-          distance: body.distance ?? null,
-          sport: body.sport ?? null,
-        })
-        .returning();
+      // Use existing race or create a new one
+      let raceRecord;
+      if (body.raceId) {
+        const existing = await db.query.race.findFirst({
+          where: eq(race.id, body.raceId),
+        });
+        if (!existing) {
+          return c.json({ error: "Race not found" }, 404);
+        }
+        raceRecord = existing;
+      } else {
+        const [created] = await db
+          .insert(race)
+          .values({
+            name: body.raceName,
+            date: body.date ? new Date(body.date) : null,
+            location:
+              [body.city, body.country].filter(Boolean).join(", ") || null,
+            distance: body.distance ?? null,
+            sport: body.sport ?? null,
+          })
+          .returning();
+        raceRecord = created;
+      }
 
       // Create race result stub
       const [newRaceResult] = await db
         .insert(raceResult)
         .values({
           userId: currentUser.id,
-          raceId: newRace.id,
+          raceId: raceRecord.id,
           source: "ai",
         })
         .returning();
@@ -185,7 +212,7 @@ export const scan = new Hono<{ Variables: Variables }>()
 
       return c.json({
         data: {
-          race: newRace,
+          race: raceRecord,
           raceResult: newRaceResult,
         },
       });

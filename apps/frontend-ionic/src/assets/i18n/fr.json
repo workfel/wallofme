@@ -233,9 +233,22 @@
     "finish": "Terminé",
     "step1": "Traitement",
     "step2": "Détails",
-    "step3": "Recherche",
-    "step4": "Terminé",
-    "title": "Vérification"
+    "step3": "Association",
+    "step4": "Recherche",
+    "step5": "Terminé",
+    "title": "Vérification",
+    "matchingTitle": "Est-ce la même course ?",
+    "matchingSubtitle": "Nous avons trouvé des courses similaires dans notre base.",
+    "finishersCount": "{{count}} finishers",
+    "createNewRace": "Non, créer une nouvelle course"
+  },
+  "finishers": {
+    "title": "Club des Finishers",
+    "club": "Club des Finishers",
+    "seeFinishers": "Voir {{count}} Finishers",
+    "totalCount": "{{count}} finishers",
+    "noTime": "Aucun temps enregistré",
+    "empty": "Vous êtes le premier !"
   },
   "social": {
     "like": "Aimer",

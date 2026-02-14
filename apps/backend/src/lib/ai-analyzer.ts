@@ -115,6 +115,73 @@ Return null for any field you cannot determine from the image.`,
   return output!;
 }
 
+// ─── Race Date Refinement ─────────────────────────────
+
+const raceDateSchema = z.object({
+  found: z.boolean().describe("Whether a precise date was found"),
+  date: z
+    .string()
+    .nullable()
+    .describe("The race date in YYYY-MM-DD format"),
+});
+
+export async function searchRaceDate(
+  raceName: string,
+  year: string,
+  sportKind?: string | null,
+  city?: string | null,
+  country?: string | null,
+): Promise<string | null> {
+  const google = getGoogleProvider();
+  const model = google(process.env.AI_TEXT_MODEL || "gemini-2.0-flash");
+
+  const locationParts = [city, country].filter(Boolean).join(", ");
+
+  const { text } = await generateText({
+    model,
+    maxRetries: 1,
+    temperature: 0,
+    tools: { google_search: google.tools.googleSearch({}) },
+    system: `Tu es un assistant spécialisé dans la recherche d'informations sur les courses sportives.
+
+Utilise Google Search pour trouver la date exacte d'une course. Cherche sur les sites officiels de la course, les calendriers sportifs, et les sites spécialisés.
+
+IMPORTANT:
+- Cherche la date EXACTE (jour, mois, année) de la course
+- Si la course a lieu sur plusieurs jours, retourne la date du premier jour
+- Si tu ne trouves pas avec certitude, retourne found: false
+- Ne fabrique JAMAIS de date
+- Le format de date doit être YYYY-MM-DD
+
+Réponds UNIQUEMENT avec un JSON:
+{ "found": true, "date": "2024-06-15" }
+
+Ou si non trouvé:
+{ "found": false, "date": null }`,
+    prompt: `Recherche la date exacte de cette course:
+- Nom: ${raceName}
+- Année: ${year}
+${sportKind ? `- Sport: ${sportKind}` : ""}
+${locationParts ? `- Lieu: ${locationParts}` : ""}
+
+Trouve la date précise (jour et mois) de cette course pour l'année ${year}.`,
+  });
+
+  try {
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = raceDateSchema.parse(JSON.parse(jsonMatch[0]));
+      if (parsed.found && parsed.date) {
+        return parsed.date;
+      }
+    }
+  } catch {
+    // Parsing failed
+  }
+
+  return null;
+}
+
 // ─── Race Results Search ───────────────────────────────
 
 const raceResultsSchema = z.object({

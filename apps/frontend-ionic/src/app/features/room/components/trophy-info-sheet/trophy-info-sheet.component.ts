@@ -26,6 +26,7 @@ import {
   barbellOutline,
   ellipseOutline,
   lockClosedOutline,
+  peopleOutline,
 } from 'ionicons/icons';
 import { TranslateModule } from '@ngx-translate/core';
 
@@ -34,6 +35,7 @@ export interface TrophyInfoData {
   type: 'medal' | 'bib';
   thumbnailUrl: string | null;
   race?: {
+    id?: string;
     name: string;
     date: string | null;
     city: string | null;
@@ -149,6 +151,17 @@ const SPORT_ICON_MAP: Record<string, string> = {
                   </div>
                 }
               </div>
+              @if (t.race.id && isAuthenticated()) {
+                <ion-button
+                  expand="block"
+                  fill="outline"
+                  class="finishers-btn"
+                  (click)="seeFinishers.emit(t.race!.id!)"
+                >
+                  <ion-icon slot="start" name="people-outline" />
+                  {{ 'finishers.club' | translate }}
+                </ion-button>
+              }
             } @else {
               <p class="no-info">{{ 'room.noRaceInfo' | translate }}</p>
             }
@@ -303,6 +316,12 @@ const SPORT_ICON_MAP: Record<string, string> = {
       margin: 24px 0;
     }
 
+    .finishers-btn {
+      width: 100%;
+      margin-top: 4px;
+      --border-radius: 10px;
+    }
+
     .details-btn {
       width: 100%;
       margin-top: 4px;
@@ -319,6 +338,7 @@ export class TrophyInfoSheetComponent {
   isAuthenticated = input(true);
   dismiss = output<void>();
   viewDetails = output<string>();
+  seeFinishers = output<string>();
   navigatePrev = output<void>();
   navigateNext = output<void>();
 
@@ -335,6 +355,7 @@ export class TrophyInfoSheetComponent {
       timerOutline, podiumOutline, walkOutline, bicycleOutline,
       fitnessOutline, waterOutline, trailSignOutline, barbellOutline, ellipseOutline,
       lockClosedOutline,
+      peopleOutline,
     });
   }
 

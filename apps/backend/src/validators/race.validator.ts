@@ -19,6 +19,22 @@ export const createRaceSchema = z.object({
   officialUrl: z.string().url().optional(),
 });
 
+export const searchRaceSchema = z.object({
+  q: z.string().min(3),
+  date: z.string().optional(),
+  sport: z
+    .enum([
+      "running",
+      "trail",
+      "triathlon",
+      "cycling",
+      "swimming",
+      "obstacle",
+      "other",
+    ])
+    .optional(),
+});
+
 export const createRaceResultSchema = z.object({
   raceId: z.string().uuid(),
   time: z.string().optional(),

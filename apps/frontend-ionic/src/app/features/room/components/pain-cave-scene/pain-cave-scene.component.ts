@@ -86,6 +86,7 @@ export interface RoomItem3D {
       ranking: number | null;
       categoryRanking: number | null;
       race: {
+        id?: string;
         name: string;
         date: string | null;
         city: string | null;
