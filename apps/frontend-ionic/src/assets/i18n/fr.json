@@ -211,10 +211,12 @@
   },
   "onboarding": {
     "title": "Bienvenue !",
-    "subtitle": "Parlez-nous de vous pour retrouver vos résultats de course",
+    "subtitle": "Votre nom et votre pays sont utilisés pour retrouver automatiquement vos résultats officiels de course. Remplissez-les avec soin !",
     "firstName": "Prénom",
     "lastName": "Nom de famille",
-    "country": "Pays (ex: FR)",
+    "country": "Pays",
+    "countryPlaceholder": "Sélectionner votre pays",
+    "searchCountry": "Rechercher un pays...",
     "continue": "Continuer",
     "back": "Retour",
     "fieldsRequired": "Le prénom et le nom sont requis",
@@ -289,7 +291,15 @@
     "matchingSubtitle": "Nous avons trouvé des courses similaires dans notre base.",
     "finishersCount": "{{count}} finishers",
     "createNewRace": "Non, créer une nouvelle course",
-    "upsellFrame": "Mettez en valeur ce trophée ! Cadre doré : 200 flammes"
+    "upsellFrame": "Mettez en valeur ce trophée ! Cadre doré : 200 flammes",
+    "searchDate": "Rechercher la date",
+    "searchingDate": "Recherche...",
+    "searchDateCooldown": "Réessayer dans {{seconds}}s",
+    "dateSearchMaxAttempts": "Recherche de date indisponible. Vous pouvez la saisir manuellement.",
+    "retryResults": "Relancer la recherche",
+    "retryingResults": "Recherche...",
+    "retryResultsCooldown": "Réessayer dans {{seconds}}s",
+    "resultsRetryMaxAttempts": "Aucun résultat trouvé. Vous pourrez les ajouter manuellement."
   },
   "finishers": {
     "title": "Club des Finishers",

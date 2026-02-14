@@ -9,6 +9,7 @@ import {
   createTrophySchema,
   updateTrophySchema,
 } from "../validators/trophy.validator";
+import { FREE_SCAN_LIMIT, getMonthlyScansUsed } from "../lib/scan-limit";
 import type { auth } from "../lib/auth";
 
 type Variables = {
@@ -68,6 +69,17 @@ export const trophies = new Hono<{ Variables: Variables }>()
   .post("/", requireAuth, zValidator("json", createTrophySchema), async (c) => {
     const user = c.get("user")!;
     const body = c.req.valid("json");
+
+    // Check scan limit for free users BEFORE creating the trophy
+    if (!user.isPro) {
+      const used = await getMonthlyScansUsed(user.id);
+      if (used >= FREE_SCAN_LIMIT) {
+        return c.json(
+          { error: "scan_limit_reached", scansRemaining: 0 },
+          403,
+        );
+      }
+    }
 
     const [item] = await db
       .insert(trophy)

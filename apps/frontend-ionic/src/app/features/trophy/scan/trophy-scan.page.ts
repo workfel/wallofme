@@ -15,6 +15,7 @@ import {
   IonSegmentButton,
   IonLabel,
   AlertController,
+  ViewWillEnter,
 } from '@ionic/angular/standalone';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { addIcons } from 'ionicons';
@@ -180,7 +181,7 @@ import { UserService } from '@app/core/services/user.service';
     }
   `,
 })
-export class TrophyScanPage {
+export class TrophyScanPage implements ViewWillEnter {
   private router = inject(Router);
   private scanService = inject(ScanService);
   private userService = inject(UserService);
@@ -194,7 +195,13 @@ export class TrophyScanPage {
 
   constructor() {
     addIcons({ camera, images, refreshOutline, arrowForward });
+  }
+
+  ionViewWillEnter(): void {
     this.scanService.reset();
+    this.imagePreview.set(null);
+    this.imageBlob.set(null);
+    this.uploading.set(false);
   }
 
   async capturePhoto(): Promise<void> {

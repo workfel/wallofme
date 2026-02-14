@@ -1,6 +1,8 @@
 import { Component, inject, computed } from '@angular/core';
 import {
+  IonButton,
   IonIcon,
+  IonSpinner,
   IonText,
   IonCard,
   IonCardContent,
@@ -9,7 +11,7 @@ import {
 } from '@ionic/angular/standalone';
 import { TranslateModule } from '@ngx-translate/core';
 import { addIcons } from 'ionicons';
-import { searchOutline, trophyOutline } from 'ionicons/icons';
+import { searchOutline, trophyOutline, refreshOutline } from 'ionicons/icons';
 
 import { ScanService } from '@app/core/services/scan.service';
 
@@ -18,7 +20,9 @@ import { ScanService } from '@app/core/services/scan.service';
   standalone: true,
   imports: [
     TranslateModule,
+    IonButton,
     IonIcon,
+    IonSpinner,
     IonText,
     IonCard,
     IonCardContent,
@@ -85,6 +89,23 @@ import { ScanService } from '@app/core/services/scan.service';
           <ion-text color="medium">
             <p>{{ 'review.noResultsMessage' | translate }}</p>
           </ion-text>
+          <div class="retry-row">
+            @if (scan.resultsRetryLoading()) {
+              <ion-spinner name="dots" />
+              <ion-text color="medium"><small>{{ 'review.retryingResults' | translate }}</small></ion-text>
+            } @else if (resultsRetryMaxed()) {
+              <ion-text color="medium"><small class="search-hint">{{ 'review.resultsRetryMaxAttempts' | translate }}</small></ion-text>
+            } @else if (scan.resultsRetryCooldownRemaining() > 0) {
+              <ion-button size="small" fill="outline" disabled="true">
+                {{ 'review.retryResultsCooldown' | translate:{ seconds: scan.resultsRetryCooldownRemaining() } }}
+              </ion-button>
+            } @else {
+              <ion-button size="small" fill="outline" (click)="onRetryResults()">
+                <ion-icon slot="start" name="refresh-outline" />
+                {{ 'review.retryResults' | translate }}
+              </ion-button>
+            }
+          </div>
         </div>
       }
     }
@@ -194,6 +215,28 @@ import { ScanService } from '@app/core/services/scan.service';
       }
     }
 
+    .retry-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 0 0;
+
+      ion-spinner {
+        width: 18px;
+        height: 18px;
+      }
+
+      ion-button {
+        margin: 0;
+      }
+    }
+
+    .search-hint {
+      font-style: italic;
+      font-size: 12px;
+    }
+
     /* Keyframes */
     @keyframes spin {
       to {
@@ -242,7 +285,13 @@ import { ScanService } from '@app/core/services/scan.service';
 export class TrophyResultsSearchComponent {
   scan = inject(ScanService);
 
+  resultsRetryMaxed = computed(() => this.scan.resultsRetryAttempts() >= 2);
+
   constructor() {
-    addIcons({ searchOutline, trophyOutline });
+    addIcons({ searchOutline, trophyOutline, refreshOutline });
+  }
+
+  async onRetryResults(): Promise<void> {
+    await this.scan.retrySearchResults();
   }
 }

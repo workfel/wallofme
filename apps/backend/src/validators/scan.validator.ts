@@ -34,3 +34,11 @@ export const validateSchema = z.object({
 export const searchResultsSchema = z.object({
   raceResultId: z.string().uuid(),
 });
+
+export const searchDateSchema = z.object({
+  raceName: z.string().min(1),
+  year: z.string().regex(/^\d{4}$/),
+  sportKind: z.enum(["running", "trail", "triathlon", "cycling", "swimming", "obstacle", "other"]).nullable().optional(),
+  city: z.string().nullable().optional(),
+  country: z.string().nullable().optional(),
+});

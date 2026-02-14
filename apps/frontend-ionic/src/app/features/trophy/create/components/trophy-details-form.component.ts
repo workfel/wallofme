@@ -1,4 +1,4 @@
-import { Component, inject, signal, output, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, computed, output, OnInit, OnDestroy } from '@angular/core';
 import {
   IonButton,
   IonInput,
@@ -7,6 +7,7 @@ import {
   IonLabel,
   IonSelect,
   IonSelectOption,
+  IonSpinner,
   IonText,
   IonIcon,
   IonSegment,
@@ -14,7 +15,7 @@ import {
 } from '@ionic/angular/standalone';
 import { TranslateModule } from '@ngx-translate/core';
 import { addIcons } from 'ionicons';
-import { searchOutline } from 'ionicons/icons';
+import { searchOutline, calendarOutline } from 'ionicons/icons';
 
 import { ScanService } from '@app/core/services/scan.service';
 
@@ -30,6 +31,7 @@ import { ScanService } from '@app/core/services/scan.service';
     IonLabel,
     IonSelect,
     IonSelectOption,
+    IonSpinner,
     IonText,
     IonIcon,
     IonSegment,
@@ -80,6 +82,25 @@ import { ScanService } from '@app/core/services/scan.service';
             type="date"
           />
         </ion-item>
+        @if (!raceDate()) {
+          <div class="field-search-row">
+            @if (scan.dateSearchLoading()) {
+              <ion-spinner name="dots" />
+              <ion-text color="medium"><small>{{ 'review.searchingDate' | translate }}</small></ion-text>
+            } @else if (dateSearchMaxed()) {
+              <ion-text color="medium"><small class="search-hint">{{ 'review.dateSearchMaxAttempts' | translate }}</small></ion-text>
+            } @else if (scan.dateSearchCooldownRemaining() > 0) {
+              <ion-button size="small" fill="outline" disabled="true">
+                {{ 'review.searchDateCooldown' | translate:{ seconds: scan.dateSearchCooldownRemaining() } }}
+              </ion-button>
+            } @else {
+              <ion-button size="small" fill="outline" (click)="onSearchDate()" [disabled]="!raceName().trim()">
+                <ion-icon slot="start" name="calendar-outline" />
+                {{ 'review.searchDate' | translate }}
+              </ion-button>
+            }
+          </div>
+        }
         <ion-item>
           <ion-input
             [label]="'review.city' | translate"
@@ -180,6 +201,30 @@ import { ScanService } from '@app/core/services/scan.service';
       margin: 0;
     }
 
+    .field-search-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: flex-end;
+      padding: 4px 0 8px;
+
+      ion-spinner {
+        width: 18px;
+        height: 18px;
+      }
+
+      ion-button {
+        margin: 0;
+        --padding-top: 4px;
+        --padding-bottom: 4px;
+      }
+    }
+
+    .search-hint {
+      font-style: italic;
+      font-size: 12px;
+    }
+
     .results-teaser {
       display: block;
       text-align: center;
@@ -227,8 +272,10 @@ export class TrophyDetailsFormComponent implements OnInit, OnDestroy {
 
   private typewriterTimers: ReturnType<typeof setTimeout>[] = [];
 
+  dateSearchMaxed = computed(() => this.scan.dateSearchAttempts() >= 2);
+
   constructor() {
-    addIcons({ searchOutline });
+    addIcons({ searchOutline, calendarOutline });
   }
 
   ngOnInit(): void {
@@ -268,6 +315,23 @@ export class TrophyDetailsFormComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     for (const t of this.typewriterTimers) {
       clearTimeout(t);
+    }
+  }
+
+  async onSearchDate(): Promise<void> {
+    if (!this.raceName().trim()) return;
+    const year = this.raceDate()
+      ? this.raceDate().substring(0, 4)
+      : new Date().getFullYear().toString();
+    const date = await this.scan.searchDateForField({
+      raceName: this.raceName().trim(),
+      year,
+      sportKind: this.sport() || null,
+      city: this.city().trim() || null,
+      country: this.country().trim().toUpperCase() || null,
+    });
+    if (date) {
+      this.raceDate.set(date);
     }
   }
 

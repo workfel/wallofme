@@ -9,11 +9,11 @@ import {
   removeBackgroundSchema,
   validateSchema,
   searchResultsSchema,
+  searchDateSchema,
 } from "../validators/scan.validator";
 import { analyzeImage, searchRaceDate, searchRaceResults } from "../lib/ai-analyzer";
 import { processTrophyImage } from "../lib/image-processor";
 import { downloadBuffer } from "../lib/storage";
-import { FREE_SCAN_LIMIT, getMonthlyScansUsed } from "../lib/scan-limit";
 import type { auth } from "../lib/auth";
 
 type Variables = {
@@ -30,17 +30,6 @@ export const scan = new Hono<{ Variables: Variables }>()
     async (c) => {
       const currentUser = c.get("user")!;
       const { trophyId } = c.req.valid("json");
-
-      // Check scan limit for free users
-      if (!currentUser.isPro) {
-        const used = await getMonthlyScansUsed(currentUser.id);
-        if (used >= FREE_SCAN_LIMIT) {
-          return c.json(
-            { error: "scan_limit_reached", scansRemaining: 0 },
-            403,
-          );
-        }
-      }
 
       const item = await db.query.trophy.findFirst({
         where: eq(trophy.id, trophyId),
@@ -273,5 +262,17 @@ export const scan = new Hono<{ Variables: Variables }>()
       }
 
       return c.json({ data: searchResult });
+    },
+  )
+
+  // Search for race date using AI + Google Search
+  .post(
+    "/search-date",
+    requireAuth,
+    zValidator("json", searchDateSchema),
+    async (c) => {
+      const { raceName, year, sportKind, city, country } = c.req.valid("json");
+      const date = await searchRaceDate(raceName, year, sportKind, city, country);
+      return c.json({ data: { found: !!date, date } });
     },
   );

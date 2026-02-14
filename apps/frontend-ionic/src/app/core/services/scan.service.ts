@@ -6,6 +6,9 @@ import { UploadService } from './upload.service';
 import { RoomService } from './room.service';
 import { UserService } from './user.service';
 
+const MAX_RETRY_ATTEMPTS = 2;
+const RETRY_COOLDOWN_MS = 15_000;
+
 export type ScanStep = 'idle' | 'processing' | 'details' | 'matching' | 'search' | 'done';
 
 export type ProcessingPhase =
@@ -76,6 +79,18 @@ export class ScanService {
   readonly processedImageUrl = signal<string | null>(null);
   readonly isProcessing = computed(() => this.step() === 'processing');
 
+  // Date search retry state
+  readonly dateSearchLoading = signal(false);
+  readonly dateSearchAttempts = signal(0);
+  readonly dateSearchCooldownRemaining = signal(0);
+
+  // Results retry state
+  readonly resultsRetryLoading = signal(false);
+  readonly resultsRetryAttempts = signal(0);
+  readonly resultsRetryCooldownRemaining = signal(0);
+
+  private cooldownTimers = new Map<string, ReturnType<typeof setInterval>>();
+
   reset(): void {
     this.step.set('idle');
     this.processingPhase.set('idle');
@@ -90,6 +105,18 @@ export class ScanService {
     this.processingMessage.set('');
     this.originalImageUrl.set(null);
     this.processedImageUrl.set(null);
+
+    // Clear retry state
+    this.dateSearchLoading.set(false);
+    this.dateSearchAttempts.set(0);
+    this.dateSearchCooldownRemaining.set(0);
+    this.resultsRetryLoading.set(false);
+    this.resultsRetryAttempts.set(0);
+    this.resultsRetryCooldownRemaining.set(0);
+    for (const timer of this.cooldownTimers.values()) {
+      clearInterval(timer);
+    }
+    this.cooldownTimers.clear();
   }
 
   /**
@@ -109,11 +136,25 @@ export class ScanService {
     }
 
     try {
-      // 1. Create trophy
+      // 1. Create trophy (also checks scan limit for free users)
       this.processingMessage.set('Creating trophy...');
       const createRes = await this.api.client.api.trophies.$post({
         json: { type },
       });
+
+      // Handle scan limit reached (403)
+      if (createRes.status === 403) {
+        const errJson = (await createRes.json()) as { error?: string };
+        if (errJson.error === 'scan_limit_reached') {
+          this.error.set('scan_limit_reached');
+          this.step.set('idle');
+          this.processingPhase.set('idle');
+          this.userService.fetchProfile();
+          return;
+        }
+        throw new Error(errJson.error ?? 'Forbidden');
+      }
+
       if (!createRes.ok) throw new Error('Failed to create trophy');
 
       const createJson = (await createRes.json()) as { data: { id: string } };
@@ -154,20 +195,6 @@ export class ScanService {
       const analyzeRes = await this.api.client.api.scan.analyze.$post({
         json: { trophyId: tId },
       });
-
-      // Handle scan limit reached (403)
-      if (analyzeRes.status === 403) {
-        const errJson = (await analyzeRes.json()) as { error?: string };
-        if (errJson.error === 'scan_limit_reached') {
-          this.error.set('scan_limit_reached');
-          this.step.set('idle');
-          this.processingPhase.set('idle');
-          // Refresh profile to get accurate remaining count
-          this.userService.fetchProfile();
-          return;
-        }
-        throw new Error(errJson.error ?? 'Forbidden');
-      }
 
       if (analyzeRes.ok) {
         const analyzeJson = (await analyzeRes.json()) as {
@@ -309,5 +336,100 @@ export class ScanService {
 
     await this.roomService.fetchMyRoom();
     return this.roomService.addItemToRoom(tId);
+  }
+
+  /**
+   * Search for race date via AI + Google Search
+   */
+  async searchDateForField(params: {
+    raceName: string;
+    year: string;
+    sportKind?: string | null;
+    city?: string | null;
+    country?: string | null;
+  }): Promise<string | null> {
+    if (this.dateSearchAttempts() >= MAX_RETRY_ATTEMPTS) return null;
+    if (this.dateSearchCooldownRemaining() > 0) return null;
+    if (this.dateSearchLoading()) return null;
+
+    this.dateSearchLoading.set(true);
+    this.dateSearchAttempts.update((n) => n + 1);
+
+    try {
+      const res = await this.api.client.api.scan['search-date'].$post({
+        json: {
+          raceName: params.raceName,
+          year: params.year,
+          sportKind: (params.sportKind as any) ?? null,
+          city: params.city ?? null,
+          country: params.country ?? null,
+        },
+      });
+
+      if (res.ok) {
+        const json = (await res.json()) as { data: { found: boolean; date: string | null } };
+        return json.data.date;
+      }
+      return null;
+    } catch {
+      return null;
+    } finally {
+      this.dateSearchLoading.set(false);
+      this.startCooldownTimer('dateSearch');
+    }
+  }
+
+  /**
+   * Retry searching for race results
+   */
+  async retrySearchResults(): Promise<void> {
+    const rrId = this.raceResultId();
+    if (!rrId) return;
+    if (this.resultsRetryAttempts() >= MAX_RETRY_ATTEMPTS) return;
+    if (this.resultsRetryCooldownRemaining() > 0) return;
+    if (this.resultsRetryLoading()) return;
+
+    this.resultsRetryLoading.set(true);
+    this.resultsRetryAttempts.update((n) => n + 1);
+
+    try {
+      const res = await this.api.client.api.scan['search-results'].$post({
+        json: { raceResultId: rrId },
+      });
+
+      if (res.ok) {
+        const json = (await res.json()) as { data: SearchResult };
+        this.searchResult.set(json.data);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      this.resultsRetryLoading.set(false);
+      this.startCooldownTimer('resultsRetry');
+    }
+  }
+
+  private startCooldownTimer(type: 'dateSearch' | 'resultsRetry'): void {
+    const existing = this.cooldownTimers.get(type);
+    if (existing) clearInterval(existing);
+
+    const cooldownSignal = type === 'dateSearch'
+      ? this.dateSearchCooldownRemaining
+      : this.resultsRetryCooldownRemaining;
+
+    cooldownSignal.set(Math.ceil(RETRY_COOLDOWN_MS / 1000));
+
+    const timer = setInterval(() => {
+      const remaining = cooldownSignal() - 1;
+      if (remaining <= 0) {
+        cooldownSignal.set(0);
+        clearInterval(timer);
+        this.cooldownTimers.delete(type);
+      } else {
+        cooldownSignal.set(remaining);
+      }
+    }, 1000);
+
+    this.cooldownTimers.set(type, timer);
   }
 }

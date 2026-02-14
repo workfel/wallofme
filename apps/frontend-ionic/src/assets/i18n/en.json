@@ -211,10 +211,12 @@
   },
   "onboarding": {
     "title": "Welcome!",
-    "subtitle": "Tell us about yourself so we can find your race results",
+    "subtitle": "Your name and country are used to automatically find your official race results. Fill them in carefully!",
     "firstName": "First name",
     "lastName": "Last name",
-    "country": "Country (e.g. FR)",
+    "country": "Country",
+    "countryPlaceholder": "Select your country",
+    "searchCountry": "Search a country...",
     "continue": "Continue",
     "back": "Back",
     "fieldsRequired": "First name and last name are required",
@@ -289,7 +291,15 @@
     "matchingSubtitle": "We found similar races already in our database.",
     "finishersCount": "{{count}} finishers",
     "createNewRace": "No, create a new race",
-    "upsellFrame": "Highlight this trophy! Gold frame: 200 flames"
+    "upsellFrame": "Highlight this trophy! Gold frame: 200 flames",
+    "searchDate": "Search for date",
+    "searchingDate": "Searching...",
+    "searchDateCooldown": "Retry in {{seconds}}s",
+    "dateSearchMaxAttempts": "Date search not available. You can enter it manually.",
+    "retryResults": "Search again",
+    "retryingResults": "Searching...",
+    "retryResultsCooldown": "Retry in {{seconds}}s",
+    "resultsRetryMaxAttempts": "No results found. You can add them manually later."
   },
   "finishers": {
     "title": "Finisher's Club",

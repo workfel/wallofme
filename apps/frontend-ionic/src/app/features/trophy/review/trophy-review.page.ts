@@ -28,7 +28,7 @@ import {
 } from '@ionic/angular/standalone';
 import { TranslateModule } from '@ngx-translate/core';
 import { addIcons } from 'ionicons';
-import { checkmarkCircle, searchOutline, trophyOutline, addCircleOutline, peopleOutline, closeOutline } from 'ionicons/icons';
+import { checkmarkCircle, searchOutline, trophyOutline, addCircleOutline, peopleOutline, closeOutline, refreshOutline, calendarOutline } from 'ionicons/icons';
 
 import { ScanService } from '@app/core/services/scan.service';
 import { TokenService } from '@app/core/services/token.service';
@@ -142,6 +142,25 @@ import { TokenService } from '@app/core/services/token.service';
                 type="date"
               />
             </ion-item>
+            @if (!raceDate) {
+              <div class="field-search-row">
+                @if (scan.dateSearchLoading()) {
+                  <ion-spinner name="dots" />
+                  <ion-text color="medium"><small>{{ 'review.searchingDate' | translate }}</small></ion-text>
+                } @else if (dateSearchMaxed()) {
+                  <ion-text color="medium"><small class="search-hint">{{ 'review.dateSearchMaxAttempts' | translate }}</small></ion-text>
+                } @else if (scan.dateSearchCooldownRemaining() > 0) {
+                  <ion-button size="small" fill="outline" disabled="true">
+                    {{ 'review.searchDateCooldown' | translate:{ seconds: scan.dateSearchCooldownRemaining() } }}
+                  </ion-button>
+                } @else {
+                  <ion-button size="small" fill="outline" (click)="onSearchDate()" [disabled]="!raceName.trim()">
+                    <ion-icon slot="start" name="calendar-outline" />
+                    {{ 'review.searchDate' | translate }}
+                  </ion-button>
+                }
+              </div>
+            }
             <ion-item>
               <ion-input
                 [label]="'review.city' | translate"
@@ -290,6 +309,23 @@ import { TokenService } from '@app/core/services/token.service';
             <ion-text color="medium">
               <p>{{ 'review.noResultsMessage' | translate }}</p>
             </ion-text>
+            <div class="field-search-row centered-row">
+              @if (scan.resultsRetryLoading()) {
+                <ion-spinner name="dots" />
+                <ion-text color="medium"><small>{{ 'review.retryingResults' | translate }}</small></ion-text>
+              } @else if (resultsRetryMaxed()) {
+                <ion-text color="medium"><small class="search-hint">{{ 'review.resultsRetryMaxAttempts' | translate }}</small></ion-text>
+              } @else if (scan.resultsRetryCooldownRemaining() > 0) {
+                <ion-button size="small" fill="outline" disabled="true">
+                  {{ 'review.retryResultsCooldown' | translate:{ seconds: scan.resultsRetryCooldownRemaining() } }}
+                </ion-button>
+              } @else {
+                <ion-button size="small" fill="outline" (click)="onRetryResults()">
+                  <ion-icon slot="start" name="refresh-outline" />
+                  {{ 'review.retryResults' | translate }}
+                </ion-button>
+              }
+            </div>
           }
 
           @if (showUpsell()) {
@@ -468,6 +504,35 @@ import { TokenService } from '@app/core/services/token.service';
       cursor: pointer;
     }
 
+    .field-search-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: flex-end;
+      padding: 4px 0 8px;
+
+      ion-spinner {
+        width: 18px;
+        height: 18px;
+      }
+
+      ion-button {
+        margin: 0;
+        --padding-top: 4px;
+        --padding-bottom: 4px;
+      }
+
+      &.centered-row {
+        justify-content: center;
+        padding: 8px 0;
+      }
+    }
+
+    .search-hint {
+      font-style: italic;
+      font-size: 12px;
+    }
+
     .done-section {
       display: flex;
       flex-direction: column;
@@ -544,8 +609,11 @@ export class TrophyReviewPage {
     return map[this.scan.step()] ?? 0;
   });
 
+  dateSearchMaxed = computed(() => this.scan.dateSearchAttempts() >= 2);
+  resultsRetryMaxed = computed(() => this.scan.resultsRetryAttempts() >= 2);
+
   constructor() {
-    addIcons({ checkmarkCircle, searchOutline, trophyOutline, addCircleOutline, peopleOutline, closeOutline });
+    addIcons({ checkmarkCircle, searchOutline, trophyOutline, addCircleOutline, peopleOutline, closeOutline, refreshOutline, calendarOutline });
 
     // Pre-fill form from AI analysis when available
     const analysis = this.scan.analysis();
@@ -610,6 +678,27 @@ export class TrophyReviewPage {
     if (this.scan.step() === 'done' && this.tokenService.balance() < 200) {
       this.showUpsell.set(true);
     }
+  }
+
+  async onSearchDate(): Promise<void> {
+    if (!this.raceName.trim()) return;
+    const year = this.raceDate
+      ? this.raceDate.substring(0, 4)
+      : new Date().getFullYear().toString();
+    const date = await this.scan.searchDateForField({
+      raceName: this.raceName.trim(),
+      year,
+      sportKind: this.sport || null,
+      city: this.city.trim() || null,
+      country: this.country.trim().toUpperCase() || null,
+    });
+    if (date) {
+      this.raceDate = date;
+    }
+  }
+
+  async onRetryResults(): Promise<void> {
+    await this.scan.retrySearchResults();
   }
 
   onUpsellTap(): void {
