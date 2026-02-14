@@ -17,6 +17,21 @@ export interface ExploreRoom {
   updatedAt: string;
 }
 
+export interface GlobePoint {
+  userId: string;
+  displayName: string | null;
+  firstName: string | null;
+  image: string | null;
+  sports: string[];
+  country: string | null;
+  isPro: boolean;
+  lat: number;
+  lng: number;
+  thumbnailUrl: string | null;
+  likeCount: number;
+  trophyCount: number;
+}
+
 export type ExploreSortBy = 'recent' | 'popular' | 'liked';
 
 @Injectable({ providedIn: 'root' })
@@ -89,5 +104,29 @@ export class ExploreService {
   async refresh(): Promise<void> {
     this.page = 1;
     await this.loadRooms({ reset: true });
+  }
+
+  // Globe data
+  readonly globePoints = signal<GlobePoint[]>([]);
+  readonly globeLoading = signal(false);
+
+  async loadGlobePoints(sport?: string | null): Promise<void> {
+    this.globeLoading.set(true);
+    try {
+      const query = sport ? { sport } : {};
+      const res = await this.api.client.api.rooms.explore.globe.$get({
+        query,
+      });
+      if (res.ok) {
+        const json = (await res.json()) as {
+          data: { points: GlobePoint[] };
+        };
+        this.globePoints.set(json.data.points);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      this.globeLoading.set(false);
+    }
   }
 }

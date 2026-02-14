@@ -64,6 +64,8 @@ export const users = new Hono<{ Variables: Variables }>()
           country: body.country ?? null,
           displayName: `${body.firstName} ${body.lastName}`,
           sports: body.sports ? JSON.stringify(body.sports) : undefined,
+          latitude: body.latitude ?? null,
+          longitude: body.longitude ?? null,
           updatedAt: new Date(),
         })
         .where(eq(user.id, currentUser.id))
@@ -94,6 +96,8 @@ export const users = new Hono<{ Variables: Variables }>()
         updates.sports = JSON.stringify(body.sports);
       if (body.image !== undefined)
         updates.image = body.image ? getPublicUrl(body.image) : null;
+      if (body.latitude !== undefined) updates.latitude = body.latitude;
+      if (body.longitude !== undefined) updates.longitude = body.longitude;
 
       const [updated] = await db
         .update(user)

@@ -23,6 +23,8 @@ export const onboardingSchema = z.object({
   lastName: z.string().min(1).max(100),
   country: z.string().length(2).optional(),
   sports: sportsSchema.optional(),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
 });
 
 export const updateProfileSchema = z.object({
@@ -33,4 +35,6 @@ export const updateProfileSchema = z.object({
   locale: z.enum(["en", "fr"]).optional(),
   sports: sportsSchema.optional(),
   image: z.string().optional().nullable(),
+  latitude: z.number().min(-90).max(90).optional().nullable(),
+  longitude: z.number().min(-180).max(180).optional().nullable(),
 });

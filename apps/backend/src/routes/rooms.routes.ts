@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { eq, sql, desc, ilike, or, and, gt } from "drizzle-orm";
+import { eq, sql, desc, ilike, or, and, gt, isNotNull } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { db } from "../db";
 import { room, roomItem, user, trophy, roomView } from "../db/schema";
@@ -11,7 +11,10 @@ import {
   placeItemSchema,
   moveItemSchema,
 } from "../validators/room.validator";
-import { exploreQuerySchema } from "../validators/explore.validator";
+import {
+  exploreQuerySchema,
+  globeExploreQuerySchema,
+} from "../validators/explore.validator";
 import { getPublicUrl } from "../lib/storage";
 import type { auth } from "../lib/auth";
 
@@ -21,6 +24,84 @@ type Variables = {
 };
 
 export const rooms = new Hono<{ Variables: Variables }>()
+  // Globe explore — all users with coordinates (public)
+  .get(
+    "/explore/globe",
+    zValidator("query", globeExploreQuerySchema),
+    async (c) => {
+      const { sport } = c.req.valid("query");
+
+      const trophyCountSq = db
+        .select({
+          userId: trophy.userId,
+          count: sql<number>`count(*)::int`.as("trophy_count"),
+        })
+        .from(trophy)
+        .where(eq(trophy.status, "ready"))
+        .groupBy(trophy.userId)
+        .as("trophy_count_sq");
+
+      const conditions = [
+        isNotNull(user.latitude),
+        isNotNull(user.longitude),
+        gt(trophyCountSq.count, 0),
+      ];
+
+      if (sport) {
+        conditions.push(sql`${user.sports} LIKE ${"%" + sport + "%"}`);
+      }
+
+      const rows = await db
+        .select({
+          userId: user.id,
+          displayName: user.displayName,
+          firstName: user.firstName,
+          image: user.image,
+          sports: user.sports,
+          country: user.country,
+          isPro: user.isPro,
+          latitude: user.latitude,
+          longitude: user.longitude,
+          thumbnailUrl: room.thumbnailUrl,
+          likeCount: room.likeCount,
+          trophyCount: trophyCountSq.count,
+        })
+        .from(user)
+        .innerJoin(room, eq(user.id, room.userId))
+        .innerJoin(trophyCountSq, eq(user.id, trophyCountSq.userId))
+        .where(and(...conditions));
+
+      const points = rows.map((r) => {
+        // Apply 2-5km random privacy offset
+        const offsetKm = 2 + Math.random() * 3;
+        const angle = Math.random() * 2 * Math.PI;
+        const lat = r.latitude!;
+        const lng = r.longitude!;
+        const latOffset = (offsetKm * Math.cos(angle)) / 111;
+        const lngOffset =
+          (offsetKm * Math.sin(angle)) /
+          (111 * Math.cos((lat * Math.PI) / 180));
+
+        return {
+          userId: r.userId,
+          displayName: r.displayName,
+          firstName: r.firstName,
+          image: r.image,
+          sports: r.sports ? JSON.parse(r.sports) : [],
+          country: r.country,
+          isPro: r.isPro,
+          lat: lat + latOffset,
+          lng: lng + lngOffset,
+          thumbnailUrl: r.thumbnailUrl,
+          likeCount: r.likeCount,
+          trophyCount: r.trophyCount,
+        };
+      });
+
+      return c.json({ data: { points } });
+    },
+  )
+
   // Explore rooms feed (public, user-aware)
   .get(
     "/explore",

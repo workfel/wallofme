@@ -68,6 +68,8 @@ export class UserService {
     locale?: string;
     sports?: string[];
     image?: string;
+    latitude?: number | null;
+    longitude?: number | null;
   }): Promise<boolean> {
     try {
       const res = await (this.api.client.api.users.me as any).$patch({

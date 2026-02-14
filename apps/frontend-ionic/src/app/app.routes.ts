@@ -18,7 +18,6 @@ export const routes: Routes = [
   },
   {
     path: 'tabs',
-    canActivate: [authGuard, onboardingGuard],
     loadChildren: () =>
       import('./features/tabs/tabs.routes').then((m) => m.TABS_ROUTES),
   },

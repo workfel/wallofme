@@ -64,6 +64,13 @@
       "when": 1771056991881,
       "tag": "0008_familiar_molly_hayes",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1771060171041,
+      "tag": "0009_steep_forge",
+      "breakpoints": true
     }
   ]
 }

@@ -4,6 +4,7 @@ import {
   signal,
   OnInit,
   OnDestroy,
+  ViewChild,
 } from '@angular/core';
 import { SlicePipe } from '@angular/common';
 import { Router } from '@angular/router';
@@ -22,12 +23,16 @@ import {
   IonCardContent,
   IonSpinner,
   IonText,
-  IonBadge,
   IonAvatar,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
   IonRefresher,
   IonRefresherContent,
+  IonButtons,
+  IonButton,
+  IonModal,
+  ViewWillLeave,
+  ViewDidEnter,
 } from '@ionic/angular/standalone';
 import { TranslateModule } from '@ngx-translate/core';
 import { addIcons } from 'ionicons';
@@ -36,14 +41,19 @@ import {
   personCircleOutline,
   starOutline,
   searchOutline,
+  listOutline,
+  globeOutline,
 } from 'ionicons/icons';
 
 import {
   ExploreService,
   type ExploreRoom,
   type ExploreSortBy,
+  type GlobePoint,
 } from '@app/core/services/explore.service';
 import { ProBadgeComponent } from '@app/shared/components/pro-badge/pro-badge.component';
+import { ExploreGlobeComponent } from './globe/explore-globe.component';
+import { UserPreviewSheetComponent } from './globe/user-preview-sheet.component';
 
 const SPORT_FILTERS = [
   'running',
@@ -91,18 +101,30 @@ const GRADIENT_PALETTES = [
     IonCardContent,
     IonSpinner,
     IonText,
-    IonBadge,
     IonAvatar,
     IonInfiniteScroll,
     IonInfiniteScrollContent,
     IonRefresher,
     IonRefresherContent,
+    IonButtons,
+    IonButton,
+    IonModal,
     ProBadgeComponent,
+    ExploreGlobeComponent,
+    UserPreviewSheetComponent,
   ],
   template: `
     <ion-header>
       <ion-toolbar>
         <ion-title>{{ 'explore.title' | translate }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="switchView('list')" [color]="activeView() === 'list' ? 'primary' : 'medium'">
+            <ion-icon slot="icon-only" name="list-outline" />
+          </ion-button>
+          <ion-button (click)="switchView('globe')" [color]="activeView() === 'globe' ? 'primary' : 'medium'">
+            <ion-icon slot="icon-only" name="globe-outline" />
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
@@ -113,129 +135,181 @@ const GRADIENT_PALETTES = [
         </ion-toolbar>
       </ion-header>
 
-      <!-- Pull to refresh -->
-      <ion-refresher slot="fixed" (ionRefresh)="onRefresh($event)">
-        <ion-refresher-content />
-      </ion-refresher>
+      @if (activeView() === 'list') {
+        <!-- Pull to refresh -->
+        <ion-refresher slot="fixed" (ionRefresh)="onRefresh($event)">
+          <ion-refresher-content />
+        </ion-refresher>
 
-      <div class="explore-container">
-        <!-- Search bar -->
-        <ion-searchbar
-          [placeholder]="'explore.searchPlaceholder' | translate"
-          [debounce]="300"
-          (ionInput)="onSearch($event)"
-          mode="ios"
-        />
+        <div class="explore-container">
+          <!-- Search bar -->
+          <ion-searchbar
+            [placeholder]="'explore.searchPlaceholder' | translate"
+            [debounce]="300"
+            (ionInput)="onSearch($event)"
+            mode="ios"
+          />
 
-        <!-- Sport filter chips -->
-        <div class="chip-scroll">
-          @for (sport of sports; track sport) {
-            <ion-chip
-              [outline]="activeSport() !== sport"
-              [color]="activeSport() === sport ? 'primary' : undefined"
-              (click)="onSportFilter(sport)"
-            >
-              {{ 'sports.' + sport | translate }}
-            </ion-chip>
+          <!-- Sport filter chips -->
+          <div class="chip-scroll">
+            @for (sport of sports; track sport) {
+              <ion-chip
+                [outline]="activeSport() !== sport"
+                [color]="activeSport() === sport ? 'primary' : undefined"
+                (click)="onSportFilter(sport)"
+              >
+                {{ 'sports.' + sport | translate }}
+              </ion-chip>
+            }
+          </div>
+
+          <!-- Sort segment -->
+          <ion-segment
+            [value]="activeSort()"
+            (ionChange)="onSortChange($event)"
+            mode="ios"
+          >
+            <ion-segment-button value="recent">
+              <ion-label>{{ 'explore.recent' | translate }}</ion-label>
+            </ion-segment-button>
+            <ion-segment-button value="popular">
+              <ion-label>{{ 'explore.popular' | translate }}</ion-label>
+            </ion-segment-button>
+            <ion-segment-button value="liked">
+              <ion-label>{{ 'explore.mostLiked' | translate }}</ion-label>
+            </ion-segment-button>
+          </ion-segment>
+
+          <!-- Loading state (initial) -->
+          @if (exploreService.loading() && exploreService.rooms().length === 0) {
+            <div class="centered-state">
+              <ion-spinner name="crescent" />
+            </div>
+          }
+
+          <!-- Empty state -->
+          @if (exploreService.isEmpty()) {
+            <div class="centered-state empty-state">
+              <ion-icon name="search-outline" class="empty-icon" />
+              <h3>{{ 'explore.noResults' | translate }}</h3>
+              <ion-text color="medium">
+                <p>{{ 'explore.noResultsSubtitle' | translate }}</p>
+              </ion-text>
+            </div>
+          }
+
+          <!-- Room cards grid -->
+          @if (exploreService.rooms().length > 0) {
+            <div class="rooms-grid">
+              @for (room of exploreService.rooms(); track room.id; let i = $index) {
+                <ion-card class="room-card" (click)="openRoom(room)" button>
+                  <div class="card-thumbnail" [style.background]="getGradient(i)">
+                    @if (room.thumbnailUrl) {
+                      <img
+                        [src]="room.thumbnailUrl"
+                        alt=""
+                        class="thumbnail-img"
+                        loading="lazy"
+                      />
+                    }
+                    @if (room.isPro) {
+                      <div class="pro-badge">
+                        <app-pro-badge size="small" />
+                      </div>
+                    }
+                  </div>
+                  <ion-card-content class="card-body">
+                    <div class="card-user">
+                      <ion-avatar class="card-avatar">
+                        @if (room.image) {
+                          <img [src]="room.image" alt="" />
+                        } @else {
+                          <ion-icon name="person-circle-outline" class="avatar-fallback" />
+                        }
+                      </ion-avatar>
+                      <span class="card-name">{{ room.displayName || ('explore.athlete' | translate) }}</span>
+                    </div>
+                    @if (room.sports && room.sports.length > 0) {
+                      <div class="card-sports">
+                        @for (sport of room.sports | slice:0:2; track sport) {
+                          <ion-chip class="sport-chip" color="medium" outline>
+                            {{ 'sports.' + sport | translate }}
+                          </ion-chip>
+                        }
+                      </div>
+                    }
+                    <div class="card-stats">
+                      <span class="stat">
+                        <ion-icon name="heart-outline" />
+                        {{ room.likeCount }}
+                      </span>
+                    </div>
+                  </ion-card-content>
+                </ion-card>
+              }
+            </div>
           }
         </div>
 
-        <!-- Sort segment -->
-        <ion-segment
-          [value]="activeSort()"
-          (ionChange)="onSortChange($event)"
-          mode="ios"
+        <!-- Infinite scroll -->
+        <ion-infinite-scroll
+          [disabled]="!exploreService.hasMore()"
+          (ionInfinite)="onInfiniteScroll($event)"
         >
-          <ion-segment-button value="recent">
-            <ion-label>{{ 'explore.recent' | translate }}</ion-label>
-          </ion-segment-button>
-          <ion-segment-button value="popular">
-            <ion-label>{{ 'explore.popular' | translate }}</ion-label>
-          </ion-segment-button>
-          <ion-segment-button value="liked">
-            <ion-label>{{ 'explore.mostLiked' | translate }}</ion-label>
-          </ion-segment-button>
-        </ion-segment>
+          <ion-infinite-scroll-content loadingSpinner="crescent" />
+        </ion-infinite-scroll>
+      }
 
-        <!-- Loading state (initial) -->
-        @if (exploreService.loading() && exploreService.rooms().length === 0) {
-          <div class="centered-state">
-            <ion-spinner name="crescent" />
-          </div>
-        }
-
-        <!-- Empty state -->
-        @if (exploreService.isEmpty()) {
-          <div class="centered-state empty-state">
-            <ion-icon name="search-outline" class="empty-icon" />
-            <h3>{{ 'explore.noResults' | translate }}</h3>
-            <ion-text color="medium">
-              <p>{{ 'explore.noResultsSubtitle' | translate }}</p>
-            </ion-text>
-          </div>
-        }
-
-        <!-- Room cards grid -->
-        @if (exploreService.rooms().length > 0) {
-          <div class="rooms-grid">
-            @for (room of exploreService.rooms(); track room.id; let i = $index) {
-              <ion-card class="room-card" (click)="openRoom(room)" button>
-                <div class="card-thumbnail" [style.background]="getGradient(i)">
-                  @if (room.thumbnailUrl) {
-                    <img
-                      [src]="room.thumbnailUrl"
-                      alt=""
-                      class="thumbnail-img"
-                      loading="lazy"
-                    />
-                  }
-                  @if (room.isPro) {
-                    <div class="pro-badge">
-                      <app-pro-badge size="small" />
-                    </div>
-                  }
-                </div>
-                <ion-card-content class="card-body">
-                  <div class="card-user">
-                    <ion-avatar class="card-avatar">
-                      @if (room.image) {
-                        <img [src]="room.image" alt="" />
-                      } @else {
-                        <ion-icon name="person-circle-outline" class="avatar-fallback" />
-                      }
-                    </ion-avatar>
-                    <span class="card-name">{{ room.displayName || ('explore.athlete' | translate) }}</span>
-                  </div>
-                  @if (room.sports && room.sports.length > 0) {
-                    <div class="card-sports">
-                      @for (sport of room.sports | slice:0:2; track sport) {
-                        <ion-chip class="sport-chip" color="medium" outline>
-                          {{ 'sports.' + sport | translate }}
-                        </ion-chip>
-                      }
-                    </div>
-                  }
-                  <div class="card-stats">
-                    <span class="stat">
-                      <ion-icon name="heart-outline" />
-                      {{ room.likeCount }}
-                    </span>
-                  </div>
-                </ion-card-content>
-              </ion-card>
+      @if (activeView() === 'globe') {
+        <!-- Sport filter for globe -->
+        <div class="globe-filters">
+          <div class="chip-scroll">
+            @for (sport of sports; track sport) {
+              <ion-chip
+                [outline]="activeSport() !== sport"
+                [color]="activeSport() === sport ? 'primary' : undefined"
+                (click)="onSportFilter(sport)"
+              >
+                {{ 'sports.' + sport | translate }}
+              </ion-chip>
             }
           </div>
-        }
-      </div>
+        </div>
 
-      <!-- Infinite scroll -->
-      <ion-infinite-scroll
-        [disabled]="!exploreService.hasMore()"
-        (ionInfinite)="onInfiniteScroll($event)"
-      >
-        <ion-infinite-scroll-content loadingSpinner="crescent" />
-      </ion-infinite-scroll>
+        @if (exploreService.globeLoading() && exploreService.globePoints().length === 0) {
+          <div class="centered-state">
+            <ion-spinner name="crescent" />
+            <ion-text color="medium">
+              <p>{{ 'globe.loading' | translate }}</p>
+            </ion-text>
+          </div>
+        } @else if (showGlobe()) {
+          <div class="globe-container">
+            <app-explore-globe
+              [points]="exploreService.globePoints()"
+              (pointTapped)="onGlobePointTapped($event)"
+            />
+          </div>
+        }
+      }
     </ion-content>
+
+    <!-- User preview bottom sheet -->
+    <ion-modal
+      #previewModal
+      [isOpen]="!!selectedGlobeUser()"
+      [initialBreakpoint]="0.45"
+      [breakpoints]="[0, 0.45, 0.75]"
+      (didDismiss)="selectedGlobeUser.set(null)"
+    >
+      <ng-template>
+        <app-user-preview-sheet
+          [user]="selectedGlobeUser()"
+          (enterCave)="onEnterCave($event)"
+          (dismiss)="selectedGlobeUser.set(null)"
+        />
+      </ng-template>
+    </ion-modal>
   `,
   styles: `
     .explore-container {
@@ -392,20 +466,41 @@ const GRADIENT_PALETTES = [
         font-size: 14px;
       }
     }
+
+    .globe-filters {
+      padding: 0 8px;
+    }
+
+    .globe-container {
+      width: 100%;
+      height: calc(100% - 52px);
+    }
   `,
 })
-export class ExplorePage implements OnInit, OnDestroy {
+export class ExplorePage implements OnInit, OnDestroy, ViewWillLeave, ViewDidEnter {
   exploreService = inject(ExploreService);
   private router = inject(Router);
 
   readonly sports = SPORT_FILTERS;
   activeSort = signal<ExploreSortBy>('recent');
   activeSport = signal<string | null>(null);
+  activeView = signal<'list' | 'globe'>('list');
+  showGlobe = signal(true);
+  selectedGlobeUser = signal<GlobePoint | null>(null);
+
+  @ViewChild('previewModal') previewModal!: IonModal;
 
   private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
-    addIcons({ heartOutline, personCircleOutline, starOutline, searchOutline });
+    addIcons({
+      heartOutline,
+      personCircleOutline,
+      starOutline,
+      searchOutline,
+      listOutline,
+      globeOutline,
+    });
   }
 
   ngOnInit(): void {
@@ -414,6 +509,21 @@ export class ExplorePage implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
+  }
+
+  ionViewWillLeave(): void {
+    this.showGlobe.set(false);
+  }
+
+  ionViewDidEnter(): void {
+    this.showGlobe.set(true);
+  }
+
+  switchView(view: 'list' | 'globe'): void {
+    this.activeView.set(view);
+    if (view === 'globe' && this.exploreService.globePoints().length === 0) {
+      this.exploreService.loadGlobePoints(this.activeSport());
+    }
   }
 
   onSearch(event: CustomEvent): void {
@@ -426,6 +536,9 @@ export class ExplorePage implements OnInit, OnDestroy {
     const next = current === sport ? null : sport;
     this.activeSport.set(next);
     this.exploreService.loadRooms({ sport: next, reset: true });
+    if (this.activeView() === 'globe') {
+      this.exploreService.loadGlobePoints(next);
+    }
   }
 
   onSortChange(event: CustomEvent): void {
@@ -446,6 +559,16 @@ export class ExplorePage implements OnInit, OnDestroy {
 
   openRoom(room: ExploreRoom): void {
     this.router.navigate(['/room', room.userId]);
+  }
+
+  onGlobePointTapped(point: GlobePoint): void {
+    this.selectedGlobeUser.set(point);
+  }
+
+  async onEnterCave(userId: string): Promise<void> {
+    this.selectedGlobeUser.set(null);
+    await this.previewModal?.dismiss();
+    this.router.navigate(['/room', userId]);
   }
 
   getGradient(index: number): string {

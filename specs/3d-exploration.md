@@ -14,6 +14,8 @@ Filtres Globaux (Chips) : Une barre de filtres horizontale (Triathlon, Running, 
 
 Comportement : Si je sélectionne "Triathlon", la Vue Liste ne montre que des triathlètes, et la Vue Globe ne montre que les points géolocalisés des triathlètes.
 
+La page explorer est disponible pour tout le monde meme si l'user est pas connecté. ça permet d'engager l'user et de lui faire découvrir les autres passionnés.
+
 
 . Le Globe 3D (Spécifications)
 Rendu : Niveau tech utiliser https://globe.gl/ .

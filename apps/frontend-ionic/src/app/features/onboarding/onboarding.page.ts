@@ -16,6 +16,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 import { AuthService } from '@app/core/services/auth.service';
 import { ApiService } from '@app/core/services/api.service';
+import { GeolocationService } from '@app/core/services/geolocation.service';
 
 const SPORTS = [
   'running', 'trail', 'triathlon', 'cycling', 'crossfit',
@@ -282,6 +283,7 @@ export class OnboardingPage implements OnInit {
   private apiService = inject(ApiService);
   private router = inject(Router);
   private translate = inject(TranslateService);
+  private geoService = inject(GeolocationService);
 
   firstName = '';
   lastName = '';
@@ -349,6 +351,9 @@ export class OnboardingPage implements OnInit {
     this.errorMessage.set('');
 
     try {
+      // Request geolocation (non-blocking — null on failure)
+      const position = await this.geoService.getCurrentPosition();
+
       // Use the onboarding endpoint with sports
       const res = await this.apiService.client.api.users.onboarding.$post({
         json: {
@@ -356,6 +361,8 @@ export class OnboardingPage implements OnInit {
           lastName: this.lastName.trim(),
           country: this.country.trim().toUpperCase() || undefined,
           sports: this.selectedSports(),
+          latitude: position?.latitude,
+          longitude: position?.longitude,
         } as any,
       });
 

@@ -28,12 +28,15 @@ import {
   cameraOutline,
   personCircleOutline,
   checkmarkOutline,
+  locationOutline,
+  checkmarkCircleOutline,
 } from "ionicons/icons";
 import { Capacitor } from "@capacitor/core";
 
 import { AuthService } from "@app/core/services/auth.service";
 import { UserService } from "@app/core/services/user.service";
 import { UploadService } from "@app/core/services/upload.service";
+import { GeolocationService } from "@app/core/services/geolocation.service";
 
 const SPORTS = [
   "running",
@@ -214,6 +217,30 @@ const SPORT_EMOJIS: Record<string, string> = {
           </div>
         </div>
 
+        <!-- Location -->
+        <div class="location-section">
+          <ion-text>
+            <h3>{{ "profileEdit.location" | translate }}</h3>
+          </ion-text>
+          <p class="location-hint">{{ "profileEdit.locationHint" | translate }}</p>
+          <ion-button
+            fill="outline"
+            expand="block"
+            (click)="onUpdateLocation()"
+            [disabled]="updatingLocation()"
+          >
+            @if (updatingLocation()) {
+              <ion-spinner name="crescent" />
+            } @else if (hasLocation()) {
+              <ion-icon name="checkmark-circle-outline" slot="start" />
+              {{ "profileEdit.locationUpdated" | translate }}
+            } @else {
+              <ion-icon name="location-outline" slot="start" />
+              {{ "profileEdit.updateLocation" | translate }}
+            }
+          </ion-button>
+        </div>
+
         @if (errorMessage()) {
           <ion-text color="danger">
             <p class="error-text">{{ errorMessage() }}</p>
@@ -287,6 +314,22 @@ const SPORT_EMOJIS: Record<string, string> = {
       gap: 8px;
     }
 
+    .location-section {
+      margin-top: 24px;
+
+      h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0 0 4px;
+      }
+
+      .location-hint {
+        font-size: 13px;
+        color: var(--ion-color-medium);
+        margin: 0 0 12px;
+      }
+    }
+
     .save-btn {
       margin-top: 32px;
     }
@@ -302,6 +345,7 @@ export class ProfileEditPage implements OnInit {
   authService = inject(AuthService);
   private userService = inject(UserService);
   private uploadService = inject(UploadService);
+  private geoService = inject(GeolocationService);
   private router = inject(Router);
   private translate = inject(TranslateService);
   private toastController = inject(ToastController);
@@ -316,11 +360,15 @@ export class ProfileEditPage implements OnInit {
   private avatarBlob = signal<Blob | null>(null);
   saving = signal(false);
   errorMessage = signal("");
+  updatingLocation = signal(false);
+  hasLocation = signal(false);
+  private pendingLatitude: number | null = null;
+  private pendingLongitude: number | null = null;
 
   readonly sports = SPORTS;
 
   constructor() {
-    addIcons({ cameraOutline, personCircleOutline, checkmarkOutline });
+    addIcons({ cameraOutline, personCircleOutline, checkmarkOutline, locationOutline, checkmarkCircleOutline });
   }
 
   ngOnInit(): void {
@@ -387,6 +435,24 @@ export class ProfileEditPage implements OnInit {
     }
   }
 
+  async onUpdateLocation(): Promise<void> {
+    this.updatingLocation.set(true);
+    try {
+      const position = await this.geoService.getCurrentPosition();
+      if (position) {
+        this.pendingLatitude = position.latitude;
+        this.pendingLongitude = position.longitude;
+        this.hasLocation.set(true);
+      } else {
+        this.errorMessage.set(
+          this.translate.instant("profileEdit.locationFailed"),
+        );
+      }
+    } finally {
+      this.updatingLocation.set(false);
+    }
+  }
+
   async onSave(): Promise<void> {
     if (!this.firstName.trim() || !this.lastName.trim()) {
       this.errorMessage.set(
@@ -420,7 +486,7 @@ export class ProfileEditPage implements OnInit {
       }
 
       // Update profile
-      const success = await this.userService.updateProfile({
+      const profileData: Record<string, unknown> = {
         firstName: this.firstName.trim(),
         lastName: this.lastName.trim(),
         displayName:
@@ -430,7 +496,14 @@ export class ProfileEditPage implements OnInit {
         locale: this.locale,
         sports: this.selectedSports(),
         image: avatarKey,
-      });
+      };
+
+      if (this.pendingLatitude !== null && this.pendingLongitude !== null) {
+        profileData.latitude = this.pendingLatitude;
+        profileData.longitude = this.pendingLongitude;
+      }
+
+      const success = await this.userService.updateProfile(profileData as any);
 
       if (success) {
         // Refresh auth session to keep user data in sync

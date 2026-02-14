@@ -80,6 +80,8 @@ export const user = pgTable("user", {
   tokenBalance: integer("token_balance").default(0).notNull(),
   sports: text("sports"),
   proExpiresAt: timestamp("pro_expires_at"),
+  latitude: real("latitude"),
+  longitude: real("longitude"),
 });
 
 export const session = pgTable("session", {

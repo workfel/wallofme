@@ -55,7 +55,9 @@
     "rooms": "salles",
     "likes": "j'aime",
     "views": "vues",
-    "athlete": "Athlète"
+    "athlete": "Athlète",
+    "listView": "Liste",
+    "globeView": "Globe"
   },
   "trophies": {
     "title": "Mes Trophées",
@@ -264,7 +266,12 @@
     "changePhoto": "Changer la photo",
     "displayName": "Nom d'affichage",
     "sports": "Mes sports",
-    "saved": "Profil enregistré !"
+    "saved": "Profil enregistré !",
+    "location": "Localisation",
+    "locationHint": "Partagez votre position pour apparaitre sur le globe et vous connecter avec les athlètes proches.",
+    "updateLocation": "Mettre à jour ma position",
+    "locationUpdated": "Position mise à jour",
+    "locationFailed": "Impossible d'obtenir votre position. Vérifiez vos autorisations."
   },
   "pro": {
     "title": "WallOfMe Pro",
@@ -302,6 +309,10 @@
     "unlockFeature": "Débloquer cette fonctionnalité",
     "featureRequiresPro": "{{feature}} nécessite WallOfMe Pro. Passez à Pro pour débloquer toutes les fonctionnalités premium.",
     "viewPlans": "Voir les plans Pro"
+  },
+  "globe": {
+    "enterCave": "Entrer dans la Cave",
+    "loading": "Chargement des athlètes autour du monde..."
   },
   "sports": {
     "running": "Course à pied",

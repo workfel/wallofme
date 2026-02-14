@@ -1,5 +1,5 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, inject, signal, OnInit } from "@angular/core";
+import { Router } from "@angular/router";
 import {
   IonHeader,
   IonToolbar,
@@ -16,24 +16,23 @@ import {
   IonCard,
   IonCardContent,
   IonSpinner,
-  IonText,
   ToastController,
-} from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
+} from "@ionic/angular/standalone";
+import { addIcons } from "ionicons";
 import {
   checkmarkCircle,
   closeCircle,
   chevronBackOutline,
   sparklesOutline,
   ribbonOutline,
-} from 'ionicons/icons';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { ProBadgeComponent } from '@app/shared/components/pro-badge/pro-badge.component';
-import { SubscriptionService } from '@app/core/services/subscription.service';
-import { AuthService } from '@app/core/services/auth.service';
+} from "ionicons/icons";
+import { TranslateModule, TranslateService } from "@ngx-translate/core";
+import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.component";
+import { SubscriptionService } from "@app/core/services/subscription.service";
+import { AuthService } from "@app/core/services/auth.service";
 
 @Component({
-  selector: 'app-pro-upgrade',
+  selector: "app-pro-upgrade",
   standalone: true,
   imports: [
     IonHeader,
@@ -51,7 +50,6 @@ import { AuthService } from '@app/core/services/auth.service';
     IonCard,
     IonCardContent,
     IonSpinner,
-    IonText,
     TranslateModule,
     ProBadgeComponent,
   ],
@@ -61,7 +59,7 @@ import { AuthService } from '@app/core/services/auth.service';
         <ion-buttons slot="start">
           <ion-back-button defaultHref="/tabs/profile" />
         </ion-buttons>
-        <ion-title>{{ 'pro.title' | translate }}</ion-title>
+        <ion-title>{{ "pro.title" | translate }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -71,91 +69,91 @@ import { AuthService } from '@app/core/services/auth.service';
         <div class="hero-badge">
           <app-pro-badge size="medium" />
         </div>
-        <h1 class="hero-title">{{ 'pro.heroTitle' | translate }}</h1>
-        <p class="hero-subtitle">{{ 'pro.heroSubtitle' | translate }}</p>
+        <h1 class="hero-title">{{ "pro.heroTitle" | translate }}</h1>
+        <p class="hero-subtitle">{{ "pro.heroSubtitle" | translate }}</p>
       </div>
 
       <!-- Feature comparison -->
-      <h2 class="section-title">{{ 'pro.whatsIncluded' | translate }}</h2>
+      <h2 class="section-title">{{ "pro.whatsIncluded" | translate }}</h2>
 
       <ion-list [inset]="true" class="feature-list">
         <!-- Scans -->
         <ion-item>
           <ion-label>
-            <h3>{{ 'pro.featureScans' | translate }}</h3>
-            <p class="free-value">{{ 'pro.freeScans' | translate }}</p>
+            <h3>{{ "pro.featureScans" | translate }}</h3>
+            <p class="free-value">{{ "pro.freeScans" | translate }}</p>
           </ion-label>
           <div slot="end" class="pro-value">
             <ion-icon name="checkmark-circle" color="success" />
-            <span>{{ 'pro.proScans' | translate }}</span>
+            <span>{{ "pro.proScans" | translate }}</span>
           </div>
         </ion-item>
 
         <!-- Premium themes -->
         <ion-item>
           <ion-label>
-            <h3>{{ 'pro.featureThemes' | translate }}</h3>
-            <p class="free-value">{{ 'pro.freeThemes' | translate }}</p>
+            <h3>{{ "pro.featureThemes" | translate }}</h3>
+            <p class="free-value">{{ "pro.freeThemes" | translate }}</p>
           </ion-label>
           <div slot="end" class="pro-value">
             <ion-icon name="checkmark-circle" color="success" />
-            <span>{{ 'pro.proThemes' | translate }}</span>
+            <span>{{ "pro.proThemes" | translate }}</span>
           </div>
         </ion-item>
 
         <!-- Custom colors -->
         <ion-item>
           <ion-label>
-            <h3>{{ 'pro.featureColors' | translate }}</h3>
+            <h3>{{ "pro.featureColors" | translate }}</h3>
             <p class="free-value">
               <ion-icon name="close-circle" color="danger" />
             </p>
           </ion-label>
           <div slot="end" class="pro-value">
             <ion-icon name="checkmark-circle" color="success" />
-            <span>{{ 'common.yes' | translate }}</span>
+            <span>{{ "common.yes" | translate }}</span>
           </div>
         </ion-item>
 
         <!-- Ads -->
         <ion-item>
           <ion-label>
-            <h3>{{ 'pro.featureAds' | translate }}</h3>
-            <p class="free-value">{{ 'pro.freeAds' | translate }}</p>
+            <h3>{{ "pro.featureAds" | translate }}</h3>
+            <p class="free-value">{{ "pro.freeAds" | translate }}</p>
           </ion-label>
           <div slot="end" class="pro-value">
             <ion-icon name="checkmark-circle" color="success" />
-            <span>{{ 'pro.proAds' | translate }}</span>
+            <span>{{ "pro.proAds" | translate }}</span>
           </div>
         </ion-item>
 
         <!-- Monthly bonus -->
         <ion-item>
           <ion-label>
-            <h3>{{ 'pro.featureBonus' | translate }}</h3>
+            <h3>{{ "pro.featureBonus" | translate }}</h3>
             <p class="free-value">—</p>
           </ion-label>
           <div slot="end" class="pro-value">
             <ion-icon name="checkmark-circle" color="success" />
-            <span>{{ 'pro.proBonus' | translate }}</span>
+            <span>{{ "pro.proBonus" | translate }}</span>
           </div>
         </ion-item>
 
         <!-- Pro badge -->
         <ion-item>
           <ion-label>
-            <h3>{{ 'pro.featureBadge' | translate }}</h3>
+            <h3>{{ "pro.featureBadge" | translate }}</h3>
             <p class="free-value">—</p>
           </ion-label>
           <div slot="end" class="pro-value">
             <ion-icon name="checkmark-circle" color="success" />
-            <span>{{ 'common.yes' | translate }}</span>
+            <span>{{ "common.yes" | translate }}</span>
           </div>
         </ion-item>
       </ion-list>
 
       <!-- Pricing cards -->
-      <h2 class="section-title">{{ 'pro.choosePlan' | translate }}</h2>
+      <h2 class="section-title">{{ "pro.choosePlan" | translate }}</h2>
 
       <div class="pricing-grid">
         <!-- Monthly -->
@@ -166,11 +164,14 @@ import { AuthService } from '@app/core/services/auth.service';
           (click)="selectedPlan.set('monthly')"
         >
           <ion-card-content>
-            <span class="plan-name">{{ 'pro.monthly' | translate }}</span>
+            <span class="plan-name">{{ "pro.monthly" | translate }}</span>
             <span class="plan-price">
-              {{ subscriptionService.getMonthlyOffering()?.localizedPrice || '$4.99' }}
+              {{
+                subscriptionService.getMonthlyOffering()?.localizedPrice ||
+                  "$4.99"
+              }}
             </span>
-            <span class="plan-period">{{ 'pro.perMonth' | translate }}</span>
+            <span class="plan-period">{{ "pro.perMonth" | translate }}</span>
           </ion-card-content>
         </ion-card>
 
@@ -182,16 +183,19 @@ import { AuthService } from '@app/core/services/auth.service';
           (click)="selectedPlan.set('annual')"
         >
           <ion-badge color="success" class="best-value-badge">
-            {{ 'pro.bestValue' | translate }}
+            {{ "pro.bestValue" | translate }}
           </ion-badge>
           <ion-card-content>
-            <span class="plan-name">{{ 'pro.annual' | translate }}</span>
+            <span class="plan-name">{{ "pro.annual" | translate }}</span>
             <span class="plan-price">
-              {{ subscriptionService.getAnnualOffering()?.localizedPrice || '$29.99' }}
+              {{
+                subscriptionService.getAnnualOffering()?.localizedPrice ||
+                  "$29.99"
+              }}
             </span>
-            <span class="plan-period">{{ 'pro.perYear' | translate }}</span>
+            <span class="plan-period">{{ "pro.perYear" | translate }}</span>
             <ion-badge color="warning" class="save-badge">
-              {{ 'pro.save50' | translate }}
+              {{ "pro.save50" | translate }}
             </ion-badge>
           </ion-card-content>
         </ion-card>
@@ -208,7 +212,7 @@ import { AuthService } from '@app/core/services/auth.service';
           <ion-spinner name="crescent" />
         } @else {
           <ion-icon slot="start" name="sparkles-outline" />
-          {{ 'pro.subscribe' | translate }}
+          {{ "pro.subscribe" | translate }}
         }
       </ion-button>
 
@@ -219,18 +223,23 @@ import { AuthService } from '@app/core/services/auth.service';
         size="small"
         (click)="onRestore()"
       >
-        {{ 'pro.restorePurchases' | translate }}
+        {{ "pro.restorePurchases" | translate }}
       </ion-button>
 
       <!-- Terms footer -->
       <p class="terms-footer">
-        {{ 'pro.termsFooter' | translate }}
+        {{ "pro.termsFooter" | translate }}
       </p>
     </ion-content>
   `,
   styles: `
     .hero {
-      background: linear-gradient(135deg, #f5a623 0%, #f7c948 50%, #ffd700 100%);
+      background: linear-gradient(
+        135deg,
+        #f5a623 0%,
+        #f7c948 50%,
+        #ffd700 100%
+      );
       border-radius: 20px;
       padding: 32px 24px;
       text-align: center;
@@ -384,7 +393,7 @@ export class ProUpgradePage implements OnInit {
   private toastCtrl = inject(ToastController);
   private translate = inject(TranslateService);
 
-  selectedPlan = signal<'monthly' | 'annual'>('annual');
+  selectedPlan = signal<"monthly" | "annual">("annual");
 
   constructor() {
     addIcons({
@@ -401,20 +410,20 @@ export class ProUpgradePage implements OnInit {
 
     // If already Pro, redirect back
     if (this.authService.user()?.isPro) {
-      this.router.navigate(['/tabs/profile']);
+      this.router.navigate(["/tabs/profile"]);
     }
   }
 
   async onSubscribe(): Promise<void> {
     const offering =
-      this.selectedPlan() === 'annual'
+      this.selectedPlan() === "annual"
         ? this.subscriptionService.getAnnualOffering()
         : this.subscriptionService.getMonthlyOffering();
 
     if (!offering) {
       await this.showToast(
-        this.translate.instant('pro.unavailable'),
-        'warning',
+        this.translate.instant("pro.unavailable"),
+        "warning",
       );
       return;
     }
@@ -422,10 +431,10 @@ export class ProUpgradePage implements OnInit {
     const result = await this.subscriptionService.purchase(offering);
     if (result.success) {
       await this.showToast(
-        this.translate.instant('pro.purchaseSuccess'),
-        'success',
+        this.translate.instant("pro.purchaseSuccess"),
+        "success",
       );
-      this.router.navigate(['/tabs/profile']);
+      this.router.navigate(["/tabs/profile"]);
     }
   }
 
@@ -433,14 +442,14 @@ export class ProUpgradePage implements OnInit {
     const result = await this.subscriptionService.restorePurchases();
     if (result.success) {
       await this.showToast(
-        this.translate.instant('pro.restoreSuccess'),
-        'success',
+        this.translate.instant("pro.restoreSuccess"),
+        "success",
       );
-      this.router.navigate(['/tabs/profile']);
+      this.router.navigate(["/tabs/profile"]);
     } else {
       await this.showToast(
-        this.translate.instant('pro.restoreFailed'),
-        'warning',
+        this.translate.instant("pro.restoreFailed"),
+        "warning",
       );
     }
   }
@@ -450,7 +459,7 @@ export class ProUpgradePage implements OnInit {
       message,
       duration: 2000,
       color,
-      position: 'bottom',
+      position: "bottom",
     });
     await toast.present();
   }

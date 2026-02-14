@@ -55,7 +55,9 @@
     "rooms": "rooms",
     "likes": "likes",
     "views": "views",
-    "athlete": "Athlete"
+    "athlete": "Athlete",
+    "listView": "List",
+    "globeView": "Globe"
   },
   "trophies": {
     "title": "My Trophies",
@@ -264,7 +266,16 @@
     "changePhoto": "Change Photo",
     "displayName": "Display Name",
     "sports": "My Sports",
-    "saved": "Profile saved!"
+    "saved": "Profile saved!",
+    "location": "Location",
+    "locationHint": "Share your location to appear on the globe and connect with nearby athletes.",
+    "updateLocation": "Update My Location",
+    "locationUpdated": "Location Updated",
+    "locationFailed": "Could not get your location. Please check your permissions."
+  },
+  "globe": {
+    "enterCave": "Enter the Cave",
+    "loading": "Loading athletes around the world..."
   },
   "sports": {
     "running": "Running",
