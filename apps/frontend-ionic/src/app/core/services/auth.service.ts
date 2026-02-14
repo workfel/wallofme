@@ -1,8 +1,16 @@
-import { Injectable, signal, computed, inject, NgZone, Injector } from '@angular/core';
-import { Router } from '@angular/router';
-import { createAuthClient } from 'better-auth/client';
-import { withCapacitor, isNativePlatform } from 'better-auth-capacitor/client';
-import { environment } from '@env/environment';
+import {
+  Injectable,
+  signal,
+  computed,
+  inject,
+  NgZone,
+  Injector,
+} from "@angular/core";
+import { Router } from "@angular/router";
+import { I18nService } from "./i18n.service";
+import { createAuthClient } from "better-auth/client";
+import { withCapacitor, isNativePlatform } from "better-auth-capacitor/client";
+import { environment } from "@env/environment";
 
 export interface User {
   id: string;
@@ -26,7 +34,7 @@ export interface Session {
   expiresAt: Date;
 }
 
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class AuthService {
   private readonly _user = signal<User | null>(null);
   private readonly _session = signal<Session | null>(null);
@@ -34,6 +42,7 @@ export class AuthService {
   private router = inject(Router);
   private zone = inject(NgZone);
   private injector = inject(Injector);
+  private i18nService = inject(I18nService);
 
   readonly user = this._user.asReadonly();
   readonly session = this._session.asReadonly();
@@ -46,11 +55,11 @@ export class AuthService {
       {
         baseURL: environment.apiUrl,
         fetchOptions: {
-          credentials: 'include' as const,
+          credentials: "include" as const,
         },
       },
-      { scheme: 'wallofme' }
-    )
+      { scheme: "wallofme" },
+    ),
   );
 
   constructor() {
@@ -63,8 +72,14 @@ export class AuthService {
     try {
       const session = await this.authClient.getSession();
       if (session.data) {
-        this._user.set(session.data.user as unknown as User);
+        const user = session.data.user as unknown as User;
+        this._user.set(user);
         this._session.set(session.data.session as unknown as Session);
+
+        if (user.locale) {
+          this.i18nService.setLanguage(user.locale);
+        }
+
         this.initPushNotifications();
       } else {
         this._user.set(null);
@@ -80,10 +95,12 @@ export class AuthService {
 
   private initPushNotifications(): void {
     // Lazy import to avoid circular dependency
-    import('./push-notification.service').then(({ PushNotificationService }) => {
-      const pushService = this.injector.get(PushNotificationService);
-      pushService.initialize();
-    });
+    import("./push-notification.service").then(
+      ({ PushNotificationService }) => {
+        const pushService = this.injector.get(PushNotificationService);
+        pushService.initialize();
+      },
+    );
   }
 
   async signInEmail(email: string, password: string): Promise<void> {
@@ -100,7 +117,7 @@ export class AuthService {
   async signUpEmail(
     email: string,
     password: string,
-    name: string
+    name: string,
   ): Promise<void> {
     const result = await this.authClient.signUp.email({
       email,
@@ -116,14 +133,14 @@ export class AuthService {
     }
   }
 
-  async signInSocial(provider: 'google' | 'apple'): Promise<void> {
+  async signInSocial(provider: "google" | "apple"): Promise<void> {
     // On web: use absolute URL (relative would resolve to backend origin)
     // On native: use relative URL (capacitorClient converts to wallofme:///auth/callback)
     const callbackURL = isNativePlatform()
-      ? '/auth/callback'
+      ? "/auth/callback"
       : `${window.location.origin}/auth/callback`;
 
-    console.log('callbackURL', callbackURL);
+    console.log("callbackURL", callbackURL);
     await this.authClient.signIn.social({
       provider,
       callbackURL,
@@ -146,7 +163,9 @@ export class AuthService {
     country?: string;
     displayName?: string;
   }): Promise<void> {
-    const result = await this.authClient.updateUser(data as Record<string, unknown>);
+    const result = await this.authClient.updateUser(
+      data as Record<string, unknown>,
+    );
     if (result.error) {
       throw new Error(result.error.message);
     }
@@ -160,8 +179,8 @@ export class AuthService {
    * After native OAuth completes, the plugin dispatches this event.
    */
   private listenForSessionUpdates(): void {
-    if (typeof window === 'undefined') return;
-    window.addEventListener('better-auth:session-update', () => {
+    if (typeof window === "undefined") return;
+    window.addEventListener("better-auth:session-update", () => {
       this.zone.run(() => {
         this.refreshSession();
       });

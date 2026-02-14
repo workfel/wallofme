@@ -1,5 +1,6 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, inject, OnInit, signal, computed } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
+import { Router } from "@angular/router";
 import {
   IonContent,
   IonHeader,
@@ -18,9 +19,10 @@ import {
   IonModal,
   IonRefresher,
   IonRefresherContent,
-} from '@ionic/angular/standalone';
-import { TranslateModule } from '@ngx-translate/core';
-import { addIcons } from 'ionicons';
+  ActionSheetController,
+} from "@ionic/angular/standalone";
+import { TranslateService, TranslateModule } from "@ngx-translate/core";
+import { addIcons } from "ionicons";
 import {
   logOutOutline,
   languageOutline,
@@ -30,20 +32,22 @@ import {
   flameOutline,
   settingsOutline,
   ribbonOutline,
+  checkmarkOutline,
   documentTextOutline,
   createOutline,
   arrowForwardOutline,
-} from 'ionicons/icons';
+} from "ionicons/icons";
 
-import { AuthService } from '@app/core/services/auth.service';
-import { TokenService } from '@app/core/services/token.service';
-import { RoomService } from '@app/core/services/room.service';
-import { TrophyService, type Trophy } from '@app/core/services/trophy.service';
-import { UserService } from '@app/core/services/user.service';
-import { ProBadgeComponent } from '@app/shared/components/pro-badge/pro-badge.component';
+import { AuthService } from "@app/core/services/auth.service";
+import { AppThemeService } from "@app/core/services/app-theme.service";
+import { TokenService } from "@app/core/services/token.service";
+import { RoomService } from "@app/core/services/room.service";
+import { TrophyService, type Trophy } from "@app/core/services/trophy.service";
+import { UserService } from "@app/core/services/user.service";
+import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.component";
 
 @Component({
-  selector: 'app-profile',
+  selector: "app-profile",
   standalone: true,
   imports: [
     TranslateModule,
@@ -69,7 +73,7 @@ import { ProBadgeComponent } from '@app/shared/components/pro-badge/pro-badge.co
   template: `
     <ion-header>
       <ion-toolbar>
-        <ion-title>{{ 'profile.title' | translate }}</ion-title>
+        <ion-title>{{ "profile.title" | translate }}</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="showSettings.set(true)">
             <ion-icon name="settings-outline" slot="icon-only" />
@@ -90,7 +94,10 @@ import { ProBadgeComponent } from '@app/shared/components/pro-badge/pro-badge.co
             @if (authService.user()?.image) {
               <img [src]="authService.user()!.image!" alt="avatar" />
             } @else {
-              <ion-icon name="person-circle-outline" class="avatar-placeholder" />
+              <ion-icon
+                name="person-circle-outline"
+                class="avatar-placeholder"
+              />
             }
           </ion-avatar>
           <div class="avatar-edit-badge" (click)="onEditProfile()">
@@ -116,7 +123,7 @@ import { ProBadgeComponent } from '@app/shared/components/pro-badge/pro-badge.co
             <div class="sport-chips">
               @for (sport of sports; track sport) {
                 <ion-chip outline color="primary" class="sport-chip">
-                  {{ 'sports.' + sport | translate }}
+                  {{ "sports." + sport | translate }}
                 </ion-chip>
               }
             </div>
@@ -128,17 +135,23 @@ import { ProBadgeComponent } from '@app/shared/components/pro-badge/pro-badge.co
       <div class="stats-bar animate-fade-in-up">
         <div class="stat-item">
           <span class="stat-value">{{ trophyService.trophies().length }}</span>
-          <span class="stat-label">{{ 'profile.statTrophies' | translate }}</span>
+          <span class="stat-label">{{
+            "profile.statTrophies" | translate
+          }}</span>
         </div>
         <div class="stat-divider"></div>
         <div class="stat-item">
-          <span class="stat-value">{{ roomService.room()?.likeCount || 0 }}</span>
-          <span class="stat-label">{{ 'profile.statLikes' | translate }}</span>
+          <span class="stat-value">{{
+            roomService.room()?.likeCount || 0
+          }}</span>
+          <span class="stat-label">{{ "profile.statLikes" | translate }}</span>
         </div>
         <div class="stat-divider"></div>
         <div class="stat-item">
-          <span class="stat-value">{{ roomService.room()?.viewCount || 0 }}</span>
-          <span class="stat-label">{{ 'profile.statViews' | translate }}</span>
+          <span class="stat-value">{{
+            roomService.room()?.viewCount || 0
+          }}</span>
+          <span class="stat-label">{{ "profile.statViews" | translate }}</span>
         </div>
       </div>
 
@@ -147,10 +160,10 @@ import { ProBadgeComponent } from '@app/shared/components/pro-badge/pro-badge.co
         <div class="pro-banner" (click)="onUpgradePro()">
           <div class="pro-banner-content">
             <ion-icon name="star-outline" color="warning" />
-            <span>{{ 'profile.proBanner' | translate }}</span>
+            <span>{{ "profile.proBanner" | translate }}</span>
           </div>
           <ion-button fill="clear" size="small" color="warning">
-            {{ 'profile.goProCta' | translate }}
+            {{ "profile.goProCta" | translate }}
             <ion-icon slot="end" name="arrow-forward-outline" />
           </ion-button>
         </div>
@@ -165,7 +178,7 @@ import { ProBadgeComponent } from '@app/shared/components/pro-badge/pro-badge.co
         <div class="empty-state animate-fade-in">
           <ion-icon name="ribbon-outline" class="empty-icon" />
           <ion-text color="medium">
-            <p>{{ 'profile.noTrophies' | translate }}</p>
+            <p>{{ "profile.noTrophies" | translate }}</p>
           </ion-text>
         </div>
       } @else {
@@ -173,13 +186,26 @@ import { ProBadgeComponent } from '@app/shared/components/pro-badge/pro-badge.co
           @for (trophy of trophyService.trophies(); track trophy.id) {
             <div class="trophy-cell" (click)="goToTrophy(trophy.id)">
               @if (trophy.thumbnailUrl) {
-                <img [src]="trophy.thumbnailUrl" [alt]="trophy.type" class="trophy-img" loading="lazy" />
+                <img
+                  [src]="trophy.thumbnailUrl"
+                  [alt]="trophy.type"
+                  class="trophy-img"
+                  loading="lazy"
+                />
               } @else {
                 <div class="trophy-fallback">
-                  <ion-icon [name]="trophy.type === 'medal' ? 'ribbon-outline' : 'document-text-outline'" />
+                  <ion-icon
+                    [name]="
+                      trophy.type === 'medal'
+                        ? 'ribbon-outline'
+                        : 'document-text-outline'
+                    "
+                  />
                 </div>
               }
-              @if (trophy.status === 'processing' || trophy.status === 'pending') {
+              @if (
+                trophy.status === "processing" || trophy.status === "pending"
+              ) {
                 <div class="trophy-processing-overlay">
                   <ion-spinner name="crescent" color="light" />
                 </div>
@@ -199,7 +225,7 @@ import { ProBadgeComponent } from '@app/shared/components/pro-badge/pro-badge.co
         <ng-template>
           <ion-header>
             <ion-toolbar>
-              <ion-title>{{ 'profile.settings' | translate }}</ion-title>
+              <ion-title>{{ "profile.settings" | translate }}</ion-title>
             </ion-toolbar>
           </ion-header>
           <ion-content>
@@ -207,22 +233,33 @@ import { ProBadgeComponent } from '@app/shared/components/pro-badge/pro-badge.co
               <ion-item button [detail]="true" (click)="onGetTokens()">
                 <ion-icon slot="start" name="flame-outline" color="warning" />
                 <ion-label>
-                  <h3>{{ 'tokens.title' | translate }}</h3>
-                  <p>{{ tokenService.balance() }} {{ 'tokens.flames' | translate }}</p>
+                  <h3>{{ "tokens.title" | translate }}</h3>
+                  <p>
+                    {{ tokenService.balance() }}
+                    {{ "tokens.flames" | translate }}
+                  </p>
                 </ion-label>
               </ion-item>
-              <ion-item button [detail]="true">
+              <ion-item button [detail]="true" (click)="onChangeLanguage()">
                 <ion-icon slot="start" name="language-outline" />
-                <ion-label>{{ 'profile.language' | translate }}</ion-label>
+                <ion-label>
+                  {{ "profile.language" | translate }}
+                  <p>{{ currentLanguage() }}</p>
+                </ion-label>
               </ion-item>
-              <ion-item button [detail]="true">
+              <ion-item button [detail]="true" (click)="onChangeTheme()">
                 <ion-icon slot="start" name="moon-outline" />
-                <ion-label>{{ 'profile.theme' | translate }}</ion-label>
+                <ion-label>
+                  {{ "profile.theme" | translate }}
+                  <p>{{ currentTheme() | translate }}</p>
+                </ion-label>
               </ion-item>
               @if (!authService.user()?.isPro) {
                 <ion-item button [detail]="true" (click)="onUpgradePro()">
                   <ion-icon slot="start" name="star-outline" color="warning" />
-                  <ion-label color="warning">{{ 'profile.pro' | translate }}</ion-label>
+                  <ion-label color="warning">{{
+                    "profile.pro" | translate
+                  }}</ion-label>
                 </ion-item>
               }
             </ion-list>
@@ -235,7 +272,7 @@ import { ProBadgeComponent } from '@app/shared/components/pro-badge/pro-badge.co
                 (click)="onLogout()"
               >
                 <ion-icon slot="start" name="log-out-outline" />
-                {{ 'profile.logout' | translate }}
+                {{ "profile.logout" | translate }}
               </ion-button>
             </div>
           </ion-content>
@@ -357,7 +394,11 @@ import { ProBadgeComponent } from '@app/shared/components/pro-badge/pro-badge.co
       justify-content: space-between;
       margin: 0 16px 16px;
       padding: 12px 16px;
-      background: linear-gradient(135deg, rgba(245, 166, 35, 0.08) 0%, rgba(255, 215, 0, 0.08) 100%);
+      background: linear-gradient(
+        135deg,
+        rgba(245, 166, 35, 0.08) 0%,
+        rgba(255, 215, 0, 0.08) 100%
+      );
       border-left: 3px solid var(--ion-color-warning);
       border-radius: 12px;
     }
@@ -459,6 +500,15 @@ export class ProfilePage implements OnInit {
   trophyService = inject(TrophyService);
   userService = inject(UserService);
   private router = inject(Router);
+  private actionSheetCtrl = inject(ActionSheetController);
+  private translate = inject(TranslateService);
+  private appThemeService = inject(AppThemeService);
+
+  private langChange = toSignal(this.translate.onLangChange);
+  private currentLang = computed(() => {
+    this.langChange(); // dependency
+    return this.translate.currentLang;
+  });
 
   showSettings = signal(false);
 
@@ -475,6 +525,7 @@ export class ProfilePage implements OnInit {
       documentTextOutline,
       createOutline,
       arrowForwardOutline,
+      checkmarkOutline,
     });
   }
 
@@ -495,26 +546,106 @@ export class ProfilePage implements OnInit {
   }
 
   onEditProfile(): void {
-    this.router.navigate(['/profile/edit']);
+    this.router.navigate(["/profile/edit"]);
   }
 
   goToTrophy(id: string): void {
-    this.router.navigate(['/trophy', id]);
+    this.router.navigate(["/trophy", id]);
   }
 
   onGetTokens(): void {
     this.showSettings.set(false);
-    this.router.navigate(['/tokens']);
+    this.router.navigate(["/tokens"]);
   }
 
   onUpgradePro(): void {
     this.showSettings.set(false);
-    this.router.navigate(['/pro']);
+    this.router.navigate(["/pro"]);
   }
 
   async onLogout(): Promise<void> {
     this.showSettings.set(false);
     await this.authService.signOut();
-    this.router.navigate(['/auth/login']);
+    this.router.navigate(["/auth/login"]);
+  }
+
+  currentLanguage = computed(() => {
+    return this.currentLang() === "fr" ? "Français" : "English";
+  });
+
+  currentTheme = computed(() => {
+    const mode = this.appThemeService.mode();
+    switch (mode) {
+      case "dark":
+        return "profile.themeDark";
+      case "light":
+        return "profile.themeLight";
+      default:
+        return "profile.themeSystem";
+    }
+  });
+
+  async onChangeLanguage(): Promise<void> {
+    const actionSheet = await this.actionSheetCtrl.create({
+      header: this.translate.instant("profile.language"),
+      buttons: [
+        {
+          text: "English",
+          icon:
+            this.translate.currentLang === "en"
+              ? "checkmark-outline"
+              : undefined,
+          handler: () => this.setLanguage("en"),
+        },
+        {
+          text: "Français",
+          icon:
+            this.translate.currentLang === "fr"
+              ? "checkmark-outline"
+              : undefined,
+          handler: () => this.setLanguage("fr"),
+        },
+        {
+          text: this.translate.instant("common.cancel"),
+          role: "cancel",
+        },
+      ],
+    });
+    await actionSheet.present();
+  }
+
+  private async setLanguage(lang: string): Promise<void> {
+    if (this.translate.currentLang === lang) return;
+    this.translate.use(lang);
+    await this.userService.updateProfile({ locale: lang });
+  }
+
+  async onChangeTheme(): Promise<void> {
+    const current = this.appThemeService.mode();
+    const actionSheet = await this.actionSheetCtrl.create({
+      header: this.translate.instant("profile.theme"),
+      buttons: [
+        {
+          text: this.translate.instant("profile.themeSystem"),
+          icon: current === "system" ? "checkmark-outline" : undefined,
+          handler: () => this.appThemeService.setTheme("system"),
+        },
+        {
+          text: this.translate.instant("profile.themeLight"),
+          icon: current === "light" ? "checkmark-outline" : undefined,
+          handler: () => this.appThemeService.setTheme("light"),
+        },
+        {
+          text: this.translate.instant("profile.themeDark"),
+          icon: current === "dark" ? "checkmark-outline" : undefined,
+          handler: () => this.appThemeService.setTheme("dark"),
+        },
+        {
+          text: this.translate.instant("common.cancel"),
+          role: "cancel",
+        },
+      ],
+    });
+    await actionSheet.present();
   }
 }

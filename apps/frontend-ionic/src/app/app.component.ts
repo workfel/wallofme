@@ -1,14 +1,15 @@
-import { Component, inject, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { IonApp, IonRouterOutlet, Platform } from '@ionic/angular/standalone';
-import { App } from '@capacitor/app';
-import { I18nService } from './core/services/i18n.service';
-import { AdService } from './core/services/ad.service';
-import { Purchases, LOG_LEVEL } from '@revenuecat/purchases-capacitor';
-import { environment } from '@env/environment';
+import { Component, inject, OnInit } from "@angular/core";
+import { Router } from "@angular/router";
+import { IonApp, IonRouterOutlet, Platform } from "@ionic/angular/standalone";
+import { App } from "@capacitor/app";
+import { I18nService } from "./core/services/i18n.service";
+import { AppThemeService } from "./core/services/app-theme.service";
+import { AdService } from "./core/services/ad.service";
+import { Purchases, LOG_LEVEL } from "@revenuecat/purchases-capacitor";
+import { environment } from "@env/environment";
 
 @Component({
-  selector: 'app-root',
+  selector: "app-root",
   standalone: true,
   imports: [IonApp, IonRouterOutlet],
   template: `
@@ -19,6 +20,7 @@ import { environment } from '@env/environment';
 })
 export class AppComponent implements OnInit {
   private i18n = inject(I18nService);
+  private appThemeService = inject(AppThemeService);
   private platform = inject(Platform);
   private adService = inject(AdService);
   private router = inject(Router);
@@ -27,7 +29,7 @@ export class AppComponent implements OnInit {
     this.platform.ready().then(async () => {
       // Initialize RevenueCat Capacitor SDK only on iOS native (Apple IAP)
       // Web/Android use RevenueCat Web Billing via PurchaseService
-      if (this.platform.is('capacitor') && this.platform.is('ios')) {
+      if (this.platform.is("capacitor") && this.platform.is("ios")) {
         await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
         await Purchases.configure({ apiKey: environment.revenueCat.apiKey });
       }
@@ -36,11 +38,11 @@ export class AppComponent implements OnInit {
       await this.adService.initialize();
 
       // Deep link handling on native platforms
-      if (this.platform.is('capacitor')) {
-        App.addListener('appUrlOpen', (event) => {
+      if (this.platform.is("capacitor")) {
+        App.addListener("appUrlOpen", (event) => {
           const url = new URL(event.url);
           // wallofme://room/share/abc → host="room", pathname="/share/abc"
-          const path = url.host ? '/' + url.host + url.pathname : url.pathname;
+          const path = url.host ? "/" + url.host + url.pathname : url.pathname;
           if (path) {
             this.router.navigateByUrl(path);
           }
@@ -51,5 +53,6 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     this.i18n.init();
+    this.appThemeService.init();
   }
 }
