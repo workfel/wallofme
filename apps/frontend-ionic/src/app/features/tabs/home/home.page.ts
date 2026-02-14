@@ -397,7 +397,7 @@ export class HomePage implements OnInit {
       this.showUpgradeModal.set(true);
       return;
     }
-    this.router.navigate(['/trophy/scan']);
+    this.router.navigate(['/trophy/create']);
   }
 
   goToEdit(): void {

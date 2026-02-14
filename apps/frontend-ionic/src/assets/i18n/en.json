@@ -206,7 +206,18 @@
     "limitReachedTitle": "Monthly scan limit reached",
     "limitReachedMessage": "Free accounts get 3 scans per month. Upgrade to Pro for unlimited scans!",
     "resetsIn": "Resets in {{days}} days",
-    "tapToPhoto": "Tap to take a photo"
+    "tapToPhoto": "Tap to take a photo",
+    "uploadStep": "Upload",
+    "bgRemovalStep": "Background",
+    "analysisStep": "Analysis",
+    "resultsTeaser": "We'll search for your official race results!",
+    "searchingHint": "Searching race databases..."
+  },
+  "firstTrophy": {
+    "title": "Scan your first trophy!",
+    "subtitle": "Take a photo of a race medal or bib to start building your Pain Cave.",
+    "scanNow": "Scan Now",
+    "skip": "Skip for now"
   },
   "review": {
     "processing": "Processing image...",

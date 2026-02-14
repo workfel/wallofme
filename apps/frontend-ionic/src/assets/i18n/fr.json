@@ -206,7 +206,18 @@
     "limitReachedTitle": "Limite mensuelle atteinte",
     "limitReachedMessage": "Les comptes gratuits ont 3 scans par mois. Passez à Pro pour des scans illimités !",
     "resetsIn": "Réinitialisation dans {{days}} jours",
-    "tapToPhoto": "Appuyez pour prendre une photo"
+    "tapToPhoto": "Appuyez pour prendre une photo",
+    "uploadStep": "Upload",
+    "bgRemovalStep": "Fond",
+    "analysisStep": "Analyse",
+    "resultsTeaser": "Nous rechercherons vos résultats officiels !",
+    "searchingHint": "Recherche dans les bases de données..."
+  },
+  "firstTrophy": {
+    "title": "Scannez votre premier trophée !",
+    "subtitle": "Prenez en photo une médaille ou un dossard pour commencer à construire votre Pain Cave.",
+    "scanNow": "Scanner",
+    "skip": "Passer"
   },
   "review": {
     "processing": "Traitement de l'image...",

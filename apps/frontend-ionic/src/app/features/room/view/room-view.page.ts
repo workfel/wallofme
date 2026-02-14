@@ -398,6 +398,9 @@ export class RoomViewPage implements OnInit {
     const r = this.room();
     if (!r) return;
 
+    // Capture target before any await (currentTarget resets to null after dispatch)
+    const target = event.currentTarget as HTMLElement | null;
+
     // Haptic feedback
     try {
       const { Haptics, ImpactStyle } = await import("@capacitor/haptics");
@@ -411,14 +414,13 @@ export class RoomViewPage implements OnInit {
     setTimeout(() => this.showHeartPop.set(false), 300);
 
     // Spawn floating hearts
-    this.spawnFloatingHearts(event);
+    this.spawnFloatingHearts(target);
 
     this.likeBatchingService.addLike(r.id);
   }
 
-  private spawnFloatingHearts(event: Event): void {
-    // Get FAB position from the event target
-    const target = event.currentTarget as HTMLElement;
+  private spawnFloatingHearts(target: HTMLElement | null): void {
+    if (!target) return;
     const rect = target.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = window.innerHeight - rect.bottom + rect.height / 2;

@@ -410,6 +410,9 @@ export class RoomSharePage implements OnInit {
     const r = this.room();
     if (!r) return;
 
+    // Capture target before any await (currentTarget resets to null after dispatch)
+    const target = event.currentTarget as HTMLElement | null;
+
     // Haptic feedback - light on every tap
     try {
       const { Haptics, ImpactStyle } = await import('@capacitor/haptics');
@@ -437,7 +440,7 @@ export class RoomSharePage implements OnInit {
     setTimeout(() => this.showHeartPop.set(false), 300);
 
     // Spawn floating hearts (more hearts on combo)
-    this.spawnFloatingHearts(event);
+    this.spawnFloatingHearts(target);
 
     // Add like to batching service
     this.likeBatchingService.addLike(r.id);
@@ -451,9 +454,8 @@ export class RoomSharePage implements OnInit {
     }, 1000);
   }
 
-  private spawnFloatingHearts(event: Event): void {
-    // Get FAB position from the event target
-    const target = event.currentTarget as HTMLElement;
+  private spawnFloatingHearts(target: HTMLElement | null): void {
+    if (!target) return;
     const rect = target.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = window.innerHeight - rect.bottom + rect.height / 2;

@@ -8,6 +8,15 @@ import { UserService } from './user.service';
 
 export type ScanStep = 'idle' | 'processing' | 'details' | 'matching' | 'search' | 'done';
 
+export type ProcessingPhase =
+  | 'idle'
+  | 'creating'
+  | 'uploading'
+  | 'removing-bg'
+  | 'bg-done'
+  | 'analyzing'
+  | 'analyze-done';
+
 export interface MatchedRace {
   id: string;
   name: string;
@@ -53,6 +62,7 @@ export class ScanService {
   private translate = inject(TranslateService);
 
   readonly step = signal<ScanStep>('idle');
+  readonly processingPhase = signal<ProcessingPhase>('idle');
   readonly trophyId = signal<string | null>(null);
   readonly raceResultId = signal<string | null>(null);
   readonly analysis = signal<ScanAnalysis | null>(null);
@@ -62,10 +72,13 @@ export class ScanService {
   readonly selectedRaceId = signal<string | null>(null);
   readonly error = signal<string | null>(null);
   readonly processingMessage = signal('');
+  readonly originalImageUrl = signal<string | null>(null);
+  readonly processedImageUrl = signal<string | null>(null);
   readonly isProcessing = computed(() => this.step() === 'processing');
 
   reset(): void {
     this.step.set('idle');
+    this.processingPhase.set('idle');
     this.trophyId.set(null);
     this.raceResultId.set(null);
     this.analysis.set(null);
@@ -75,6 +88,8 @@ export class ScanService {
     this.selectedRaceId.set(null);
     this.error.set(null);
     this.processingMessage.set('');
+    this.originalImageUrl.set(null);
+    this.processedImageUrl.set(null);
   }
 
   /**
@@ -82,10 +97,16 @@ export class ScanService {
    */
   async uploadAndProcess(
     imageBlob: Blob,
-    type: 'medal' | 'bib'
+    type: 'medal' | 'bib',
+    imagePreviewUrl?: string
   ): Promise<void> {
     this.step.set('processing');
+    this.processingPhase.set('creating');
     this.error.set(null);
+
+    if (imagePreviewUrl) {
+      this.originalImageUrl.set(imagePreviewUrl);
+    }
 
     try {
       // 1. Create trophy
@@ -100,6 +121,7 @@ export class ScanService {
       this.trophyId.set(tId);
 
       // 2. Upload image via presigned URL
+      this.processingPhase.set('uploading');
       this.processingMessage.set('Uploading image...');
       const uploaded = await this.uploadService.uploadFile(
         imageBlob,
@@ -110,6 +132,7 @@ export class ScanService {
       if (!uploaded) throw new Error('Upload failed');
 
       // 3. Remove background (synchronous endpoint)
+      this.processingPhase.set('removing-bg');
       this.processingMessage.set('Removing background...');
       const removeBgRes =
         await this.api.client.api.scan['remove-background'].$post({
@@ -118,9 +141,15 @@ export class ScanService {
       if (removeBgRes.ok) {
         const bgJson = (await removeBgRes.json()) as { data: ProcessedUrls };
         this.processedUrls.set(bgJson.data);
+        this.processedImageUrl.set(bgJson.data.processedImageUrl);
       }
 
+      // Pause at bg-done so user appreciates the before/after reveal
+      this.processingPhase.set('bg-done');
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
       // 4. AI analysis
+      this.processingPhase.set('analyzing');
       this.processingMessage.set('Analyzing trophy...');
       const analyzeRes = await this.api.client.api.scan.analyze.$post({
         json: { trophyId: tId },
@@ -130,8 +159,9 @@ export class ScanService {
       if (analyzeRes.status === 403) {
         const errJson = (await analyzeRes.json()) as { error?: string };
         if (errJson.error === 'scan_limit_reached') {
-          this.error.set('scan.limitReachedTitle');
+          this.error.set('scan_limit_reached');
           this.step.set('idle');
+          this.processingPhase.set('idle');
           // Refresh profile to get accurate remaining count
           this.userService.fetchProfile();
           return;
@@ -146,12 +176,15 @@ export class ScanService {
         if (analyzeJson.data.hasPornContent) {
           this.error.set('review.inappropriateContent');
           this.step.set('idle');
+          this.processingPhase.set('idle');
           return;
         }
         this.analysis.set(analyzeJson.data);
       } else {
         throw new Error('Analysis failed');
       }
+
+      this.processingPhase.set('analyze-done');
 
       // Move to details step
       this.step.set('details');
@@ -172,6 +205,7 @@ export class ScanService {
     } catch (e) {
       this.error.set(e instanceof Error ? e.message : 'Processing failed');
       this.step.set('idle');
+      this.processingPhase.set('idle');
     }
   }
 

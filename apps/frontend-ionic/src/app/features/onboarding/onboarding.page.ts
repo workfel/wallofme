@@ -370,7 +370,7 @@ export class OnboardingPage implements OnInit {
 
       // Refresh auth session to get updated user data
       await this.authService.refreshSession();
-      this.router.navigate(['/tabs']);
+      this.router.navigate(['/trophy/first']);
     } catch (e: unknown) {
       this.errorMessage.set(
         e instanceof Error ? e.message : this.translate.instant('common.updateFailed')

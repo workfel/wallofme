@@ -199,7 +199,7 @@ export class TrophiesPage implements OnInit {
   }
 
   goToScan(): void {
-    this.router.navigate(['/trophy/scan']);
+    this.router.navigate(['/trophy/create']);
   }
 
   goToTrophy(id: string): void {

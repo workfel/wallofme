@@ -1,6 +1,6 @@
 # TODO pour MVP
 
-- [ ] Page explorer en mode libre sans connexion
+- [x] Page explorer en mode libre sans connexion
 - [ ] Revoir toute l'UX/UI creation trophée
 - [ ] Rajouter les differents models 3d pour la librairie pour une personnalisation de salle parfaite
 - [ ] Rajouter les differentes textures pour la thematisation de la salle

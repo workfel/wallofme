@@ -105,8 +105,8 @@ export class ExploreGlobeComponent implements OnDestroy {
       .htmlElement((d: GlobePoint) => {
         const el = document.createElement('div');
         el.style.pointerEvents = 'auto';
-        el.style.width = '32px';
-        el.style.height = '32px';
+        el.style.width = '48px';
+        el.style.height = '48px';
         el.style.borderRadius = '50%';
         el.style.border = '2px solid #fff';
         el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';

@@ -22,20 +22,30 @@ export const routes: Routes = [
       import('./features/tabs/tabs.routes').then((m) => m.TABS_ROUTES),
   },
   {
-    path: 'trophy/scan',
+    path: 'trophy/create',
     canActivate: [authGuard, onboardingGuard],
     loadComponent: () =>
-      import('./features/trophy/scan/trophy-scan.page').then(
-        (m) => m.TrophyScanPage
+      import('./features/trophy/create/trophy-creation.page').then(
+        (m) => m.TrophyCreationPage
       ),
   },
   {
-    path: 'trophy/review',
+    path: 'trophy/first',
     canActivate: [authGuard, onboardingGuard],
     loadComponent: () =>
-      import('./features/trophy/review/trophy-review.page').then(
-        (m) => m.TrophyReviewPage
+      import('./features/trophy/first/first-trophy.page').then(
+        (m) => m.FirstTrophyPage
       ),
+  },
+  {
+    path: 'trophy/scan',
+    redirectTo: 'trophy/create',
+    pathMatch: 'full',
+  },
+  {
+    path: 'trophy/review',
+    redirectTo: 'trophy/create',
+    pathMatch: 'full',
   },
   {
     path: 'trophy/:id',
