@@ -28,8 +28,6 @@ import {
   IonInfiniteScrollContent,
   IonRefresher,
   IonRefresherContent,
-  IonButtons,
-  IonButton,
   IonModal,
   ViewWillLeave,
   ViewDidEnter,
@@ -43,6 +41,7 @@ import {
   searchOutline,
   listOutline,
   globeOutline,
+  chevronForwardOutline,
 } from 'ionicons/icons';
 
 import {
@@ -106,8 +105,6 @@ const GRADIENT_PALETTES = [
     IonInfiniteScrollContent,
     IonRefresher,
     IonRefresherContent,
-    IonButtons,
-    IonButton,
     IonModal,
     ProBadgeComponent,
     ExploreGlobeComponent,
@@ -117,23 +114,34 @@ const GRADIENT_PALETTES = [
     <ion-header>
       <ion-toolbar>
         <ion-title>{{ 'explore.title' | translate }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="switchView('list')" [color]="activeView() === 'list' ? 'primary' : 'medium'">
-            <ion-icon slot="icon-only" name="list-outline" />
-          </ion-button>
-          <ion-button (click)="switchView('globe')" [color]="activeView() === 'globe' ? 'primary' : 'medium'">
-            <ion-icon slot="icon-only" name="globe-outline" />
-          </ion-button>
-        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
     <ion-content [fullscreen]="true">
-      <ion-header collapse="condense">
-        <ion-toolbar>
-          <ion-title size="large">{{ 'explore.title' | translate }}</ion-title>
-        </ion-toolbar>
-      </ion-header>
+
+
+      <!-- View Toggle -->
+      <div class="toggle-container">
+        <div class="toggle-track">
+          <div class="toggle-slider" [class.globe]="activeView() === 'globe'"></div>
+          <button
+            class="toggle-btn"
+            [class.active]="activeView() === 'list'"
+            (click)="switchView('list')"
+          >
+            <ion-icon name="list-outline" />
+            <span>{{ 'explore.listView' | translate }}</span>
+          </button>
+          <button
+            class="toggle-btn"
+            [class.active]="activeView() === 'globe'"
+            (click)="switchView('globe')"
+          >
+            <ion-icon name="globe-outline" />
+            <span>{{ 'explore.globeView' | translate }}</span>
+          </button>
+        </div>
+      </div>
 
       @if (activeView() === 'list') {
         <!-- Pull to refresh -->
@@ -142,6 +150,18 @@ const GRADIENT_PALETTES = [
         </ion-refresher>
 
         <div class="explore-container">
+          <!-- Globe Teaser Card -->
+          <div class="globe-teaser" (click)="switchView('globe')">
+            <div class="globe-teaser-icon">
+              <ion-icon name="globe-outline" />
+            </div>
+            <div class="globe-teaser-text">
+              <span class="globe-teaser-title">{{ 'explore.globeTeaser' | translate }}</span>
+              <span class="globe-teaser-sub">{{ 'explore.globeTeaserSub' | translate }}</span>
+            </div>
+            <ion-icon name="chevron-forward-outline" class="globe-teaser-chevron" />
+          </div>
+
           <!-- Search bar -->
           <ion-searchbar
             [placeholder]="'explore.searchPlaceholder' | translate"
@@ -312,6 +332,116 @@ const GRADIENT_PALETTES = [
     </ion-modal>
   `,
   styles: `
+    .toggle-container {
+      padding: 8px 16px 4px;
+    }
+
+    .toggle-track {
+      position: relative;
+      display: flex;
+      background: var(--ion-color-step-100);
+      border-radius: 12px;
+      padding: 3px;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: calc(50% - 3px);
+      height: calc(100% - 6px);
+      background: var(--ion-background-color, #fff);
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+      &.globe {
+        transform: translateX(100%);
+      }
+    }
+
+    .toggle-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 0;
+      background: none;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ion-color-medium);
+      cursor: pointer;
+      position: relative;
+      z-index: 1;
+      transition: color 0.3s ease;
+
+      &.active {
+        color: var(--ion-text-color);
+      }
+
+      ion-icon {
+        font-size: 18px;
+      }
+    }
+
+    .globe-teaser {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 8px 0 4px;
+      padding: 12px 14px;
+      background: linear-gradient(135deg, rgba(var(--ion-color-primary-rgb), 0.08), rgba(var(--ion-color-primary-rgb), 0.03));
+      border: 1px solid rgba(var(--ion-color-primary-rgb), 0.2);
+      border-radius: 14px;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+
+      &:active {
+        transform: scale(0.98);
+      }
+    }
+
+    .globe-teaser-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--ion-color-primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+
+      ion-icon {
+        font-size: 20px;
+      }
+    }
+
+    .globe-teaser-text {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .globe-teaser-title {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .globe-teaser-sub {
+      font-size: 12px;
+      color: var(--ion-color-medium);
+    }
+
+    .globe-teaser-chevron {
+      font-size: 18px;
+      color: var(--ion-color-medium);
+      flex-shrink: 0;
+    }
+
     .explore-container {
       padding: 0 8px;
     }
@@ -383,6 +513,11 @@ const GRADIENT_PALETTES = [
       border-radius: 14px;
       overflow: hidden;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      transition: transform 0.2s ease;
+
+      &:active {
+        transform: scale(0.97);
+      }
 
       .card-thumbnail {
         position: relative;
@@ -500,6 +635,7 @@ export class ExplorePage implements OnInit, OnDestroy, ViewWillLeave, ViewDidEnt
       searchOutline,
       listOutline,
       globeOutline,
+      chevronForwardOutline,
     });
   }
 

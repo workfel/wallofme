@@ -19,13 +19,7 @@ export const TABS_ROUTES: Routes = [
         loadComponent: () =>
           import('./explore/explore.page').then((m) => m.ExplorePage),
       },
-      {
-        path: 'trophies',
-        canActivate: [authGuard, onboardingGuard],
-        loadComponent: () =>
-          import('./trophies/trophies.page').then((m) => m.TrophiesPage),
-      },
-      {
+{
         path: 'profile',
         canActivate: [authGuard, onboardingGuard],
         loadComponent: () =>

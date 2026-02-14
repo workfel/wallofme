@@ -1,0 +1,14 @@
+node_modules
+.git
+.angular
+.vscode
+.agent
+.agents
+.claude
+*.md
+!README.md
+apps/frontend-ionic/www
+apps/frontend-ionic/android
+apps/frontend-ionic/ios
+apps/frontend-ionic/.angular
+apps/backend/node_modules

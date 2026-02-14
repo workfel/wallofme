@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output } from "@angular/core";
 import {
   IonToolbar,
   IonButtons,
@@ -6,18 +6,18 @@ import {
   IonIcon,
   IonBackButton,
   IonTitle,
-} from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
+} from "@ionic/angular/standalone";
+import { addIcons } from "ionicons";
 import {
   eyeOutline,
   colorPaletteOutline,
   shareOutline,
   heartOutline,
-} from 'ionicons/icons';
-import { TranslateModule } from '@ngx-translate/core';
+} from "ionicons/icons";
+import { TranslateModule } from "@ngx-translate/core";
 
 @Component({
-  selector: 'app-editor-toolbar',
+  selector: "app-editor-toolbar",
   standalone: true,
   imports: [
     IonToolbar,
@@ -33,7 +33,7 @@ import { TranslateModule } from '@ngx-translate/core';
       <ion-buttons slot="start">
         <ion-back-button defaultHref="/tabs/home" />
       </ion-buttons>
-      <ion-title>{{ 'room.edit' | translate }}</ion-title>
+      <ion-title>{{ "room.edit" | translate }}</ion-title>
       <ion-buttons slot="end">
         @if (viewCount() > 0 || likeCount() > 0) {
           <div class="stats-badges">
@@ -51,9 +51,6 @@ import { TranslateModule } from '@ngx-translate/core';
             }
           </div>
         }
-        <ion-button (click)="preview.emit()" title="Preview">
-          <ion-icon slot="icon-only" name="eye-outline" />
-        </ion-button>
         <ion-button (click)="openThemes.emit()" title="Themes">
           <ion-icon slot="icon-only" name="color-palette-outline" />
         </ion-button>
@@ -88,7 +85,6 @@ export class EditorToolbarComponent {
   viewCount = input(0);
   likeCount = input(0);
 
-  preview = output<void>();
   openThemes = output<void>();
   share = output<void>();
 

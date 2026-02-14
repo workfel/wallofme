@@ -119,3 +119,13 @@ ion-content {
     opacity: 0;
   }
 }
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 4px 16px rgba(var(--ion-color-primary-rgb), 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 24px rgba(var(--ion-color-primary-rgb), 0.6);
+  }
+}

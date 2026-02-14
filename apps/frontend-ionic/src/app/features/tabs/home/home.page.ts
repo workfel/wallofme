@@ -2,40 +2,39 @@ import { Component, inject, signal, computed, OnInit, CUSTOM_ELEMENTS_SCHEMA } f
 import { Router } from '@angular/router';
 import {
   IonContent,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
   IonButton,
   IonText,
   IonSpinner,
-  IonFab,
-  IonFabButton,
-  IonFabList,
   IonIcon,
-  IonBadge,
   IonModal,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonAvatar,
 } from '@ionic/angular/standalone';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgtCanvas } from 'angular-three/dom';
 import { addIcons } from 'ionicons';
-import { add, camera, create, lockClosedOutline, rocketOutline } from 'ionicons/icons';
+import {
+  cameraOutline,
+  createOutline,
+  lockClosedOutline,
+  rocketOutline,
+  infiniteOutline,
+  trophyOutline,
+  heartOutline,
+  eyeOutline,
+  personCircleOutline,
+} from 'ionicons/icons';
 
-import { ApiService } from '@app/core/services/api.service';
+import { RoomService } from '@app/core/services/room.service';
 import { ThemeService } from '@app/core/services/theme.service';
 import { UserService } from '@app/core/services/user.service';
+import { AuthService } from '@app/core/services/auth.service';
 import { PainCaveSceneComponent, type RoomItem3D } from '../../room/components/pain-cave-scene/pain-cave-scene.component';
 import { TrophyInfoSheetComponent, type TrophyInfoData } from '../../room/components/trophy-info-sheet/trophy-info-sheet.component';
 import type { RoomTheme } from '@app/types/room-theme';
 import { DEFAULT_THEME } from '@app/types/room-theme';
-
-interface RoomData {
-  id: string;
-  userId: string;
-  themeId: string | null;
-  customTheme: string | null;
-  floor: string | null;
-  items: RoomItem3D[];
-}
 
 @Component({
   selector: 'app-home',
@@ -46,100 +45,110 @@ interface RoomData {
     PainCaveSceneComponent,
     TrophyInfoSheetComponent,
     IonContent,
-    IonHeader,
-    IonToolbar,
-    IonTitle,
     IonButton,
     IonText,
     IonSpinner,
-    IonFab,
-    IonFabButton,
-    IonFabList,
     IonIcon,
-    IonBadge,
     IonModal,
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonAvatar,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>{{ 'home.title' | translate }}</ion-title>
-      </ion-toolbar>
-    </ion-header>
+    <ion-content [fullscreen]="true" [scrollY]="false">
+      <div class="home-layout">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header animate-fade-in-down">
+          <!-- Greeting row -->
+          <div class="greeting-row">
+            <div class="greeting-left" (click)="goToProfile()">
+              <ion-avatar class="greeting-avatar">
+                @if (authService.user()?.image) {
+                  <img [src]="authService.user()!.image!" alt="avatar" />
+                } @else {
+                  <ion-icon name="person-circle-outline" class="avatar-fallback" />
+                }
+              </ion-avatar>
+              <span class="greeting-text">{{ 'home.greeting' | translate: { name: authService.user()?.firstName || '' } }}</span>
+            </div>
+            @if (userService.scansDisplay(); as display) {
+              <div class="scan-pill" [class.pro]="display === 'unlimited'" [class.danger]="display === 0">
+                @if (display === 'unlimited') {
+                  <ion-icon name="infinite-outline" />
+                } @else {
+                  <ion-icon name="camera-outline" />
+                  <span>{{ display }}</span>
+                }
+              </div>
+            }
+          </div>
 
-    <ion-content [fullscreen]="true">
-      <ion-header collapse="condense">
-        <ion-toolbar>
-          <ion-title size="large">{{ 'home.title' | translate }}</ion-title>
-        </ion-toolbar>
-      </ion-header>
+          <!-- Stats row -->
+          <div class="stats-row animate-fade-in-up">
+            <div class="stat-card">
+              <ion-icon name="trophy-outline" color="primary" />
+              <span class="stat-value">{{ trophyItemCount() }}</span>
+              <span class="stat-label">{{ 'home.statTrophies' | translate }}</span>
+            </div>
+            <div class="stat-card">
+              <ion-icon name="heart-outline" color="danger" />
+              <span class="stat-value">{{ roomService.room()?.likeCount || 0 }}</span>
+              <span class="stat-label">{{ 'home.statLikes' | translate }}</span>
+            </div>
+            <div class="stat-card">
+              <ion-icon name="eye-outline" color="medium" />
+              <span class="stat-value">{{ roomService.room()?.viewCount || 0 }}</span>
+              <span class="stat-label">{{ 'home.statViews' | translate }}</span>
+            </div>
+          </div>
+        </div>
 
-      @if (loading()) {
-        <div class="centered">
-          <ion-spinner name="crescent" />
-        </div>
-      } @else if (error()) {
-        <div class="centered">
-          <ion-text>{{ 'common.error' | translate }}</ion-text>
-          <ion-button fill="clear" (click)="fetchRoom()">
-            {{ 'common.retry' | translate }}
-          </ion-button>
-        </div>
-      } @else if (!hasItems()) {
-        <div class="centered animate-fade-in">
-          <h2>{{ 'home.title' | translate }}</h2>
-          <ion-text color="medium">
-            <p>{{ 'room.empty' | translate }}</p>
-          </ion-text>
-          <ion-button (click)="onScanTap()">
-            {{ 'trophies.scan' | translate }}
-          </ion-button>
-        </div>
-      } @else {
-        <div class="canvas-container animate-fade-in">
-          <ngt-canvas
-            [shadows]="true"
-            [dpr]="[1, 2]"
-            [camera]="{ position: [5, 5, 5], fov: 45 }"
-          >
-            <app-pain-cave-scene
-              *canvasContent
-              [items]="room()!.items"
-              [inspectedItemId]="inspectedItemId()"
-              [theme]="resolvedTheme()"
-              (itemPressed)="onItemPressed($event)"
-            />
-          </ngt-canvas>
-        </div>
-      }
-
-      <!-- Scan remaining badge -->
-      @if (userService.scansDisplay(); as display) {
-        <div class="scan-remaining-badge">
-          @if (display === 'unlimited') {
-            <ion-badge color="success">{{ 'scan.unlimited' | translate }}</ion-badge>
+        <!-- Room 3D -->
+        <div class="room-container animate-fade-in">
+          @if (roomService.loading()) {
+            <div class="centered">
+              <ion-spinner name="crescent" />
+            </div>
+          } @else if (error()) {
+            <div class="centered">
+              <ion-text>{{ 'common.error' | translate }}</ion-text>
+              <ion-button fill="clear" (click)="fetchRoom()">
+                {{ 'common.retry' | translate }}
+              </ion-button>
+            </div>
+          } @else if (!hasItems()) {
+            <div class="centered">
+              <h2 class="empty-title">{{ 'home.emptyTitle' | translate }}</h2>
+              <ion-text color="medium">
+                <p class="empty-subtitle">{{ 'home.emptySubtitle' | translate }}</p>
+              </ion-text>
+            </div>
           } @else {
-            <ion-badge [color]="display === 0 ? 'danger' : 'primary'">
-              {{ 'scan.remaining' | translate: { count: display } }}
-            </ion-badge>
+            <ngt-canvas
+              [shadows]="true"
+              [dpr]="[1, 2]"
+              [camera]="{ position: [5, 5, 5], fov: 45 }"
+            >
+              <app-pain-cave-scene
+                *canvasContent
+                [items]="roomService.room()!.items"
+                [inspectedItemId]="inspectedItemId()"
+                [theme]="resolvedTheme()"
+                (itemPressed)="onItemPressed($event)"
+              />
+            </ngt-canvas>
+          }
+
+          <!-- Edit room button -->
+          @if (!roomService.loading() && !error()) {
+            <div class="edit-room-btn" (click)="goToEdit()">
+              <ion-icon name="create-outline" />
+            </div>
           }
         </div>
-      }
-
-      <!-- Floating action buttons -->
-      <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-        <ion-fab-button>
-          <ion-icon name="add" />
-        </ion-fab-button>
-        <ion-fab-list side="top">
-          <ion-fab-button (click)="onScanTap()" color="primary">
-            <ion-icon name="camera" />
-          </ion-fab-button>
-          <ion-fab-button (click)="goToEdit()" color="secondary">
-            <ion-icon name="create" />
-          </ion-fab-button>
-        </ion-fab-list>
-      </ion-fab>
+      </div>
 
       <!-- Trophy Info Bottom Sheet -->
       <ion-modal
@@ -194,29 +203,107 @@ interface RoomData {
     </ion-content>
   `,
   styles: `
-    .centered {
+    .home-layout {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
       height: 100%;
-      padding: 24px;
-      text-align: center;
+    }
 
-      h2 {
-        font-size: 24px;
-        font-weight: 700;
-        margin: 0 0 8px;
+    .dashboard-header {
+      padding: 16px 16px 8px;
+      flex-shrink: 0;
+    }
+
+    .greeting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .greeting-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .greeting-avatar {
+      width: 36px;
+      height: 36px;
+    }
+
+    .avatar-fallback {
+      font-size: 36px;
+      color: var(--ion-color-step-400);
+    }
+
+    .greeting-text {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .scan-pill {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      background: var(--ion-color-primary);
+      color: #fff;
+
+      ion-icon {
+        font-size: 16px;
       }
 
-      p {
-        margin: 0 0 24px;
+      &.pro {
+        background: linear-gradient(135deg, #43e97b, #38f9d7);
+        color: #1a1a1a;
+      }
+
+      &.danger {
+        background: var(--ion-color-danger);
       }
     }
 
-    .canvas-container {
-      width: 100%;
-      height: 100%;
+    .stats-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .stat-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 10px 4px;
+      background: var(--ion-color-step-50);
+      border-radius: 16px;
+
+      ion-icon {
+        font-size: 18px;
+      }
+    }
+
+    .stat-value {
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--ion-color-medium);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .room-container {
+      flex: 1;
+      min-height: 0;
+      position: relative;
     }
 
     ngt-canvas {
@@ -225,11 +312,50 @@ interface RoomData {
       height: 100%;
     }
 
-    .scan-remaining-badge {
+    .centered {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .empty-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0 0 8px;
+    }
+
+    .empty-subtitle {
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .edit-room-btn {
       position: absolute;
-      top: 12px;
-      right: 12px;
+      bottom: 16px;
+      left: 16px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--ion-color-step-100);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      cursor: pointer;
+      transition: transform 0.15s ease;
       z-index: 10;
+
+      &:active {
+        transform: scale(0.92);
+      }
+
+      ion-icon {
+        font-size: 20px;
+      }
     }
 
     .upgrade-container {
@@ -270,20 +396,24 @@ interface RoomData {
   `,
 })
 export class HomePage implements OnInit {
-  private api = inject(ApiService);
   private router = inject(Router);
   private themeService = inject(ThemeService);
+  roomService = inject(RoomService);
   userService = inject(UserService);
+  authService = inject(AuthService);
 
-  room = signal<RoomData | null>(null);
-  loading = signal(true);
   error = signal(false);
-  hasItems = signal(false);
   showUpgradeModal = signal(false);
   inspectedItemId = signal<string | null>(null);
 
+  hasItems = computed(() => (this.roomService.room()?.items?.length ?? 0) > 0);
+
+  trophyItemCount = computed(() => {
+    return (this.roomService.room()?.items ?? []).filter((i) => i.trophyId).length;
+  });
+
   trophyItems = computed(() => {
-    return (this.room()?.items ?? []).filter(
+    return (this.roomService.room()?.items ?? []).filter(
       (item) => item.trophyId && item.trophy
     );
   });
@@ -297,7 +427,7 @@ export class HomePage implements OnInit {
   inspectedTrophyData = computed<TrophyInfoData | null>(() => {
     const itemId = this.inspectedItemId();
     if (!itemId) return null;
-    const item = this.room()?.items.find((i) => i.id === itemId);
+    const item = this.roomService.room()?.items.find((i) => i.id === itemId);
     if (!item?.trophy) return null;
     return {
       id: item.trophy.id,
@@ -315,7 +445,7 @@ export class HomePage implements OnInit {
   });
 
   resolvedTheme = computed<RoomTheme>(() => {
-    const r = this.room();
+    const r = this.roomService.room();
     if (!r) return DEFAULT_THEME;
     return this.themeService.resolveThemeFromRoom(r);
   });
@@ -327,7 +457,17 @@ export class HomePage implements OnInit {
   });
 
   constructor() {
-    addIcons({ add, camera, create, lockClosedOutline, rocketOutline });
+    addIcons({
+      cameraOutline,
+      createOutline,
+      lockClosedOutline,
+      rocketOutline,
+      infiniteOutline,
+      trophyOutline,
+      heartOutline,
+      eyeOutline,
+      personCircleOutline,
+    });
   }
 
   ngOnInit(): void {
@@ -336,26 +476,19 @@ export class HomePage implements OnInit {
   }
 
   async fetchRoom(): Promise<void> {
-    this.loading.set(true);
     this.error.set(false);
     try {
-      const res = await this.api.client.api.rooms.me.$get();
-      if (res.ok) {
-        const json = (await res.json()) as { data: RoomData };
-        this.room.set(json.data);
-        this.hasItems.set(json.data.items.length > 0);
-      } else {
+      const room = await this.roomService.fetchMyRoom();
+      if (!room) {
         this.error.set(true);
       }
     } catch {
       this.error.set(true);
-    } finally {
-      this.loading.set(false);
     }
   }
 
   onItemPressed(itemId: string): void {
-    const item = this.room()?.items.find((i) => i.id === itemId);
+    const item = this.roomService.room()?.items.find((i) => i.id === itemId);
     if (item?.trophy) {
       this.inspectedItemId.set(itemId);
     }
@@ -391,17 +524,12 @@ export class HomePage implements OnInit {
     this.router.navigate(['/race', raceId, 'finishers']);
   }
 
-  onScanTap(): void {
-    const remaining = this.userService.scansRemaining();
-    if (remaining !== null && remaining <= 0 && !this.userService.isPro()) {
-      this.showUpgradeModal.set(true);
-      return;
-    }
-    this.router.navigate(['/trophy/create']);
-  }
-
   goToEdit(): void {
     this.router.navigate(['/room/edit']);
+  }
+
+  goToProfile(): void {
+    this.router.navigate(['/tabs/profile']);
   }
 
   onUpgrade(): void {

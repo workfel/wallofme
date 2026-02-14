@@ -47,7 +47,7 @@ type CreationPhase = 'capture' | 'processing' | 'details' | 'matching' | 'search
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-back-button defaultHref="/tabs/trophies" />
+          <ion-back-button defaultHref="/tabs/home" />
         </ion-buttons>
         <ion-title>{{ headerTitle() | translate }}</ion-title>
       </ion-toolbar>

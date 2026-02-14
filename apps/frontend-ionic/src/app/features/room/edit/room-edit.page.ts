@@ -4,10 +4,9 @@ import {
   signal,
   computed,
   OnInit,
-  OnDestroy,
   CUSTOM_ELEMENTS_SCHEMA,
-} from '@angular/core';
-import { Router } from '@angular/router';
+} from "@angular/core";
+import { Router } from "@angular/router";
 import {
   IonContent,
   IonHeader,
@@ -17,52 +16,65 @@ import {
   IonFabButton,
   IonModal,
   IonAlert,
-} from '@ionic/angular/standalone';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { NgtCanvas } from 'angular-three/dom';
-import { addIcons } from 'ionicons';
+} from "@ionic/angular/standalone";
+import { TranslateModule, TranslateService } from "@ngx-translate/core";
+import { NgtCanvas } from "angular-three/dom";
+import { addIcons } from "ionicons";
 import {
   addOutline,
   trashOutline,
   refreshOutline,
   moveOutline,
   shareOutline,
-} from 'ionicons/icons';
+} from "ionicons/icons";
 
-import { RoomService } from '@app/core/services/room.service';
-import { TrophyService } from '@app/core/services/trophy.service';
-import { ThemeService } from '@app/core/services/theme.service';
-import { TokenService } from '@app/core/services/token.service';
-import { ShareService } from '@app/core/services/share.service';
-import { ScreenshotService } from '@app/core/services/screenshot.service';
-import { UploadService } from '@app/core/services/upload.service';
-import { DecorationService } from '@app/core/services/decoration.service';
-import { type RoomTheme, type CustomThemeColors, CUSTOM_THEME_ID } from '@app/types/room-theme';
+import { RoomService } from "@app/core/services/room.service";
+import { TrophyService } from "@app/core/services/trophy.service";
+import { ThemeService } from "@app/core/services/theme.service";
+import { TokenService } from "@app/core/services/token.service";
+import { ShareService } from "@app/core/services/share.service";
+import { ScreenshotService } from "@app/core/services/screenshot.service";
+import { UploadService } from "@app/core/services/upload.service";
+import { DecorationService } from "@app/core/services/decoration.service";
+import {
+  type RoomTheme,
+  type CustomThemeColors,
+  CUSTOM_THEME_ID,
+} from "@app/types/room-theme";
 
-import { PainCaveSceneComponent, type ItemDragEvent } from '../components/pain-cave-scene/pain-cave-scene.component';
-import { EditorToolbarComponent } from '../components/editor-toolbar/editor-toolbar.component';
-import { ContextActionBarComponent } from '../components/context-action-bar/context-action-bar.component';
-import { FloorPlacementPanelComponent, type FloorPlacementValues } from '../components/floor-placement-panel/floor-placement-panel.component';
-import { ThemeSelectorSheetComponent } from '../components/theme-selector-sheet/theme-selector-sheet.component';
-import { CustomThemeEditorComponent } from '../components/custom-theme-editor/custom-theme-editor.component';
-import { ObjectCatalogSheetComponent } from '../components/object-catalog-sheet/object-catalog-sheet.component';
-import { ShareRoomSheetComponent } from '../components/share-room-sheet/share-room-sheet.component';
-import { WallPlacementPanelComponent, type WallPlacementValues } from '../components/wall-placement-panel/wall-placement-panel.component';
+import {
+  PainCaveSceneComponent,
+  type ItemDragEvent,
+} from "../components/pain-cave-scene/pain-cave-scene.component";
+import { EditorToolbarComponent } from "../components/editor-toolbar/editor-toolbar.component";
+import { ContextActionBarComponent } from "../components/context-action-bar/context-action-bar.component";
+import {
+  FloorPlacementPanelComponent,
+  type FloorPlacementValues,
+} from "../components/floor-placement-panel/floor-placement-panel.component";
+import { ThemeSelectorSheetComponent } from "../components/theme-selector-sheet/theme-selector-sheet.component";
+import { CustomThemeEditorComponent } from "../components/custom-theme-editor/custom-theme-editor.component";
+import { ObjectCatalogSheetComponent } from "../components/object-catalog-sheet/object-catalog-sheet.component";
+import { ShareRoomSheetComponent } from "../components/share-room-sheet/share-room-sheet.component";
+import {
+  WallPlacementPanelComponent,
+  type WallPlacementValues,
+} from "../components/wall-placement-panel/wall-placement-panel.component";
 
 // ─── Editor State Machine ────────────────────────────────
 type EditorState =
-  | { kind: 'IDLE' }
-  | { kind: 'SELECTED'; itemId: string }
-  | { kind: 'DRAGGING'; itemId: string }
-  | { kind: 'CATALOG_OPEN' }
-  | { kind: 'SLOT_PICKING'; itemToPlace: string; source: 'catalog' | 'move' }
-  | { kind: 'THEME_OPEN' }
-  | { kind: 'CUSTOM_EDITOR_OPEN' }
-  | { kind: 'SHARE_OPEN' }
-  | { kind: 'CONFIRM_DELETE'; itemId: string };
+  | { kind: "IDLE" }
+  | { kind: "SELECTED"; itemId: string }
+  | { kind: "DRAGGING"; itemId: string }
+  | { kind: "CATALOG_OPEN" }
+  | { kind: "SLOT_PICKING"; itemToPlace: string; source: "catalog" | "move" }
+  | { kind: "THEME_OPEN" }
+  | { kind: "CUSTOM_EDITOR_OPEN" }
+  | { kind: "SHARE_OPEN" }
+  | { kind: "CONFIRM_DELETE"; itemId: string };
 
 @Component({
-  selector: 'app-room-edit',
+  selector: "app-room-edit",
   standalone: true,
   imports: [
     TranslateModule,
@@ -92,7 +104,6 @@ type EditorState =
       <app-editor-toolbar
         [viewCount]="roomService.room()?.viewCount ?? 0"
         [likeCount]="roomService.room()?.likeCount ?? 0"
-        (preview)="onPreview()"
         (openThemes)="openThemeSelector()"
         (share)="onShare()"
       />
@@ -159,7 +170,7 @@ type EditorState =
       </div>
 
       <!-- FAB: Add items -->
-      @if (state().kind === 'IDLE') {
+      @if (state().kind === "IDLE") {
         <ion-fab vertical="bottom" horizontal="end" slot="fixed">
           <ion-fab-button (click)="openCatalog()">
             <ion-icon name="add-outline" />
@@ -278,7 +289,7 @@ type EditorState =
     }
   `,
 })
-export class RoomEditPage implements OnInit, OnDestroy {
+export class RoomEditPage implements OnInit {
   // Ionic lifecycle — fires BEFORE component/canvas destruction
   ionViewWillLeave(): void {
     this.captureThumbnail();
@@ -297,14 +308,14 @@ export class RoomEditPage implements OnInit, OnDestroy {
   private thumbnailCaptured = false;
 
   // ─── State Machine ───────────────────────────────
-  state = signal<EditorState>({ kind: 'IDLE' });
+  state = signal<EditorState>({ kind: "IDLE" });
 
-  isItemSelected = computed(() => this.state().kind === 'SELECTED');
+  isItemSelected = computed(() => this.state().kind === "SELECTED");
   selectedItemId = computed(() => {
     const s = this.state();
-    if (s.kind === 'SELECTED') return s.itemId;
-    if (s.kind === 'DRAGGING') return s.itemId;
-    if (s.kind === 'CONFIRM_DELETE') return s.itemId;
+    if (s.kind === "SELECTED") return s.itemId;
+    if (s.kind === "DRAGGING") return s.itemId;
+    if (s.kind === "CONFIRM_DELETE") return s.itemId;
     return null;
   });
 
@@ -314,7 +325,7 @@ export class RoomEditPage implements OnInit, OnDestroy {
     return this.roomService.room()?.items.find((i) => i.id === id) ?? null;
   });
 
-  isDragging = computed(() => this.state().kind === 'DRAGGING');
+  isDragging = computed(() => this.state().kind === "DRAGGING");
 
   isDecorationSelected = computed(() => {
     const item = this.selectedItem();
@@ -328,19 +339,29 @@ export class RoomEditPage implements OnInit, OnDestroy {
 
   selectedItemRotationDeg = computed(() => {
     const item = this.selectedItem();
-    return item ? Math.round((item.rotationY || 0) * 180 / Math.PI) : 0;
+    return item ? Math.round(((item.rotationY || 0) * 180) / Math.PI) : 0;
   });
 
   shareLink = signal<string | null>(null);
   private previousTheme: RoomTheme | null = null;
 
   deleteAlertButtons = [
-    { text: this.translate.instant('common.cancel'), role: 'cancel' },
-    { text: this.translate.instant('common.delete'), role: 'destructive', handler: () => this.doDelete() },
+    { text: this.translate.instant("common.cancel"), role: "cancel" },
+    {
+      text: this.translate.instant("common.delete"),
+      role: "destructive",
+      handler: () => this.doDelete(),
+    },
   ];
 
   constructor() {
-    addIcons({ addOutline, trashOutline, refreshOutline, moveOutline, shareOutline });
+    addIcons({
+      addOutline,
+      trashOutline,
+      refreshOutline,
+      moveOutline,
+      shareOutline,
+    });
   }
 
   async ngOnInit(): Promise<void> {
@@ -365,20 +386,20 @@ export class RoomEditPage implements OnInit, OnDestroy {
   // ─── Item Interactions ───────────────────────────
   onItemPressed(itemId: string): void {
     // Floor tap → deselect
-    if (itemId === '__deselect__') {
-      this.state.set({ kind: 'IDLE' });
+    if (itemId === "__deselect__") {
+      this.state.set({ kind: "IDLE" });
       return;
     }
 
     const s = this.state();
-    if (s.kind === 'IDLE' || s.kind === 'SELECTED') {
-      if (s.kind === 'SELECTED' && s.itemId === itemId) {
-        this.state.set({ kind: 'IDLE' });
+    if (s.kind === "IDLE" || s.kind === "SELECTED") {
+      if (s.kind === "SELECTED" && s.itemId === itemId) {
+        this.state.set({ kind: "IDLE" });
       } else {
-        this.state.set({ kind: 'SELECTED', itemId });
+        this.state.set({ kind: "SELECTED", itemId });
         this.hapticLight();
       }
-    } else if (s.kind === 'SLOT_PICKING') {
+    } else if (s.kind === "SLOT_PICKING") {
       // Clicking an item during slot picking — ignore
     }
   }
@@ -387,22 +408,22 @@ export class RoomEditPage implements OnInit, OnDestroy {
   confirmDelete(): void {
     const id = this.selectedItemId();
     if (id) {
-      this.state.set({ kind: 'CONFIRM_DELETE', itemId: id });
+      this.state.set({ kind: "CONFIRM_DELETE", itemId: id });
     }
   }
 
   cancelDelete(): void {
     const s = this.state();
-    if (s.kind === 'CONFIRM_DELETE') {
-      this.state.set({ kind: 'SELECTED', itemId: s.itemId });
+    if (s.kind === "CONFIRM_DELETE") {
+      this.state.set({ kind: "SELECTED", itemId: s.itemId });
     }
   }
 
   async doDelete(): Promise<void> {
     const s = this.state();
-    if (s.kind === 'CONFIRM_DELETE') {
+    if (s.kind === "CONFIRM_DELETE") {
       await this.roomService.removeItem(s.itemId);
-      this.state.set({ kind: 'IDLE' });
+      this.state.set({ kind: "IDLE" });
     }
   }
 
@@ -433,7 +454,7 @@ export class RoomEditPage implements OnInit, OnDestroy {
         wall: slot.wall,
       });
     }
-    this.state.set({ kind: 'IDLE' });
+    this.state.set({ kind: "IDLE" });
   }
 
   async onFloorPlacementChange(values: FloorPlacementValues): Promise<void> {
@@ -467,8 +488,8 @@ export class RoomEditPage implements OnInit, OnDestroy {
   onItemDragged(event: ItemDragEvent): void {
     // Enter DRAGGING state to hide bottom bar
     const s = this.state();
-    if (s.kind === 'SELECTED') {
-      this.state.set({ kind: 'DRAGGING', itemId: s.itemId });
+    if (s.kind === "SELECTED") {
+      this.state.set({ kind: "DRAGGING", itemId: s.itemId });
       this.hapticMedium();
     }
 
@@ -491,12 +512,14 @@ export class RoomEditPage implements OnInit, OnDestroy {
   async onItemDragEnd(event: ItemDragEvent): Promise<void> {
     // Return to SELECTED state
     const s = this.state();
-    if (s.kind === 'DRAGGING') {
-      this.state.set({ kind: 'SELECTED', itemId: s.itemId });
+    if (s.kind === "DRAGGING") {
+      this.state.set({ kind: "SELECTED", itemId: s.itemId });
     }
 
     // Persist final position to server
-    const item = this.roomService.room()?.items.find((i) => i.id === event.itemId);
+    const item = this.roomService
+      .room()
+      ?.items.find((i) => i.id === event.itemId);
     if (!item) return;
     await this.roomService.updateItem(event.itemId, {
       positionX: event.positionX,
@@ -508,18 +531,18 @@ export class RoomEditPage implements OnInit, OnDestroy {
 
   // ─── Catalog ─────────────────────────────────────
   openCatalog(): void {
-    this.state.set({ kind: 'CATALOG_OPEN' });
+    this.state.set({ kind: "CATALOG_OPEN" });
   }
 
   closeCatalog(): void {
-    if (this.state().kind === 'CATALOG_OPEN') {
-      this.state.set({ kind: 'IDLE' });
+    if (this.state().kind === "CATALOG_OPEN") {
+      this.state.set({ kind: "IDLE" });
     }
   }
 
   async onPlaceTrophy(trophyId: string): Promise<void> {
     await this.roomService.addItemToRoom(trophyId);
-    this.state.set({ kind: 'IDLE' });
+    this.state.set({ kind: "IDLE" });
     this.hapticSuccess();
   }
 
@@ -530,28 +553,28 @@ export class RoomEditPage implements OnInit, OnDestroy {
       if (!acquired) return;
     }
     await this.roomService.addDecorationToRoom(decorationId);
-    this.state.set({ kind: 'IDLE' });
+    this.state.set({ kind: "IDLE" });
     this.hapticSuccess();
   }
 
   onGetTokens(): void {
-    this.state.set({ kind: 'IDLE' });
-    this.router.navigate(['/tokens']);
+    this.state.set({ kind: "IDLE" });
+    this.router.navigate(["/tokens"]);
   }
 
   // ─── Theme Selector ──────────────────────────────
   openThemeSelector(): void {
     this.previousTheme = this.themeService.activeTheme();
-    this.state.set({ kind: 'THEME_OPEN' });
+    this.state.set({ kind: "THEME_OPEN" });
   }
 
   closeThemeSelector(): void {
     // Don't reset to IDLE if we transitioned to the custom editor
-    if (this.state().kind === 'CUSTOM_EDITOR_OPEN') return;
-    if (this.state().kind === 'THEME_OPEN' && this.previousTheme) {
+    if (this.state().kind === "CUSTOM_EDITOR_OPEN") return;
+    if (this.state().kind === "THEME_OPEN" && this.previousTheme) {
       this.themeService.applyTheme(this.previousTheme);
     }
-    this.state.set({ kind: 'IDLE' });
+    this.state.set({ kind: "IDLE" });
   }
 
   onThemePreview(theme: RoomTheme): void {
@@ -564,20 +587,20 @@ export class RoomEditPage implements OnInit, OnDestroy {
       this.previousTheme = null;
       this.roomService.updateRoom({ themeId: theme.id, customTheme: null });
     }
-    this.state.set({ kind: 'IDLE' });
+    this.state.set({ kind: "IDLE" });
   }
 
   // ─── Custom Theme Editor ──────────────────────────
   onOpenCustomEditor(): void {
-    this.state.set({ kind: 'CUSTOM_EDITOR_OPEN' });
+    this.state.set({ kind: "CUSTOM_EDITOR_OPEN" });
   }
 
   closeCustomEditor(): void {
-    if (this.state().kind === 'CUSTOM_EDITOR_OPEN' && this.previousTheme) {
+    if (this.state().kind === "CUSTOM_EDITOR_OPEN" && this.previousTheme) {
       this.themeService.applyTheme(this.previousTheme);
     }
-    if (this.state().kind === 'CUSTOM_EDITOR_OPEN') {
-      this.state.set({ kind: 'IDLE' });
+    if (this.state().kind === "CUSTOM_EDITOR_OPEN") {
+      this.state.set({ kind: "IDLE" });
     }
   }
 
@@ -589,12 +612,12 @@ export class RoomEditPage implements OnInit, OnDestroy {
     this.themeService.applyCustomColors(colors);
     this.previousTheme = null;
     this.roomService.updateRoom({ themeId: null, customTheme: colors });
-    this.state.set({ kind: 'IDLE' });
+    this.state.set({ kind: "IDLE" });
   }
 
   // ─── Share ─────────────────────────────────────
   async onShare(): Promise<void> {
-    this.state.set({ kind: 'SHARE_OPEN' });
+    this.state.set({ kind: "SHARE_OPEN" });
     const slug = await this.shareService.generateShareLink();
     if (slug) {
       this.shareLink.set(this.shareService.getShareUrl(slug));
@@ -602,8 +625,8 @@ export class RoomEditPage implements OnInit, OnDestroy {
   }
 
   closeShare(): void {
-    if (this.state().kind === 'SHARE_OPEN') {
-      this.state.set({ kind: 'IDLE' });
+    if (this.state().kind === "SHARE_OPEN") {
+      this.state.set({ kind: "IDLE" });
     }
   }
 
@@ -612,17 +635,20 @@ export class RoomEditPage implements OnInit, OnDestroy {
     if (!link) return;
 
     try {
-      const { Share } = await import('@capacitor/share');
+      const { Share } = await import("@capacitor/share");
       await Share.share({
-        title: this.translate.instant('room.shareTitle'),
-        text: this.translate.instant('room.shareText'),
+        title: this.translate.instant("room.shareTitle"),
+        text: this.translate.instant("room.shareText"),
         url: link,
-        dialogTitle: this.translate.instant('room.shareMessage'),
+        dialogTitle: this.translate.instant("room.shareMessage"),
       });
     } catch {
       // User cancelled or share not supported — try web fallback
       try {
-        await navigator.share({ title: this.translate.instant('room.shareTitle'), url: link });
+        await navigator.share({
+          title: this.translate.instant("room.shareTitle"),
+          url: link,
+        });
       } catch {
         // Silently fail
       }
@@ -632,11 +658,11 @@ export class RoomEditPage implements OnInit, OnDestroy {
   async onShareScreenshot(): Promise<void> {
     try {
       const blob = await this.screenshotService.captureRoom();
-      const file = new File([blob], 'pain-cave.png', { type: 'image/png' });
+      const file = new File([blob], "pain-cave.png", { type: "image/png" });
 
       // Try native Capacitor share first
       try {
-        const { Share } = await import('@capacitor/share');
+        const { Share } = await import("@capacitor/share");
 
         // Convert blob to data URI for native sharing
         const reader = new FileReader();
@@ -647,16 +673,16 @@ export class RoomEditPage implements OnInit, OnDestroy {
         });
 
         // Write to a temp file and share
-        const { Filesystem, Directory } = await import('@capacitor/filesystem');
-        const base64Data = dataUri.split(',')[1];
+        const { Filesystem, Directory } = await import("@capacitor/filesystem");
+        const base64Data = dataUri.split(",")[1];
         const tempFile = await Filesystem.writeFile({
-          path: 'pain-cave.png',
+          path: "pain-cave.png",
           data: base64Data,
           directory: Directory.Cache,
         });
 
         await Share.share({
-          title: this.translate.instant('room.shareTitle'),
+          title: this.translate.instant("room.shareTitle"),
           files: [tempFile.uri],
         });
         return;
@@ -666,31 +692,21 @@ export class RoomEditPage implements OnInit, OnDestroy {
 
       // Web fallback: navigator.share with file or download
       if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ title: this.translate.instant('room.shareTitle'), files: [file] });
+        await navigator.share({
+          title: this.translate.instant("room.shareTitle"),
+          files: [file],
+        });
       } else {
         // Download fallback
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
+        const a = document.createElement("a");
         a.href = url;
-        a.download = 'pain-cave.png';
+        a.download = "pain-cave.png";
         a.click();
         URL.revokeObjectURL(url);
       }
     } catch {
       // User cancelled or capture failed
-    }
-  }
-
-  ngOnDestroy(): void {
-    // Thumbnail already captured in ionViewWillLeave
-  }
-
-  // ─── Toolbar Actions ─────────────────────────────
-  onPreview(): void {
-    // Thumbnail captured by ionViewWillLeave — just navigate
-    const room = this.roomService.room();
-    if (room) {
-      this.router.navigate(['/room', room.userId]);
     }
   }
 
@@ -700,40 +716,48 @@ export class RoomEditPage implements OnInit, OnDestroy {
     this.thumbnailCaptured = true;
 
     // Fire and forget — don't block navigation
-    this.screenshotService.captureRoom().then(async (blob) => {
-      const result = await this.uploadService.uploadFile(
-        blob,
-        'room-thumbnail',
-        'image/png'
-      );
-      if (result?.key) {
-        await this.roomService.updateRoom({ thumbnailKey: result.key });
-      }
-    }).catch(() => {
-      // Silently fail — thumbnail is non-critical
-    });
+    this.screenshotService
+      .captureRoom()
+      .then(async (blob) => {
+        const result = await this.uploadService.uploadFile(
+          blob,
+          "room-thumbnail",
+          "image/png",
+        );
+        if (result?.key) {
+          await this.roomService.updateRoom({ thumbnailKey: result.key });
+        }
+      })
+      .catch(() => {
+        // Silently fail — thumbnail is non-critical
+      });
   }
 
   // ─── Haptics ──────────────────────────────────────
   private async hapticLight(): Promise<void> {
     try {
-      const { Haptics, ImpactStyle } = await import('@capacitor/haptics');
+      const { Haptics, ImpactStyle } = await import("@capacitor/haptics");
       Haptics.impact({ style: ImpactStyle.Light });
-    } catch { /* not available */ }
+    } catch {
+      /* not available */
+    }
   }
 
   private async hapticMedium(): Promise<void> {
     try {
-      const { Haptics, ImpactStyle } = await import('@capacitor/haptics');
+      const { Haptics, ImpactStyle } = await import("@capacitor/haptics");
       Haptics.impact({ style: ImpactStyle.Medium });
-    } catch { /* not available */ }
+    } catch {
+      /* not available */
+    }
   }
 
   private async hapticSuccess(): Promise<void> {
     try {
-      const { Haptics, NotificationType } = await import('@capacitor/haptics');
+      const { Haptics, NotificationType } = await import("@capacitor/haptics");
       Haptics.notification({ type: NotificationType.Success });
-    } catch { /* not available */ }
+    } catch {
+      /* not available */
+    }
   }
-
 }

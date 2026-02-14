@@ -71,7 +71,7 @@ interface TrophyDetail {
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-back-button defaultHref="/tabs/trophies" />
+          <ion-back-button defaultHref="/tabs/home" />
         </ion-buttons>
         <ion-title>{{ 'trophies.detail' | translate }}</ion-title>
       </ion-toolbar>
