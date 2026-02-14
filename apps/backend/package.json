@@ -6,6 +6,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
+    "db:seed": "bun src/db/seed-decorations.ts",
+    "db:seed:update": "bun scripts/update-decorations-seed.ts",
     "postinstall": "mkdir -p node_modules/@imgly && ln -snf ../../../../node_modules/@imgly/background-removal-node node_modules/@imgly/background-removal-node"
   },
   "dependencies": {
