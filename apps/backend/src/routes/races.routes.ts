@@ -8,6 +8,7 @@ import { idParamSchema, paginationSchema } from "../validators/common.validator"
 import {
   createRaceSchema,
   createRaceResultSchema,
+  updateRaceResultSchema,
   searchRaceSchema,
 } from "../validators/race.validator";
 import { normalizeRaceName, getSearchTerms } from "../lib/race-matcher";
@@ -210,6 +211,35 @@ export const races = new Hono<{ Variables: Variables }>()
         .returning();
 
       return c.json({ data: item }, 201);
+    }
+  )
+
+  // Update race result
+  .patch(
+    "/results/:id",
+    requireAuth,
+    zValidator("param", idParamSchema),
+    zValidator("json", updateRaceResultSchema),
+    async (c) => {
+      const currentUser = c.get("user")!;
+      const { id } = c.req.valid("param");
+      const body = c.req.valid("json");
+
+      const existing = await db.query.raceResult.findFirst({
+        where: eq(raceResult.id, id),
+      });
+
+      if (!existing || existing.userId !== currentUser.id) {
+        return c.json({ error: "Not found" }, 404);
+      }
+
+      const [updated] = await db
+        .update(raceResult)
+        .set({ ...body, source: "manual", updatedAt: new Date() })
+        .where(eq(raceResult.id, id))
+        .returning();
+
+      return c.json({ data: updated });
     }
   )
 

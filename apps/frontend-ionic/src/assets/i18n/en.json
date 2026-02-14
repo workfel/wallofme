@@ -302,7 +302,30 @@
     "retryResults": "Search again",
     "retryingResults": "Searching...",
     "retryResultsCooldown": "Retry in {{seconds}}s",
-    "resultsRetryMaxAttempts": "No results found. You can add them manually later."
+    "resultsRetryMaxAttempts": "No results found. You can add them manually later.",
+    "stepRefine": "Refine",
+    "enterResults": "Enter Your Results",
+    "aiDisclaimer": "Results found by AI may contain errors — feel free to correct them.",
+    "totalParticipants": "Total Participants"
+  },
+  "refinement": {
+    "raceNameTitle": "What's the race name?",
+    "raceNameHint": "Enter the official race name as accurately as possible",
+    "locationTitle": "Where was this race?",
+    "locationHint": "Select the country and city where the race took place",
+    "yearTitle": "When did you race?",
+    "yearHint": "We'll search for the exact date",
+    "yearLabel": "Year (e.g. 2024)",
+    "next": "Next",
+    "back": "Back",
+    "searchNow": "Search for race info",
+    "searchingDate": "Searching for race info...",
+    "searchFailedTitle": "Race info not found",
+    "searchFailedHint": "No worries — you can enter the date manually below.",
+    "orJustYear": "If you only know the year, that's okay",
+    "successFound": "Race info found!",
+    "manualDateLabel": "Date (YYYY-MM-DD)",
+    "confirmYear": "Confirm with year only"
   },
   "finishers": {
     "title": "Finisher's Club",

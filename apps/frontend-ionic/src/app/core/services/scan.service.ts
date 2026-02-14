@@ -9,7 +9,7 @@ import { UserService } from './user.service';
 const MAX_RETRY_ATTEMPTS = 2;
 const RETRY_COOLDOWN_MS = 15_000;
 
-export type ScanStep = 'idle' | 'processing' | 'details' | 'matching' | 'search' | 'done';
+export type ScanStep = 'idle' | 'processing' | 'refining' | 'details' | 'matching' | 'search' | 'done';
 
 export type ProcessingPhase =
   | 'idle'
@@ -55,6 +55,16 @@ export interface SearchResult {
   totalParticipants: number | null;
 }
 
+export interface RefineSearchResult {
+  found: boolean;
+  date: string | null;
+  city: string | null;
+  country: string | null;
+  sport: string | null;
+  distance: string | null;
+  raceName: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ScanService {
   private api = inject(ApiService);
@@ -89,6 +99,25 @@ export class ScanService {
   readonly resultsRetryAttempts = signal(0);
   readonly resultsRetryCooldownRemaining = signal(0);
 
+  // Save results state
+  readonly savingResults = signal(false);
+
+  // Refine search state
+  readonly refineSearchLoading = signal(false);
+
+  // Computed: which critical fields are missing from analysis
+  readonly missingCriticalFields = computed(() => {
+    const a = this.analysis();
+    if (!a) return [];
+    const missing: ('raceName' | 'location' | 'date')[] = [];
+    if (!a.raceName) missing.push('raceName');
+    if (!a.city && !a.country) missing.push('location');
+    if (!a.date) missing.push('date');
+    return missing;
+  });
+
+  readonly needsRefinement = computed(() => this.missingCriticalFields().length > 0);
+
   private cooldownTimers = new Map<string, ReturnType<typeof setInterval>>();
 
   reset(): void {
@@ -113,6 +142,8 @@ export class ScanService {
     this.resultsRetryLoading.set(false);
     this.resultsRetryAttempts.set(0);
     this.resultsRetryCooldownRemaining.set(0);
+    this.savingResults.set(false);
+    this.refineSearchLoading.set(false);
     for (const timer of this.cooldownTimers.values()) {
       clearInterval(timer);
     }
@@ -213,8 +244,18 @@ export class ScanService {
 
       this.processingPhase.set('analyze-done');
 
-      // Move to details step
-      this.step.set('details');
+      // Auto-search date if raceName exists but no date (silent, no retry budget)
+      const currentAnalysis = this.analysis();
+      if (currentAnalysis?.raceName && !currentAnalysis.date) {
+        await this.autoSearchDate(currentAnalysis);
+      }
+
+      // Check if refinement is needed
+      if (this.needsRefinement()) {
+        this.step.set('refining');
+      } else {
+        this.step.set('details');
+      }
 
       // Update scan count and show toast
       this.userService.decrementScansRemaining();
@@ -406,6 +447,131 @@ export class ScanService {
     } finally {
       this.resultsRetryLoading.set(false);
       this.startCooldownTimer('resultsRetry');
+    }
+  }
+
+  /**
+   * Update race result with edited values
+   */
+  async updateRaceResult(data: {
+    time?: string | null;
+    ranking?: number | null;
+    categoryRanking?: number | null;
+    totalParticipants?: number | null;
+  }): Promise<void> {
+    const rrId = this.raceResultId();
+    if (!rrId) return;
+
+    this.savingResults.set(true);
+    try {
+      await this.api.client.api.races.results[':id'].$patch({
+        param: { id: rrId },
+        json: data,
+      });
+    } catch {
+      // silently fail — save is best-effort
+    } finally {
+      this.savingResults.set(false);
+    }
+  }
+
+  /**
+   * Apply refinement data from guided stepper + AI search into analysis, then move to details
+   */
+  applyRefinement(data: {
+    raceName?: string;
+    date?: string;
+    city?: string;
+    country?: string;
+    sport?: string;
+    distance?: string;
+  }): void {
+    const current = this.analysis();
+    if (!current) return;
+
+    this.analysis.set({
+      ...current,
+      raceName: data.raceName ?? current.raceName,
+      date: data.date ?? current.date,
+      city: data.city ?? current.city,
+      country: data.country ?? current.country,
+      sportKind: data.sport ?? current.sportKind,
+      distance: data.distance ?? current.distance,
+    });
+
+    this.step.set('details');
+  }
+
+  /**
+   * Enriched race info search — calls POST /scan/refine-search
+   */
+  async refineSearch(params: {
+    raceName: string;
+    year: string;
+    sportKind?: string | null;
+    city?: string | null;
+    country?: string | null;
+  }): Promise<RefineSearchResult> {
+    this.refineSearchLoading.set(true);
+
+    try {
+      const res = await this.api.client.api.scan['refine-search'].$post({
+        json: {
+          raceName: params.raceName,
+          year: params.year,
+          sportKind: (params.sportKind as any) ?? null,
+          city: params.city ?? null,
+          country: params.country ?? null,
+        },
+      });
+
+      if (res.ok) {
+        const json = (await res.json()) as { data: RefineSearchResult };
+        return json.data;
+      }
+    } catch {
+      // silently fail
+    } finally {
+      this.refineSearchLoading.set(false);
+    }
+
+    return {
+      found: false,
+      date: null,
+      city: null,
+      country: null,
+      sport: null,
+      distance: null,
+      raceName: null,
+    };
+  }
+
+  /**
+   * Auto-search date during processing — does NOT consume retry budget
+   */
+  private async autoSearchDate(analysis: ScanAnalysis): Promise<void> {
+    if (!analysis.raceName) return;
+
+    try {
+      const year = new Date().getFullYear().toString();
+      const res = await this.api.client.api.scan['search-date'].$post({
+        json: {
+          raceName: analysis.raceName,
+          year,
+          sportKind: (analysis.sportKind as any) ?? null,
+          city: analysis.city ?? null,
+          country: analysis.country ?? null,
+        },
+      });
+
+      if (res.ok) {
+        const json = (await res.json()) as { data: { found: boolean; date: string | null } };
+        if (json.data.date) {
+          this.analysis.set({ ...analysis, date: json.data.date });
+        }
+      }
+    } catch {
+      // silently fail — auto-search is best-effort
     }
   }
 

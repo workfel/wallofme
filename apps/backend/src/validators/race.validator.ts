@@ -43,3 +43,10 @@ export const createRaceResultSchema = z.object({
   totalParticipants: z.number().int().positive().optional(),
   source: z.enum(["manual", "ai", "scraped"]).default("manual"),
 });
+
+export const updateRaceResultSchema = z.object({
+  time: z.string().nullable().optional(),
+  ranking: z.number().int().positive().nullable().optional(),
+  categoryRanking: z.number().int().positive().nullable().optional(),
+  totalParticipants: z.number().int().positive().nullable().optional(),
+});

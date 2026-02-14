@@ -42,3 +42,11 @@ export const searchDateSchema = z.object({
   city: z.string().nullable().optional(),
   country: z.string().nullable().optional(),
 });
+
+export const refineSearchSchema = z.object({
+  raceName: z.string().min(1),
+  year: z.string().regex(/^\d{4}$/),
+  sportKind: z.enum(["running", "trail", "triathlon", "cycling", "swimming", "obstacle", "other"]).nullable().optional(),
+  city: z.string().nullable().optional(),
+  country: z.string().nullable().optional(),
+});

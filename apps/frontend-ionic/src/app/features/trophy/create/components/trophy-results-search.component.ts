@@ -1,4 +1,5 @@
-import { Component, inject, computed } from '@angular/core';
+import { Component, inject, computed, signal, effect, output } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import {
   IonButton,
   IonIcon,
@@ -8,17 +9,28 @@ import {
   IonCardContent,
   IonCardHeader,
   IonCardTitle,
+  IonItem,
+  IonInput,
+  IonList,
 } from '@ionic/angular/standalone';
 import { TranslateModule } from '@ngx-translate/core';
 import { addIcons } from 'ionicons';
-import { searchOutline, trophyOutline, refreshOutline } from 'ionicons/icons';
+import { searchOutline, trophyOutline, refreshOutline, informationCircleOutline } from 'ionicons/icons';
 
 import { ScanService } from '@app/core/services/scan.service';
+
+export interface ResultsEdit {
+  time: string | null;
+  ranking: number | null;
+  categoryRanking: number | null;
+  totalParticipants: number | null;
+}
 
 @Component({
   selector: 'app-trophy-results-search',
   standalone: true,
   imports: [
+    FormsModule,
     TranslateModule,
     IonButton,
     IonIcon,
@@ -28,6 +40,9 @@ import { ScanService } from '@app/core/services/scan.service';
     IonCardContent,
     IonCardHeader,
     IonCardTitle,
+    IonItem,
+    IonInput,
+    IonList,
   ],
   template: `
     @if (scan.step() === 'search') {
@@ -42,70 +57,92 @@ import { ScanService } from '@app/core/services/scan.service';
       </div>
     }
 
-    @if (scan.step() === 'done' && scan.searchResult()) {
-      @if (scan.searchResult()!.found) {
-        <!-- Results found: podium reveal -->
+    @if (scan.step() === 'done') {
+      @if (scan.searchResult()?.found) {
+        <!-- Results found: trophy bounce + disclaimer -->
         <div class="results-reveal animate-fade-in">
           <div class="trophy-bounce">
             <ion-icon name="trophy-outline" class="trophy-icon" />
           </div>
 
-          <ion-card class="result-card">
-            <ion-card-header>
-              <ion-card-title>
-                {{ 'review.resultsFound' | translate }}
-              </ion-card-title>
-            </ion-card-header>
-            <ion-card-content>
-              @if (scan.searchResult()!.time) {
-                <div class="stat-row reveal-1">
-                  <span class="stat-label">{{ 'review.time' | translate }}</span>
-                  <span class="stat-value">{{ scan.searchResult()!.time }}</span>
-                </div>
-              }
-              @if (scan.searchResult()!.ranking) {
-                <div class="stat-row reveal-2">
-                  <span class="stat-label">{{ 'review.ranking' | translate }}</span>
-                  <span class="stat-value">
-                    {{ scan.searchResult()!.ranking }}
-                    @if (scan.searchResult()!.totalParticipants) {
-                      / {{ scan.searchResult()!.totalParticipants }}
-                    }
-                  </span>
-                </div>
-              }
-              @if (scan.searchResult()!.categoryRanking) {
-                <div class="stat-row reveal-3">
-                  <span class="stat-label">{{ 'review.categoryRanking' | translate }}</span>
-                  <span class="stat-value">{{ scan.searchResult()!.categoryRanking }}</span>
-                </div>
-              }
-            </ion-card-content>
-          </ion-card>
-        </div>
-      } @else {
-        <!-- No results -->
-        <div class="no-results animate-fade-in">
-          <ion-text color="medium">
-            <p>{{ 'review.noResultsMessage' | translate }}</p>
-          </ion-text>
-          <div class="retry-row">
-            @if (scan.resultsRetryLoading()) {
-              <ion-spinner name="dots" />
-              <ion-text color="medium"><small>{{ 'review.retryingResults' | translate }}</small></ion-text>
-            } @else if (resultsRetryMaxed()) {
-              <ion-text color="medium"><small class="search-hint">{{ 'review.resultsRetryMaxAttempts' | translate }}</small></ion-text>
-            } @else if (scan.resultsRetryCooldownRemaining() > 0) {
-              <ion-button size="small" fill="outline" disabled="true">
-                {{ 'review.retryResultsCooldown' | translate:{ seconds: scan.resultsRetryCooldownRemaining() } }}
-              </ion-button>
-            } @else {
-              <ion-button size="small" fill="outline" (click)="onRetryResults()">
-                <ion-icon slot="start" name="refresh-outline" />
-                {{ 'review.retryResults' | translate }}
-              </ion-button>
-            }
+          <div class="ai-disclaimer">
+            <ion-icon name="information-circle-outline" class="disclaimer-icon" />
+            <ion-text color="medium">
+              <small>{{ 'review.aiDisclaimer' | translate }}</small>
+            </ion-text>
           </div>
+        </div>
+      }
+
+      <!-- Editable results card -->
+      <ion-card class="result-card">
+        <ion-card-header>
+          <ion-card-title>
+            @if (scan.searchResult()?.found) {
+              {{ 'review.resultsFound' | translate }}
+            } @else {
+              {{ 'review.enterResults' | translate }}
+            }
+          </ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-list lines="none">
+            <ion-item>
+              <ion-input
+                [label]="'review.time' | translate"
+                labelPlacement="floating"
+                [(ngModel)]="editTime"
+                placeholder="01:23:45"
+              />
+            </ion-item>
+            <ion-item>
+              <ion-input
+                [label]="'review.ranking' | translate"
+                labelPlacement="floating"
+                type="number"
+                [(ngModel)]="editRanking"
+                placeholder="42"
+              />
+            </ion-item>
+            <ion-item>
+              <ion-input
+                [label]="'review.categoryRanking' | translate"
+                labelPlacement="floating"
+                type="number"
+                [(ngModel)]="editCategoryRanking"
+                placeholder="12"
+              />
+            </ion-item>
+            <ion-item>
+              <ion-input
+                [label]="'review.totalParticipants' | translate"
+                labelPlacement="floating"
+                type="number"
+                [(ngModel)]="editTotalParticipants"
+                placeholder="500"
+              />
+            </ion-item>
+          </ion-list>
+        </ion-card-content>
+      </ion-card>
+
+      @if (!scan.searchResult()?.found) {
+        <div class="retry-row">
+          @if (scan.resultsRetryLoading()) {
+            <ion-spinner name="dots" />
+            <ion-text color="medium"><small>{{ 'review.retryingResults' | translate }}</small></ion-text>
+          } @else if (resultsRetryMaxed()) {
+            <ion-text color="medium"><small class="search-hint">{{ 'review.resultsRetryMaxAttempts' | translate }}</small></ion-text>
+          } @else if (scan.resultsRetryCooldownRemaining() > 0) {
+            <ion-button size="small" fill="outline" disabled="true">
+              {{ 'review.retryResultsCooldown' | translate:{ seconds: scan.resultsRetryCooldownRemaining() } }}
+            </ion-button>
+          } @else {
+            <ion-button size="small" fill="outline" (click)="onRetryResults()">
+              <ion-icon slot="start" name="refresh-outline" />
+              {{ 'review.retryResults' | translate }}
+            </ion-button>
+          }
         </div>
       }
     }
@@ -151,8 +188,8 @@ import { ScanService } from '@app/core/services/scan.service';
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 16px;
-      padding: 24px 0;
+      gap: 12px;
+      padding: 24px 0 8px;
     }
 
     .trophy-bounce {
@@ -164,57 +201,39 @@ import { ScanService } from '@app/core/services/scan.service';
       color: var(--ion-color-warning);
     }
 
+    /* AI disclaimer */
+    .ai-disclaimer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: var(--ion-color-step-50);
+      border-radius: 8px;
+      width: 100%;
+
+      .disclaimer-icon {
+        font-size: 20px;
+        color: var(--ion-color-medium);
+        flex-shrink: 0;
+      }
+
+      small {
+        font-size: 12px;
+        line-height: 1.4;
+      }
+    }
+
     .result-card {
       width: 100%;
-    }
+      margin-top: 8px;
 
-    .stat-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--ion-color-step-100);
-
-      &:last-child {
-        border-bottom: none;
+      ion-item {
+        --background: transparent;
+        --padding-start: 0;
       }
     }
 
-    .stat-label {
-      font-size: 14px;
-      color: var(--ion-color-medium);
-      font-weight: 500;
-    }
-
-    .stat-value {
-      font-size: 16px;
-      font-weight: 700;
-    }
-
-    .reveal-1 {
-      animation: fadeInUp 0.4s ease-out 0.2s both;
-    }
-
-    .reveal-2 {
-      animation: fadeInUp 0.4s ease-out 0.5s both;
-    }
-
-    .reveal-3 {
-      animation: fadeInUp 0.4s ease-out 0.8s both;
-    }
-
-    /* No results */
-    .no-results {
-      text-align: center;
-      padding: 40px 0;
-
-      p {
-        margin: 0;
-        font-size: 15px;
-        line-height: 1.5;
-      }
-    }
-
+    /* Retry row */
     .retry-row {
       display: flex;
       align-items: center;
@@ -269,17 +288,6 @@ import { ScanService } from '@app/core/services/scan.service';
         opacity: 1;
       }
     }
-
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(12px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
   `,
 })
 export class TrophyResultsSearchComponent {
@@ -287,11 +295,54 @@ export class TrophyResultsSearchComponent {
 
   resultsRetryMaxed = computed(() => this.scan.resultsRetryAttempts() >= 2);
 
+  // Editable fields
+  editTime = '';
+  editRanking = '';
+  editCategoryRanking = '';
+  editTotalParticipants = '';
+
+  // Output for parent to read edited values
+  resultsEdited = output<ResultsEdit>();
+
+  private initialized = false;
+
   constructor() {
-    addIcons({ searchOutline, trophyOutline, refreshOutline });
+    addIcons({ searchOutline, trophyOutline, refreshOutline, informationCircleOutline });
+
+    // Pre-fill from search results when entering done step
+    effect(() => {
+      const step = this.scan.step();
+      const result = this.scan.searchResult();
+      if (step === 'done' && !this.initialized) {
+        this.initialized = true;
+        if (result) {
+          this.editTime = result.time ?? '';
+          this.editRanking = result.ranking?.toString() ?? '';
+          this.editCategoryRanking = result.categoryRanking?.toString() ?? '';
+          this.editTotalParticipants = result.totalParticipants?.toString() ?? '';
+        }
+      }
+    });
+  }
+
+  getEditedResults(): ResultsEdit {
+    return {
+      time: this.editTime.trim() || null,
+      ranking: this.editRanking ? parseInt(this.editRanking, 10) || null : null,
+      categoryRanking: this.editCategoryRanking ? parseInt(this.editCategoryRanking, 10) || null : null,
+      totalParticipants: this.editTotalParticipants ? parseInt(this.editTotalParticipants, 10) || null : null,
+    };
   }
 
   async onRetryResults(): Promise<void> {
     await this.scan.retrySearchResults();
+    // Update fields if retry found results
+    const result = this.scan.searchResult();
+    if (result?.found) {
+      this.editTime = result.time ?? '';
+      this.editRanking = result.ranking?.toString() ?? '';
+      this.editCategoryRanking = result.categoryRanking?.toString() ?? '';
+      this.editTotalParticipants = result.totalParticipants?.toString() ?? '';
+    }
   }
 }

@@ -302,7 +302,30 @@
     "retryResults": "Relancer la recherche",
     "retryingResults": "Recherche...",
     "retryResultsCooldown": "Réessayer dans {{seconds}}s",
-    "resultsRetryMaxAttempts": "Aucun résultat trouvé. Vous pourrez les ajouter manuellement."
+    "resultsRetryMaxAttempts": "Aucun résultat trouvé. Vous pourrez les ajouter manuellement.",
+    "stepRefine": "Préciser",
+    "enterResults": "Saisissez vos résultats",
+    "aiDisclaimer": "Les résultats trouvés par l'IA peuvent contenir des erreurs — n'hésitez pas à les corriger.",
+    "totalParticipants": "Nombre de participants"
+  },
+  "refinement": {
+    "raceNameTitle": "Quel est le nom de la course ?",
+    "raceNameHint": "Entrez le nom officiel de la course le plus précisément possible",
+    "locationTitle": "Où a eu lieu cette course ?",
+    "locationHint": "Sélectionnez le pays et la ville de la course",
+    "yearTitle": "Quand avez-vous couru ?",
+    "yearHint": "Nous rechercherons la date exacte",
+    "yearLabel": "Année (ex : 2024)",
+    "next": "Suivant",
+    "back": "Retour",
+    "searchNow": "Rechercher les infos",
+    "searchingDate": "Recherche des informations...",
+    "searchFailedTitle": "Informations non trouvées",
+    "searchFailedHint": "Pas de souci — vous pouvez entrer la date manuellement ci-dessous.",
+    "orJustYear": "Si vous ne connaissez que l'année, c'est suffisant",
+    "successFound": "Informations trouvées !",
+    "manualDateLabel": "Date (AAAA-MM-JJ)",
+    "confirmYear": "Confirmer avec l'année seule"
   },
   "finishers": {
     "title": "Club des Finishers",

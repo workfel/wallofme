@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, effect } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
@@ -28,10 +28,11 @@ import {
 } from '@ionic/angular/standalone';
 import { TranslateModule } from '@ngx-translate/core';
 import { addIcons } from 'ionicons';
-import { checkmarkCircle, searchOutline, trophyOutline, addCircleOutline, peopleOutline, closeOutline, refreshOutline, calendarOutline } from 'ionicons/icons';
+import { checkmarkCircle, searchOutline, trophyOutline, addCircleOutline, peopleOutline, closeOutline, refreshOutline, calendarOutline, informationCircleOutline } from 'ionicons/icons';
 
 import { ScanService } from '@app/core/services/scan.service';
 import { TokenService } from '@app/core/services/token.service';
+import { TrophyRefinementComponent } from '../create/components/trophy-refinement.component';
 
 @Component({
   selector: 'app-trophy-review',
@@ -62,6 +63,7 @@ import { TokenService } from '@app/core/services/token.service';
     IonCardContent,
     IonCardHeader,
     IonCardTitle,
+    TrophyRefinementComponent,
   ],
   template: `
     <ion-header>
@@ -76,7 +78,7 @@ import { TokenService } from '@app/core/services/token.service';
     <ion-content class="ion-padding" [fullscreen]="true">
       <!-- Step indicator -->
       <div class="steps">
-        @for (s of steps; track s.key; let i = $index) {
+        @for (s of steps(); track s.key; let i = $index) {
           <div
             class="step"
             [class.active]="stepIndex() >= i"
@@ -96,6 +98,11 @@ import { TokenService } from '@app/core/services/token.service';
             <p>{{ scan.processingMessage() }}</p>
           </ion-text>
         </div>
+      }
+
+      <!-- Refinement step -->
+      @if (scan.step() === 'refining') {
+        <app-trophy-refinement (completed)="onRefinementComplete()" />
       }
 
       <!-- Step 1: Details form -->
@@ -275,40 +282,66 @@ import { TokenService } from '@app/core/services/token.service';
           <h2>{{ 'review.done' | translate }}</h2>
 
           @if (scan.searchResult()?.found) {
-            <ion-card>
-              <ion-card-header>
-                <ion-card-title>
+            <div class="ai-disclaimer">
+              <ion-icon name="information-circle-outline" class="disclaimer-icon" />
+              <ion-text color="medium">
+                <small>{{ 'review.aiDisclaimer' | translate }}</small>
+              </ion-text>
+            </div>
+          }
+
+          <ion-card class="results-edit-card">
+            <ion-card-header>
+              <ion-card-title>
+                @if (scan.searchResult()?.found) {
                   {{ 'review.resultsFound' | translate }}
-                </ion-card-title>
-              </ion-card-header>
-              <ion-card-content>
-                @if (scan.searchResult()!.time) {
-                  <p>
-                    <strong>{{ 'review.time' | translate }}:</strong>
-                    {{ scan.searchResult()!.time }}
-                  </p>
+                } @else {
+                  {{ 'review.enterResults' | translate }}
                 }
-                @if (scan.searchResult()!.ranking) {
-                  <p>
-                    <strong>{{ 'review.ranking' | translate }}:</strong>
-                    {{ scan.searchResult()!.ranking }}
-                    @if (scan.searchResult()!.totalParticipants) {
-                      / {{ scan.searchResult()!.totalParticipants }}
-                    }
-                  </p>
-                }
-                @if (scan.searchResult()!.categoryRanking) {
-                  <p>
-                    <strong>{{ 'review.categoryRanking' | translate }}:</strong>
-                    {{ scan.searchResult()!.categoryRanking }}
-                  </p>
-                }
-              </ion-card-content>
-            </ion-card>
-          } @else {
-            <ion-text color="medium">
-              <p>{{ 'review.noResultsMessage' | translate }}</p>
-            </ion-text>
+              </ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <ion-list lines="none">
+                <ion-item>
+                  <ion-input
+                    [label]="'review.time' | translate"
+                    labelPlacement="floating"
+                    [(ngModel)]="editTime"
+                    placeholder="01:23:45"
+                  />
+                </ion-item>
+                <ion-item>
+                  <ion-input
+                    [label]="'review.ranking' | translate"
+                    labelPlacement="floating"
+                    type="number"
+                    [(ngModel)]="editRanking"
+                    placeholder="42"
+                  />
+                </ion-item>
+                <ion-item>
+                  <ion-input
+                    [label]="'review.categoryRanking' | translate"
+                    labelPlacement="floating"
+                    type="number"
+                    [(ngModel)]="editCategoryRanking"
+                    placeholder="12"
+                  />
+                </ion-item>
+                <ion-item>
+                  <ion-input
+                    [label]="'review.totalParticipants' | translate"
+                    labelPlacement="floating"
+                    type="number"
+                    [(ngModel)]="editTotalParticipants"
+                    placeholder="500"
+                  />
+                </ion-item>
+              </ion-list>
+            </ion-card-content>
+          </ion-card>
+
+          @if (!scan.searchResult()?.found) {
             <div class="field-search-row centered-row">
               @if (scan.resultsRetryLoading()) {
                 <ion-spinner name="dots" />
@@ -533,6 +566,37 @@ import { TokenService } from '@app/core/services/token.service';
       font-size: 12px;
     }
 
+    .ai-disclaimer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: var(--ion-color-step-50);
+      border-radius: 8px;
+      width: 100%;
+
+      .disclaimer-icon {
+        font-size: 20px;
+        color: var(--ion-color-medium);
+        flex-shrink: 0;
+      }
+
+      small {
+        font-size: 12px;
+        line-height: 1.4;
+      }
+    }
+
+    .results-edit-card {
+      width: 100%;
+      text-align: left;
+
+      ion-item {
+        --background: transparent;
+        --padding-start: 0;
+      }
+    }
+
     .done-section {
       display: flex;
       flex-direction: column;
@@ -570,6 +634,13 @@ export class TrophyReviewPage {
 
   showUpsell = signal(false);
 
+  // Editable result fields
+  editTime = '';
+  editRanking = '';
+  editCategoryRanking = '';
+  editTotalParticipants = '';
+  private resultsInitialized = false;
+
   // Form fields pre-filled from AI analysis
   formType = signal<'medal' | 'bib'>('medal');
   raceName = '';
@@ -590,30 +661,47 @@ export class TrophyReviewPage {
     'other',
   ];
 
-  steps = [
-    { key: 'processing', label: 'review.step1' },
-    { key: 'details', label: 'review.step2' },
-    { key: 'matching', label: 'review.step3' },
-    { key: 'search', label: 'review.step4' },
-    { key: 'done', label: 'review.step5' },
-  ];
+  steps = computed(() => {
+    const base = [
+      { key: 'processing', label: 'review.step1' },
+    ];
+    if (this.scan.needsRefinement() || this.scan.step() === 'refining') {
+      base.push({ key: 'refining', label: 'review.stepRefine' });
+    }
+    base.push(
+      { key: 'details', label: 'review.step2' },
+      { key: 'matching', label: 'review.step3' },
+      { key: 'search', label: 'review.step4' },
+      { key: 'done', label: 'review.step5' },
+    );
+    return base;
+  });
 
   stepIndex = computed(() => {
-    const map: Record<string, number> = {
-      processing: 0,
-      details: 1,
-      matching: 2,
-      search: 3,
-      done: 4,
-    };
-    return map[this.scan.step()] ?? 0;
+    const idx = this.steps().findIndex((s) => s.key === this.scan.step());
+    return idx >= 0 ? idx : 0;
   });
 
   dateSearchMaxed = computed(() => this.scan.dateSearchAttempts() >= 2);
   resultsRetryMaxed = computed(() => this.scan.resultsRetryAttempts() >= 2);
 
   constructor() {
-    addIcons({ checkmarkCircle, searchOutline, trophyOutline, addCircleOutline, peopleOutline, closeOutline, refreshOutline, calendarOutline });
+    addIcons({ checkmarkCircle, searchOutline, trophyOutline, addCircleOutline, peopleOutline, closeOutline, refreshOutline, calendarOutline, informationCircleOutline });
+
+    // Pre-fill editable results when entering done step
+    effect(() => {
+      const step = this.scan.step();
+      const result = this.scan.searchResult();
+      if (step === 'done' && !this.resultsInitialized) {
+        this.resultsInitialized = true;
+        if (result) {
+          this.editTime = result.time ?? '';
+          this.editRanking = result.ranking?.toString() ?? '';
+          this.editCategoryRanking = result.categoryRanking?.toString() ?? '';
+          this.editTotalParticipants = result.totalParticipants?.toString() ?? '';
+        }
+      }
+    });
 
     // Pre-fill form from AI analysis when available
     const analysis = this.scan.analysis();
@@ -680,6 +768,10 @@ export class TrophyReviewPage {
     }
   }
 
+  onRefinementComplete(): void {
+    // applyRefinement already sets step to 'details'
+  }
+
   async onSearchDate(): Promise<void> {
     if (!this.raceName.trim()) return;
     const year = this.raceDate
@@ -699,6 +791,13 @@ export class TrophyReviewPage {
 
   async onRetryResults(): Promise<void> {
     await this.scan.retrySearchResults();
+    const result = this.scan.searchResult();
+    if (result?.found) {
+      this.editTime = result.time ?? '';
+      this.editRanking = result.ranking?.toString() ?? '';
+      this.editCategoryRanking = result.categoryRanking?.toString() ?? '';
+      this.editTotalParticipants = result.totalParticipants?.toString() ?? '';
+    }
   }
 
   onUpsellTap(): void {
@@ -706,6 +805,13 @@ export class TrophyReviewPage {
   }
 
   async onFinish(): Promise<void> {
+    // Save edited results
+    await this.scan.updateRaceResult({
+      time: this.editTime.trim() || null,
+      ranking: this.editRanking ? parseInt(this.editRanking, 10) || null : null,
+      categoryRanking: this.editCategoryRanking ? parseInt(this.editCategoryRanking, 10) || null : null,
+      totalParticipants: this.editTotalParticipants ? parseInt(this.editTotalParticipants, 10) || null : null,
+    });
     // Auto-place trophy on wall
     await this.scan.autoPlaceTrophy();
     this.scan.reset();

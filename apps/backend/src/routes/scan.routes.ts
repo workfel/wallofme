@@ -10,8 +10,9 @@ import {
   validateSchema,
   searchResultsSchema,
   searchDateSchema,
+  refineSearchSchema,
 } from "../validators/scan.validator";
-import { analyzeImage, searchRaceDate, searchRaceResults } from "../lib/ai-analyzer";
+import { analyzeImage, searchRaceDate, searchRaceInfo, searchRaceResults } from "../lib/ai-analyzer";
 import { processTrophyImage } from "../lib/image-processor";
 import { downloadBuffer } from "../lib/storage";
 import type { auth } from "../lib/auth";
@@ -274,5 +275,17 @@ export const scan = new Hono<{ Variables: Variables }>()
       const { raceName, year, sportKind, city, country } = c.req.valid("json");
       const date = await searchRaceDate(raceName, year, sportKind, city, country);
       return c.json({ data: { found: !!date, date } });
+    },
+  )
+
+  // Enriched race info search (date + location + sport + distance)
+  .post(
+    "/refine-search",
+    requireAuth,
+    zValidator("json", refineSearchSchema),
+    async (c) => {
+      const { raceName, year, sportKind, city, country } = c.req.valid("json");
+      const result = await searchRaceInfo(raceName, year, sportKind, city, country);
+      return c.json({ data: result });
     },
   );

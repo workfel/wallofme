@@ -11,3 +11,4 @@ apps/frontend/dist
 apps/frontend-ionic/.angular
 apps/frontend-ionic/www
 apps/frontend-ionic/**/.idea
+.nx

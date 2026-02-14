@@ -1,4 +1,4 @@
-import { Component, inject, signal, effect, computed } from '@angular/core';
+import { Component, inject, signal, effect, computed, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   IonContent,
@@ -20,8 +20,9 @@ import { TrophyDetailsFormComponent } from './components/trophy-details-form.com
 import { TrophyMatchingComponent } from './components/trophy-matching.component';
 import { TrophyResultsSearchComponent } from './components/trophy-results-search.component';
 import { TrophyDoneComponent } from './components/trophy-done.component';
+import { TrophyRefinementComponent } from './components/trophy-refinement.component';
 
-type CreationPhase = 'capture' | 'processing' | 'details' | 'matching' | 'search' | 'done';
+type CreationPhase = 'capture' | 'processing' | 'refining' | 'details' | 'matching' | 'search' | 'done';
 
 @Component({
   selector: 'app-trophy-creation',
@@ -38,6 +39,7 @@ type CreationPhase = 'capture' | 'processing' | 'details' | 'matching' | 'search
     UpgradePromptComponent,
     TrophyCaptureComponent,
     TrophyProcessingComponent,
+    TrophyRefinementComponent,
     TrophyDetailsFormComponent,
     TrophyMatchingComponent,
     TrophyResultsSearchComponent,
@@ -60,6 +62,9 @@ type CreationPhase = 'capture' | 'processing' | 'details' | 'matching' | 'search
         }
         @case ('processing') {
           <app-trophy-processing />
+        }
+        @case ('refining') {
+          <app-trophy-refinement (completed)="onRefinementComplete()" />
         }
         @case ('details') {
           <app-trophy-details-form (submitted)="onDetailsSubmitted($event)" />
@@ -107,6 +112,8 @@ export class TrophyCreationPage {
   private scanService = inject(ScanService);
   private userService = inject(UserService);
 
+  private resultsSearchComponent = viewChild(TrophyResultsSearchComponent);
+
   phase = signal<CreationPhase>('capture');
   showUpgradeModal = signal(false);
 
@@ -126,6 +133,7 @@ export class TrophyCreationPage {
     switch (p) {
       case 'capture': return 'trophies.scan';
       case 'processing': return 'review.step1';
+      case 'refining': return 'review.stepRefine';
       case 'details': return 'review.step2';
       case 'matching': return 'review.step3';
       case 'search': return 'review.step4';
@@ -139,6 +147,7 @@ export class TrophyCreationPage {
     // Watch scanService.step to auto-transition phases
     effect(() => {
       const step = this.scanService.step();
+      if (step === 'refining') this.phase.set('refining');
       if (step === 'details') this.phase.set('details');
       if (step === 'matching') this.phase.set('matching');
       if (step === 'search') this.phase.set('search');
@@ -208,7 +217,16 @@ export class TrophyCreationPage {
     await this.doValidateAndSearch();
   }
 
+  onRefinementComplete(): void {
+    // applyRefinement already sets step to 'details'
+  }
+
   async onFinish(): Promise<void> {
+    const comp = this.resultsSearchComponent();
+    if (comp) {
+      const edits = comp.getEditedResults();
+      await this.scanService.updateRaceResult(edits);
+    }
     await this.scanService.autoPlaceTrophy();
     this.scanService.reset();
     this.router.navigate(['/tabs/home']);
