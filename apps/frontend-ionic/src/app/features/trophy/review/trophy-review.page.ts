@@ -28,9 +28,10 @@ import {
 } from '@ionic/angular/standalone';
 import { TranslateModule } from '@ngx-translate/core';
 import { addIcons } from 'ionicons';
-import { checkmarkCircle, searchOutline, trophyOutline, addCircleOutline, peopleOutline } from 'ionicons/icons';
+import { checkmarkCircle, searchOutline, trophyOutline, addCircleOutline, peopleOutline, closeOutline } from 'ionicons/icons';
 
 import { ScanService } from '@app/core/services/scan.service';
+import { TokenService } from '@app/core/services/token.service';
 
 @Component({
   selector: 'app-trophy-review',
@@ -66,7 +67,7 @@ import { ScanService } from '@app/core/services/scan.service';
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-back-button defaultHref="/tabs/trophies" />
+          <ion-back-button defaultHref="/tabs/home" />
         </ion-buttons>
         <ion-title>{{ 'review.title' | translate }}</ion-title>
       </ion-toolbar>
@@ -291,6 +292,15 @@ import { ScanService } from '@app/core/services/scan.service';
             </ion-text>
           }
 
+          @if (showUpsell()) {
+            <div class="upsell-banner" (click)="onUpsellTap()">
+              <span>{{ 'review.upsellFrame' | translate }}</span>
+              <ion-button fill="clear" size="small" (click)="showUpsell.set(false); $event.stopPropagation()">
+                <ion-icon name="close-outline" slot="icon-only" />
+              </ion-button>
+            </div>
+          }
+
           <ion-button expand="block" (click)="onFinish()">
             <ion-icon slot="start" name="trophy-outline" />
             {{ 'review.finish' | translate }}
@@ -445,6 +455,19 @@ import { ScanService } from '@app/core/services/scan.service';
       }
     }
 
+    .upsell-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      margin: 12px 0;
+      background: linear-gradient(135deg, rgba(245, 166, 35, 0.1) 0%, rgba(255, 215, 0, 0.1) 100%);
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
     .done-section {
       display: flex;
       flex-direction: column;
@@ -478,6 +501,9 @@ import { ScanService } from '@app/core/services/scan.service';
 export class TrophyReviewPage {
   scan = inject(ScanService);
   private router = inject(Router);
+  private tokenService = inject(TokenService);
+
+  showUpsell = signal(false);
 
   // Form fields pre-filled from AI analysis
   formType = signal<'medal' | 'bib'>('medal');
@@ -519,7 +545,7 @@ export class TrophyReviewPage {
   });
 
   constructor() {
-    addIcons({ checkmarkCircle, searchOutline, trophyOutline, addCircleOutline, peopleOutline });
+    addIcons({ checkmarkCircle, searchOutline, trophyOutline, addCircleOutline, peopleOutline, closeOutline });
 
     // Pre-fill form from AI analysis when available
     const analysis = this.scan.analysis();
@@ -579,6 +605,15 @@ export class TrophyReviewPage {
       sport: (this.sport as 'running' | 'trail' | 'triathlon' | 'cycling' | 'swimming' | 'obstacle' | 'other') || undefined,
       raceId,
     });
+
+    // Show upsell banner if user has low token balance
+    if (this.scan.step() === 'done' && this.tokenService.balance() < 200) {
+      this.showUpsell.set(true);
+    }
+  }
+
+  onUpsellTap(): void {
+    this.router.navigate(['/tokens']);
   }
 
   async onFinish(): Promise<void> {

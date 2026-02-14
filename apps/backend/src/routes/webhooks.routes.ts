@@ -20,10 +20,10 @@ const PRODUCT_TOKEN_MAP: Record<string, number> = {
 };
 
 /** Pro subscription bonus tokens credited on initial purchase and renewal */
-const PRO_MONTHLY_BONUS = 100;
+const PRO_MONTHLY_BONUS = 150;
 
 /** Pro product IDs */
-const PRO_PRODUCT_IDS = ["wallofme_pro_monthly", "wallofme_pro_annual"];
+const PRO_PRODUCT_IDS = ["wallofme_pro_monthly", "wallofme_pro_annual", "wallofme_pro_weekly"];
 
 interface RevenueCatEvent {
   type: string;

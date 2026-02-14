@@ -14,7 +14,7 @@ type Variables = {
   session: typeof auth.$Infer.Session.session | null;
 };
 
-const REWARDED_VIDEO_AMOUNT = 15;
+const REWARDED_VIDEO_AMOUNT = 5;
 const REWARDED_VIDEO_MAX_PER_DAY = 5;
 const REWARDED_VIDEO_COOLDOWN_MS = 20 * 60 * 1000; // 20 minutes
 
@@ -203,4 +203,50 @@ export const tokens = new Hono<{ Variables: Variables }>()
         },
       });
     }
-  );
+  )
+
+  // GET /starter-pack/status
+  .get("/starter-pack/status", requireAuth, async (c) => {
+    const userId = c.get("user")!.id;
+
+    const existing = await db.query.tokenTransaction.findFirst({
+      where: and(
+        eq(tokenTransaction.userId, userId),
+        eq(tokenTransaction.referenceId, "starter_pack")
+      ),
+    });
+
+    return c.json({ data: { available: !existing } });
+  })
+
+  // POST /starter-pack/purchase
+  .post("/starter-pack/purchase", requireAuth, async (c) => {
+    const userId = c.get("user")!.id;
+
+    // Idempotency check
+    const existing = await db.query.tokenTransaction.findFirst({
+      where: and(
+        eq(tokenTransaction.userId, userId),
+        eq(tokenTransaction.referenceId, "starter_pack")
+      ),
+    });
+
+    if (existing) {
+      return c.json({ error: "Already purchased" }, 409);
+    }
+
+    const balance = await creditTokens(
+      userId,
+      300,
+      "purchase",
+      "starter_pack",
+      "starter_pack"
+    );
+
+    return c.json({
+      data: {
+        balance,
+        earned: 300,
+      },
+    });
+  });

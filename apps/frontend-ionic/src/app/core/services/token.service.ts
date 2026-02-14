@@ -100,4 +100,28 @@ export class TokenService {
       console.error('Failed to credit purchase', e);
     }
   }
+
+  async fetchStarterPackStatus(): Promise<boolean> {
+    try {
+      const res = await this.api.client.api.tokens['starter-pack'].status.$get();
+      if (res.ok) {
+        const json = (await res.json()) as unknown as { data?: { available?: boolean } };
+        return json?.data?.available ?? false;
+      }
+    } catch (e) {
+      console.error('Failed to fetch starter pack status', e);
+    }
+    return false;
+  }
+
+  async purchaseStarterPack(): Promise<void> {
+    const res = await this.api.client.api.tokens['starter-pack'].purchase.$post();
+    if (res.ok) {
+      const json = (await res.json()) as unknown as TokenBalanceResponse;
+      const balance = json?.data?.balance ?? json?.balance ?? this.balance();
+      this.balance.set(balance);
+    } else {
+      throw new Error('Starter pack purchase failed');
+    }
+  }
 }

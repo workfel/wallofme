@@ -2,7 +2,7 @@ import { and, eq, gte, ne, sql } from "drizzle-orm";
 import { db } from "../db";
 import { trophy } from "../db/schema";
 
-export const FREE_SCAN_LIMIT = 3;
+export const FREE_SCAN_LIMIT = 2;
 
 export function getStartOfMonthUTC(): Date {
   const now = new Date();

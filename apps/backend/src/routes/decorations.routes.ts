@@ -90,10 +90,14 @@ export const decorations = new Hono<{ Variables: Variables }>()
 
       // If it costs tokens, debit first then grant
       if (item.priceTokens > 0) {
+        const actualPrice = currentUser.isPro
+          ? Math.floor(item.priceTokens * 0.8)
+          : item.priceTokens;
+
         try {
           await debitTokens(
             currentUser.id,
-            item.priceTokens,
+            actualPrice,
             "spend_decoration",
             id,
             "decoration"
@@ -107,7 +111,7 @@ export const decorations = new Hono<{ Variables: Variables }>()
           .values({ userId: currentUser.id, decorationId: id })
           .returning();
 
-        return c.json({ data: acquired }, 201);
+        return c.json({ data: acquired, discountApplied: currentUser.isPro, actualPrice }, 201);
       }
 
       // Free decoration
@@ -116,6 +120,6 @@ export const decorations = new Hono<{ Variables: Variables }>()
         .values({ userId: currentUser.id, decorationId: id })
         .returning();
 
-      return c.json({ data: acquired }, 201);
+      return c.json({ data: acquired, discountApplied: false, actualPrice: 0 }, 201);
     }
   );

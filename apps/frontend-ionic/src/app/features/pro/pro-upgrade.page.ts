@@ -101,6 +101,18 @@ import { AuthService } from "@app/core/services/auth.service";
           </div>
         </ion-item>
 
+        <!-- Decoration discount -->
+        <ion-item>
+          <ion-label>
+            <h3>{{ "pro.featureDiscount" | translate }}</h3>
+            <p class="free-value">{{ "pro.freeDiscount" | translate }}</p>
+          </ion-label>
+          <div slot="end" class="pro-value">
+            <ion-icon name="checkmark-circle" color="success" />
+            <span>{{ "pro.proDiscount" | translate }}</span>
+          </div>
+        </ion-item>
+
         <!-- Custom colors -->
         <ion-item>
           <ion-label>
@@ -156,26 +168,48 @@ import { AuthService } from "@app/core/services/auth.service";
       <h2 class="section-title">{{ "pro.choosePlan" | translate }}</h2>
 
       <div class="pricing-grid">
-        <!-- Monthly -->
+        <!-- Weekly (anchor) -->
+        <ion-card
+          class="pricing-card"
+          [class.selected]="selectedPlan() === 'weekly'"
+          button
+          (click)="selectedPlan.set('weekly')"
+        >
+          <ion-card-content>
+            <span class="plan-name">{{ "pro.weekly" | translate }}</span>
+            <span class="plan-price">
+              {{
+                subscriptionService.getWeeklyOffering()?.localizedPrice ||
+                  "€2.49"
+              }}
+            </span>
+            <span class="plan-period">{{ "pro.perWeek" | translate }}</span>
+          </ion-card-content>
+        </ion-card>
+
+        <!-- Monthly (most popular) -->
         <ion-card
           class="pricing-card"
           [class.selected]="selectedPlan() === 'monthly'"
           button
           (click)="selectedPlan.set('monthly')"
         >
+          <ion-badge color="primary" class="popular-badge">
+            {{ "pro.mostPopular" | translate }}
+          </ion-badge>
           <ion-card-content>
             <span class="plan-name">{{ "pro.monthly" | translate }}</span>
             <span class="plan-price">
               {{
                 subscriptionService.getMonthlyOffering()?.localizedPrice ||
-                  "$4.99"
+                  "€6.99"
               }}
             </span>
             <span class="plan-period">{{ "pro.perMonth" | translate }}</span>
           </ion-card-content>
         </ion-card>
 
-        <!-- Annual -->
+        <!-- Annual (best value) -->
         <ion-card
           class="pricing-card annual"
           [class.selected]="selectedPlan() === 'annual'"
@@ -190,12 +224,15 @@ import { AuthService } from "@app/core/services/auth.service";
             <span class="plan-price">
               {{
                 subscriptionService.getAnnualOffering()?.localizedPrice ||
-                  "$29.99"
+                  "€35.99"
               }}
             </span>
             <span class="plan-period">{{ "pro.perYear" | translate }}</span>
+            <span class="plan-equivalent">
+              {{ "pro.monthlyEquivalent" | translate: { price: "€3.00" } }}
+            </span>
             <ion-badge color="warning" class="save-badge">
-              {{ "pro.save50" | translate }}
+              {{ "pro.save57" | translate }}
             </ion-badge>
           </ion-card-content>
         </ion-card>
@@ -310,16 +347,21 @@ import { AuthService } from "@app/core/services/auth.service";
 
     .pricing-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 0 0 20px;
+      padding-top: 14px;
+      align-items: stretch;
+      overflow: visible;
     }
 
     .pricing-card {
       margin: 0;
       border-radius: 16px;
       border: 2px solid var(--ion-color-light-shade);
-      transition: border-color 0.2s;
+      transition:
+        border-color 0.2s,
+        transform 0.2s;
       position: relative;
       overflow: visible;
 
@@ -327,45 +369,63 @@ import { AuthService } from "@app/core/services/auth.service";
         border-color: var(--ion-color-primary);
       }
 
+      &.annual.selected {
+        border-color: var(--ion-color-success);
+      }
+
       ion-card-content {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 4px;
-        padding: 20px 12px;
+        justify-content: center;
+        gap: 2px;
+        padding: 24px 6px;
+        height: 100%;
+        box-sizing: border-box;
       }
     }
 
+    .popular-badge,
     .best-value-badge {
       position: absolute;
-      top: -10px;
+      top: 8px;
       left: 50%;
       transform: translateX(-50%);
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 700;
       z-index: 1;
       white-space: nowrap;
     }
 
     .plan-name {
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 600;
       color: var(--ion-text-color);
+      text-align: center;
+      line-height: 1.2;
     }
 
     .plan-price {
-      font-size: 28px;
+      font-size: 22px;
       font-weight: 800;
       color: var(--ion-text-color);
+      white-space: nowrap;
     }
 
     .plan-period {
-      font-size: 12px;
+      font-size: 11px;
       color: var(--ion-color-medium);
     }
 
-    .save-badge {
+    .plan-equivalent {
       font-size: 10px;
+      color: var(--ion-color-success);
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .save-badge {
+      font-size: 9px;
       margin-top: 4px;
     }
 
@@ -393,7 +453,7 @@ export class ProUpgradePage implements OnInit {
   private toastCtrl = inject(ToastController);
   private translate = inject(TranslateService);
 
-  selectedPlan = signal<"monthly" | "annual">("annual");
+  selectedPlan = signal<"weekly" | "monthly" | "annual">("monthly");
 
   constructor() {
     addIcons({
@@ -415,10 +475,17 @@ export class ProUpgradePage implements OnInit {
   }
 
   async onSubscribe(): Promise<void> {
-    const offering =
-      this.selectedPlan() === "annual"
-        ? this.subscriptionService.getAnnualOffering()
-        : this.subscriptionService.getMonthlyOffering();
+    let offering;
+    switch (this.selectedPlan()) {
+      case "weekly":
+        offering = this.subscriptionService.getWeeklyOffering();
+        break;
+      case "annual":
+        offering = this.subscriptionService.getAnnualOffering();
+        break;
+      default:
+        offering = this.subscriptionService.getMonthlyOffering();
+    }
 
     if (!offering) {
       await this.showToast(

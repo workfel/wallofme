@@ -36,11 +36,16 @@
   "tabs": {
     "home": "Home",
     "explore": "Explore",
-    "trophies": "Trophies",
     "profile": "Profile"
   },
   "home": {
     "title": "Pain Cave",
+    "greeting": "Hey {{name}}",
+    "statTrophies": "Trophies",
+    "statLikes": "Likes",
+    "statViews": "Views",
+    "emptyTitle": "Your Pain Cave is empty",
+    "emptySubtitle": "Scan your first trophy to start decorating!",
     "emptyRoom": "Your Pain Cave is empty. Add trophies to decorate!"
   },
   "explore": {
@@ -57,7 +62,9 @@
     "views": "views",
     "athlete": "Athlete",
     "listView": "List",
-    "globeView": "Globe"
+    "globeView": "Globe",
+    "globeTeaser": "Explore the globe",
+    "globeTeaserSub": "See athletes around the world"
   },
   "trophies": {
     "title": "My Trophies",
@@ -76,7 +83,13 @@
     "logout": "Log Out",
     "language": "Language",
     "theme": "Theme",
-    "pro": "Upgrade to Pro"
+    "pro": "Upgrade to Pro",
+    "statTrophies": "Trophies",
+    "statLikes": "Likes",
+    "statViews": "Views",
+    "noTrophies": "No trophies yet",
+    "proBanner": "Unlock your full potential",
+    "goProCta": "Go Pro"
   },
   "room": {
     "edit": "Edit Room",
@@ -154,7 +167,7 @@
     "flames": "Flames",
     "freeTokens": "Free Tokens",
     "watchAd": "Watch Ad",
-    "watchAdDesc": "Earn 15 flames per video",
+    "watchAdDesc": "Earn 5 flames per video",
     "watchAdWebOnly": "Available on mobile app only",
     "remaining": "{{count}} remaining today",
     "cooldown": "Available in {{minutes}} min",
@@ -176,7 +189,24 @@
     "bonus": "+{{percent}}% bonus",
     "purchaseOnDevice": "Purchases are available on mobile devices only",
     "purchaseUnavailable": "This pack is not available right now",
-    "purchaseSuccess": "You received {{amount}} flames!"
+    "purchaseSuccess": "You received {{amount}} flames!",
+    "insufficientTitle": "You need {{amount}} more flames",
+    "watchAdOption": "Watch an ad (+5 flames)",
+    "recommendedPack": "Recommended",
+    "seeAllPacks": "See all packs",
+    "quickBuy": "Quick Buy",
+    "starterPack": "Athlete's First Pack",
+    "starterPackDesc": "300 flames + Exclusive decoration",
+    "starterPackCta": "Get Now",
+    "starterPackExpires": "Expires in {{days}}d {{hours}}h",
+    "streak": "Daily Streak",
+    "streakDay": "Day {{current}}/7",
+    "streakBonus": "Day 7 bonus: +25 flames",
+    "webBonus": "Web Bonus +10%",
+    "mostPopular": "Most Popular",
+    "perToken": "{{price}}/flame",
+    "proCard": "Pro = 150 flames/month + All themes + Unlimited scans",
+    "subscribeCta": "Subscribe Now"
   },
   "onboarding": {
     "title": "Welcome!",
@@ -204,7 +234,10 @@
     "unlimited": "Unlimited",
     "limitReached": "Scan Limit",
     "limitReachedTitle": "Monthly scan limit reached",
-    "limitReachedMessage": "Free accounts get 3 scans per month. Upgrade to Pro for unlimited scans!",
+    "limitReachedMessage": "Free accounts get 2 scans per month. Upgrade to Pro for unlimited scans!",
+    "lastScanWarning": "This was your last free scan this month!",
+    "goProCta": "Go Pro for unlimited scans",
+    "maybeLater": "Maybe Later",
     "resetsIn": "Resets in {{days}} days",
     "tapToPhoto": "Tap to take a photo",
     "uploadStep": "Upload",
@@ -254,7 +287,8 @@
     "matchingTitle": "Is this the same race?",
     "matchingSubtitle": "We found similar races already in our database.",
     "finishersCount": "{{count}} finishers",
-    "createNewRace": "No, create a new race"
+    "createNewRace": "No, create a new race",
+    "upsellFrame": "Highlight this trophy! Gold frame: 200 flames"
   },
   "finishers": {
     "title": "Finisher's Club",
@@ -310,7 +344,7 @@
     "heroSubtitle": "Get unlimited scans, premium themes, and more",
     "whatsIncluded": "What's Included",
     "featureScans": "Monthly Scans",
-    "freeScans": "3 per month",
+    "freeScans": "2 per month",
     "proScans": "Unlimited",
     "featureThemes": "Premium Themes",
     "freeThemes": "Locked",
@@ -320,7 +354,7 @@
     "freeAds": "Rewarded",
     "proAds": "Ad-free",
     "featureBonus": "Monthly Bonus",
-    "proBonus": "100 tokens/month",
+    "proBonus": "150 tokens/month",
     "featureBadge": "Pro Badge",
     "choosePlan": "Choose Your Plan",
     "monthly": "Monthly",
@@ -328,7 +362,14 @@
     "perMonth": "/month",
     "perYear": "/year",
     "bestValue": "Best Value",
-    "save50": "Save 50%",
+    "weekly": "Weekly",
+    "perWeek": "/week",
+    "mostPopular": "Most Popular",
+    "monthlyEquivalent": "{{price}}/month",
+    "save57": "Save 57%",
+    "featureDiscount": "Decoration Discount",
+    "freeDiscount": "Full price",
+    "proDiscount": "-20%",
     "subscribe": "Subscribe Now",
     "restorePurchases": "Restore Purchases",
     "termsFooter": "Subscription automatically renews unless cancelled at least 24 hours before the end of the current period. Manage your subscription in your device settings.",

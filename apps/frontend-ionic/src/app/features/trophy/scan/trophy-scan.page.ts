@@ -14,8 +14,9 @@ import {
   IonSegment,
   IonSegmentButton,
   IonLabel,
+  AlertController,
 } from '@ionic/angular/standalone';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { addIcons } from 'ionicons';
 import { camera, images, refreshOutline, arrowForward } from 'ionicons/icons';
 import { Capacitor } from '@capacitor/core';
@@ -46,7 +47,7 @@ import { UserService } from '@app/core/services/user.service';
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-back-button defaultHref="/tabs/trophies" />
+          <ion-back-button defaultHref="/tabs/home" />
         </ion-buttons>
         <ion-title>{{ 'trophies.scan' | translate }}</ion-title>
       </ion-toolbar>
@@ -183,6 +184,8 @@ export class TrophyScanPage {
   private router = inject(Router);
   private scanService = inject(ScanService);
   private userService = inject(UserService);
+  private alertCtrl = inject(AlertController);
+  private translate = inject(TranslateService);
 
   imagePreview = signal<string | null>(null);
   imageBlob = signal<Blob | null>(null);
@@ -264,9 +267,35 @@ export class TrophyScanPage {
         return;
       }
       this.router.navigate(['/trophy/review']);
+
+      // Check if this was the last free scan
+      const remaining = this.userService.scansRemaining();
+      if (remaining !== null && remaining <= 1 && !this.userService.isPro()) {
+        this.showLastScanAlert();
+      }
     } catch {
       this.uploading.set(false);
     }
+  }
+
+  private async showLastScanAlert(): Promise<void> {
+    const alert = await this.alertCtrl.create({
+      header: this.translate.instant('scan.lastScanWarning'),
+      message: this.translate.instant('scan.goProCta'),
+      buttons: [
+        {
+          text: this.translate.instant('scan.maybeLater'),
+          role: 'cancel',
+        },
+        {
+          text: 'Go Pro',
+          handler: () => {
+            this.router.navigate(['/pro']);
+          },
+        },
+      ],
+    });
+    await alert.present();
   }
 
   private pickFileInput(source: 'camera' | 'gallery'): void {

@@ -1,5 +1,6 @@
 import { Injectable, inject, signal, computed } from "@angular/core";
 import { ApiService } from "./api.service";
+import { I18nService } from "./i18n.service";
 
 export interface UserProfile {
   id: string;
@@ -16,6 +17,7 @@ export interface UserProfile {
   scansRemaining: number | null;
   scanLimit: number | null;
   tokenBalance: number;
+  streakDays: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -23,6 +25,7 @@ export interface UserProfile {
 @Injectable({ providedIn: "root" })
 export class UserService {
   private api = inject(ApiService);
+  private i18n = inject(I18nService);
 
   private readonly _profile = signal<UserProfile | null>(null);
   private readonly _loading = signal(false);
@@ -50,6 +53,9 @@ export class UserService {
       if (res.ok) {
         const json = (await res.json()) as { data: UserProfile };
         this._profile.set(json.data);
+        if (json.data.locale && json.data.locale !== this.i18n.currentLang) {
+          this.i18n.setLanguage(json.data.locale);
+        }
         return json.data;
       }
     } catch {

@@ -16,8 +16,9 @@ export interface SubscriptionOffering {
 }
 
 const FALLBACK_PRICES: Record<string, string> = {
-  wallofme_pro_monthly: '$4.99',
-  wallofme_pro_annual: '$29.99',
+  wallofme_pro_weekly: '€2.49',
+  wallofme_pro_monthly: '€6.99',
+  wallofme_pro_annual: '€35.99',
 };
 
 type CheckoutMode = 'native_iap' | 'web_billing';
@@ -211,6 +212,10 @@ export class SubscriptionService {
       console.error('[SubscriptionService] Restore failed', e);
       return { success: false };
     }
+  }
+
+  getWeeklyOffering(): SubscriptionOffering | undefined {
+    return this.offerings().find((o) => o.productId === 'wallofme_pro_weekly');
   }
 
   getMonthlyOffering(): SubscriptionOffering | undefined {
