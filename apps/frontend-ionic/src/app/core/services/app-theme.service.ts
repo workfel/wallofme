@@ -48,7 +48,11 @@ export class AppThemeService {
   }
 
   private applyTheme(): void {
-    const dark = this.isDark();
-    document.body.classList.toggle('dark-theme', dark);
+    const mode = this._mode();
+    // system → remove both classes, let @media query handle it
+    // dark   → force dark-theme class
+    // light  → force light-theme class (overrides OS dark preference)
+    document.body.classList.toggle('dark-theme', mode === 'dark');
+    document.body.classList.toggle('light-theme', mode === 'light');
   }
 }
