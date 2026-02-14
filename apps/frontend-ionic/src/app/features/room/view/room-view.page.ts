@@ -125,8 +125,8 @@ interface RoomData {
     <!-- Trophy Info Bottom Sheet -->
     <ion-modal
       [isOpen]="inspectedItemId() !== null"
-      [initialBreakpoint]="0.45"
-      [breakpoints]="[0, 0.45, 0.75]"
+      [initialBreakpoint]="0.55"
+      [breakpoints]="[0, 0.55, 0.85]"
       (didDismiss)="clearInspection()"
     >
       <ng-template>
@@ -134,8 +134,8 @@ interface RoomData {
           [trophy]="inspectedTrophyData()"
           [trophyIndex]="currentTrophyIndex()"
           [totalTrophies]="trophyItems().length"
-          [hasPrev]="currentTrophyIndex() > 0"
-          [hasNext]="currentTrophyIndex() < trophyItems().length - 1"
+          [hasPrev]="trophyItems().length > 1"
+          [hasNext]="trophyItems().length > 1"
           (dismiss)="clearInspection()"
           (viewDetails)="onViewDetails($event)"
           (navigatePrev)="navigatePrev()"
@@ -296,19 +296,19 @@ export class RoomViewPage implements OnInit {
   }
 
   navigatePrev(): void {
-    const idx = this.currentTrophyIndex();
     const items = this.trophyItems();
-    if (idx > 0) {
-      this.inspectedItemId.set(items[idx - 1].id);
-    }
+    if (items.length <= 1) return;
+    const idx = this.currentTrophyIndex();
+    const newIdx = idx <= 0 ? items.length - 1 : idx - 1;
+    this.inspectedItemId.set(items[newIdx].id);
   }
 
   navigateNext(): void {
-    const idx = this.currentTrophyIndex();
     const items = this.trophyItems();
-    if (idx < items.length - 1) {
-      this.inspectedItemId.set(items[idx + 1].id);
-    }
+    if (items.length <= 1) return;
+    const idx = this.currentTrophyIndex();
+    const newIdx = idx >= items.length - 1 ? 0 : idx + 1;
+    this.inspectedItemId.set(items[newIdx].id);
   }
 
   onViewDetails(trophyId: string): void {

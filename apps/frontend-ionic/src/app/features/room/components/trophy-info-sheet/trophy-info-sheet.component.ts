@@ -7,10 +7,6 @@ import {
   IonButton,
   IonButtons,
   IonIcon,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonChip,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
@@ -29,6 +25,7 @@ import {
   trailSignOutline,
   barbellOutline,
   ellipseOutline,
+  lockClosedOutline,
 } from 'ionicons/icons';
 import { TranslateModule } from '@ngx-translate/core';
 
@@ -65,7 +62,7 @@ const SPORT_ICON_MAP: Record<string, string> = {
   standalone: true,
   imports: [
     IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonButtons,
-    IonIcon, IonItem, IonLabel, IonList, IonChip, TranslateModule,
+    IonIcon, TranslateModule,
   ],
   template: `
     <ion-header>
@@ -95,87 +92,79 @@ const SPORT_ICON_MAP: Record<string, string> = {
 
     <ion-content class="ion-padding">
       @if (trophy(); as t) {
-        <div class="trophy-header">
-          @if (t.thumbnailUrl) {
-            <div class="trophy-preview">
-              <img [src]="t.thumbnailUrl" [alt]="t.type" class="trophy-image" />
+        <div class="card">
+          <div class="card-inner">
+            <!-- Image section -->
+            <div class="card-image-section">
+              @if (t.thumbnailUrl) {
+                <img [src]="t.thumbnailUrl" [alt]="t.type" class="trophy-image" />
+              }
+              <span class="type-badge" [class.type-bib]="t.type === 'bib'">
+                {{ 'trophies.' + t.type | translate }}
+              </span>
             </div>
-          }
-          @if (sportIcon()) {
-            <ion-chip class="sport-chip" color="primary">
-              <ion-icon [name]="sportIcon()!" />
-              {{ 'sports.' + t.race!.sport | translate }}
-            </ion-chip>
-          }
+
+            @if (t.race) {
+              <!-- Race name -->
+              <h2 class="race-name">{{ t.race.name }}</h2>
+
+              <!-- Sport badge -->
+              @if (sportIcon()) {
+                <div class="sport-badge">
+                  <ion-icon [name]="sportIcon()!" />
+                  <span>{{ 'sports.' + t.race!.sport | translate }}</span>
+                </div>
+              }
+
+              <!-- Stats grid -->
+              <div class="stats-grid">
+                @if (t.result?.time) {
+                  <div class="stat-cell stat-accent">
+                    <span class="stat-label">{{ 'room.raceTime' | translate }}</span>
+                    <span class="stat-value">{{ t.result!.time }}</span>
+                  </div>
+                }
+                @if (t.result?.ranking) {
+                  <div class="stat-cell">
+                    <span class="stat-label">{{ 'room.raceRanking' | translate }}</span>
+                    <span class="stat-value">#{{ t.result!.ranking }}</span>
+                  </div>
+                }
+                @if (t.result?.categoryRanking) {
+                  <div class="stat-cell">
+                    <span class="stat-label">{{ 'room.raceCategoryRanking' | translate }}</span>
+                    <span class="stat-value">#{{ t.result!.categoryRanking }}</span>
+                  </div>
+                }
+                @if (t.race.date) {
+                  <div class="stat-cell">
+                    <span class="stat-label">{{ 'room.raceDate' | translate }}</span>
+                    <span class="stat-value">{{ t.race.date }}</span>
+                  </div>
+                }
+                @if (t.race.city || t.race.country) {
+                  <div class="stat-cell">
+                    <span class="stat-label">{{ 'room.raceLocation' | translate }}</span>
+                    <span class="stat-value">{{ formatLocation(t.race.city, t.race.country) }}</span>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="no-info">{{ 'room.noRaceInfo' | translate }}</p>
+            }
+
+            @if (isAuthenticated()) {
+              <ion-button expand="block" (click)="viewDetails.emit(t.id)" class="details-btn">
+                {{ 'room.viewDetails' | translate }}
+              </ion-button>
+            } @else {
+              <ion-button expand="block" [disabled]="true" class="details-btn details-btn-locked">
+                <ion-icon name="lock-closed-outline" slot="start" />
+                {{ 'room.loginToView' | translate }}
+              </ion-button>
+            }
+          </div>
         </div>
-
-        @if (t.race) {
-          <ion-list lines="none">
-            <ion-item>
-              <ion-icon name="trophy-outline" slot="start" color="primary" />
-              <ion-label>
-                <p>{{ 'room.raceName' | translate }}</p>
-                <h2>{{ t.race.name }}</h2>
-              </ion-label>
-            </ion-item>
-
-            @if (t.race.date) {
-              <ion-item>
-                <ion-icon name="calendar-outline" slot="start" color="medium" />
-                <ion-label>
-                  <p>{{ 'room.raceDate' | translate }}</p>
-                  <h3>{{ t.race.date }}</h3>
-                </ion-label>
-              </ion-item>
-            }
-
-            @if (t.race.city || t.race.country) {
-              <ion-item>
-                <ion-icon name="location-outline" slot="start" color="medium" />
-                <ion-label>
-                  <p>{{ 'room.raceLocation' | translate }}</p>
-                  <h3>{{ formatLocation(t.race.city, t.race.country) }}</h3>
-                </ion-label>
-              </ion-item>
-            }
-
-            @if (t.result?.time) {
-              <ion-item>
-                <ion-icon name="timer-outline" slot="start" color="medium" />
-                <ion-label>
-                  <p>{{ 'room.raceTime' | translate }}</p>
-                  <h3>{{ t.result?.time }}</h3>
-                </ion-label>
-              </ion-item>
-            }
-
-            @if (t.result?.ranking) {
-              <ion-item>
-                <ion-icon name="podium-outline" slot="start" color="medium" />
-                <ion-label>
-                  <p>{{ 'room.raceRanking' | translate }}</p>
-                  <h3>#{{ t.result?.ranking }}</h3>
-                </ion-label>
-              </ion-item>
-            }
-
-            @if (t.result?.categoryRanking) {
-              <ion-item>
-                <ion-icon name="podium-outline" slot="start" color="tertiary" />
-                <ion-label>
-                  <p>{{ 'room.raceCategoryRanking' | translate }}</p>
-                  <h3>#{{ t.result?.categoryRanking }}</h3>
-                </ion-label>
-              </ion-item>
-            }
-          </ion-list>
-        } @else {
-          <p class="no-info">{{ 'room.noRaceInfo' | translate }}</p>
-        }
-
-        <ion-button expand="block" (click)="viewDetails.emit(t.id)" class="details-btn">
-          {{ 'room.viewDetails' | translate }}
-        </ion-button>
       }
     </ion-content>
   `,
@@ -186,48 +175,138 @@ const SPORT_ICON_MAP: Record<string, string> = {
       height: 100%;
     }
 
-    .trophy-header {
+    .card {
+      border-radius: 16px;
+      padding: 3px;
+      background: linear-gradient(
+        135deg,
+        #bf953f 0%,
+        #fcf6ba 25%,
+        #b38728 50%,
+        #fbf5b7 75%,
+        #aa771c 100%
+      );
+      background-size: 300% 300%;
+      animation: shimmer 3s ease-in-out infinite;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 100% 0%; }
+      50% { background-position: 0% 100%; }
+      100% { background-position: 100% 0%; }
+    }
+
+    .card-inner {
+      background: var(--ion-background-color, #fff);
+      border-radius: 14px;
+      padding: 20px 16px 16px;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 12px;
-      padding-bottom: 8px;
     }
-    .trophy-preview {
+
+    .card-image-section {
+      position: relative;
       display: flex;
       justify-content: center;
     }
+
     .trophy-image {
-      width: 120px;
-      height: 120px;
+      width: 140px;
+      height: 140px;
       object-fit: contain;
-      border-radius: 12px;
-      background: var(--ion-color-step-50);
+      filter: drop-shadow(0 4px 12px rgba(191, 149, 63, 0.3));
     }
-    .sport-chip {
+
+    .type-badge {
+      position: absolute;
+      top: 4px;
+      right: -8px;
+      background: linear-gradient(135deg, #bf953f, #fcf6ba);
+      color: #1a1a2e;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .type-badge.type-bib {
+      background: linear-gradient(135deg, #4a90d9, #74b9ff);
+      color: #fff;
+    }
+
+    .race-name {
+      color: var(--ion-text-color, #000);
+      font-size: 18px;
+      font-weight: 700;
+      text-align: center;
+      margin: 0;
+      line-height: 1.3;
+    }
+
+    .sport-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--ion-color-step-100, rgba(0, 0, 0, 0.06));
+      padding: 4px 12px;
+      border-radius: 20px;
+      color: var(--ion-color-step-700, #555);
+      font-size: 13px;
       font-weight: 500;
     }
-    ion-item {
-      --padding-start: 0;
-    }
-    ion-item h2 {
-      font-weight: 600;
+
+    .sport-badge ion-icon {
       font-size: 16px;
     }
-    ion-item h3 {
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .stat-cell {
+      background: var(--ion-color-step-50, rgba(0, 0, 0, 0.04));
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--ion-color-medium, #999);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      font-weight: 500;
+    }
+
+    .stat-value {
       font-size: 15px;
+      font-weight: 600;
+      color: var(--ion-text-color, #000);
     }
-    ion-item p {
-      font-size: 12px;
-      color: var(--ion-color-medium);
+
+    .stat-accent .stat-value {
+      color: #cf9f0a;
     }
+
     .no-info {
       text-align: center;
-      color: var(--ion-color-medium);
-      margin: 32px 0;
+      color: var(--ion-color-medium, #999);
+      margin: 24px 0;
     }
+
     .details-btn {
-      margin-top: 24px;
+      width: 100%;
+      margin-top: 4px;
+      --border-radius: 10px;
     }
   `,
 })
@@ -237,6 +316,7 @@ export class TrophyInfoSheetComponent {
   totalTrophies = input(0);
   hasPrev = input(false);
   hasNext = input(false);
+  isAuthenticated = input(true);
   dismiss = output<void>();
   viewDetails = output<string>();
   navigatePrev = output<void>();
@@ -254,6 +334,7 @@ export class TrophyInfoSheetComponent {
       trophyOutline, calendarOutline, locationOutline,
       timerOutline, podiumOutline, walkOutline, bicycleOutline,
       fitnessOutline, waterOutline, trailSignOutline, barbellOutline, ellipseOutline,
+      lockClosedOutline,
     });
   }
 

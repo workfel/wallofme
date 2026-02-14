@@ -18,6 +18,12 @@ const DEFAULT_TARGET = new Vector3(0, 1, 0);
 const INSPECT_DISTANCE = 2.0;
 const INSPECT_Y_OFFSET = 0.3;
 
+// Face-on camera distance for wall trophies (perpendicular to wall)
+const FACE_DISTANCE = 1.2;
+const FACE_Y_OFFSET = 0.05;
+// Drop the lookAt target below the trophy so it renders above the bottom sheet
+const FACE_LOOKAT_DROP = 0.35;
+
 // Animation speed (higher = faster lerp)
 const LERP_SPEED = 3;
 
@@ -65,12 +71,33 @@ export class CameraControlsComponent {
         if (!item) return;
 
         const itemPos = this.getItemWorldPosition(item);
-        this.targetLookAt.set(itemPos[0], itemPos[1], itemPos[2]);
-        this.targetCamPos.set(
-          itemPos[0] + INSPECT_DISTANCE,
-          itemPos[1] + INSPECT_Y_OFFSET + INSPECT_DISTANCE * 0.6,
-          itemPos[2] + INSPECT_DISTANCE,
-        );
+
+        if (item.wall === 'left') {
+          // Left wall (X=-3, faces +X) → camera perpendicular in front
+          // LookAt dropped below trophy so it renders above the bottom sheet
+          this.targetLookAt.set(itemPos[0], itemPos[1] - FACE_LOOKAT_DROP, itemPos[2]);
+          this.targetCamPos.set(
+            itemPos[0] + FACE_DISTANCE,
+            itemPos[1] + FACE_Y_OFFSET - FACE_LOOKAT_DROP,
+            itemPos[2],
+          );
+        } else if (item.wall === 'right') {
+          // Back wall (Z=-3, faces +Z) → camera perpendicular in front
+          this.targetLookAt.set(itemPos[0], itemPos[1] - FACE_LOOKAT_DROP, itemPos[2]);
+          this.targetCamPos.set(
+            itemPos[0],
+            itemPos[1] + FACE_Y_OFFSET - FACE_LOOKAT_DROP,
+            itemPos[2] + FACE_DISTANCE,
+          );
+        } else {
+          // Floor decorations → keep isometric offset
+          this.targetLookAt.set(itemPos[0], itemPos[1], itemPos[2]);
+          this.targetCamPos.set(
+            itemPos[0] + INSPECT_DISTANCE,
+            itemPos[1] + INSPECT_Y_OFFSET + INSPECT_DISTANCE * 0.6,
+            itemPos[2] + INSPECT_DISTANCE,
+          );
+        }
         this.wasInspecting = true;
         this.isAnimating.set(true);
       } else if (this.wasInspecting) {
