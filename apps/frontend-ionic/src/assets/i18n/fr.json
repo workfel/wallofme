@@ -46,7 +46,8 @@
     "statViews": "Vues",
     "emptyTitle": "Votre Pain Cave est vide",
     "emptySubtitle": "Scannez votre premier trophée pour commencer !",
-    "emptyRoom": "Votre Pain Cave est vide. Ajoutez des trophées pour décorer !"
+    "emptyRoom": "Votre Pain Cave est vide. Ajoutez des trophées pour décorer !",
+    "editRoom": "Éditer ma room"
   },
   "explore": {
     "title": "Explorer",

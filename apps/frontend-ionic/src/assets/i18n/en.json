@@ -46,7 +46,8 @@
     "statViews": "Views",
     "emptyTitle": "Your Pain Cave is empty",
     "emptySubtitle": "Scan your first trophy to start decorating!",
-    "emptyRoom": "Your Pain Cave is empty. Add trophies to decorate!"
+    "emptyRoom": "Your Pain Cave is empty. Add trophies to decorate!",
+    "editRoom": "Edit my room"
   },
   "explore": {
     "title": "Explore",

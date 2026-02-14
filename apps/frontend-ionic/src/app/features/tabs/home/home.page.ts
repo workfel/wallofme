@@ -143,9 +143,10 @@ import { DEFAULT_THEME } from '@app/types/room-theme';
 
           <!-- Edit room button -->
           @if (!roomService.loading() && !error()) {
-            <div class="edit-room-btn" (click)="goToEdit()">
+            <button class="edit-room-btn" (click)="goToEdit()">
               <ion-icon name="create-outline" />
-            </div>
+              <span>{{ 'home.editRoom' | translate }}</span>
+            </button>
           }
         </div>
       </div>
@@ -335,26 +336,61 @@ import { DEFAULT_THEME } from '@app/types/room-theme';
 
     .edit-room-btn {
       position: absolute;
-      bottom: 16px;
-      left: 16px;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: var(--ion-color-step-100);
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
       display: flex;
       align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      gap: 6px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 100px;
+      background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.72);
+      backdrop-filter: blur(16px) saturate(1.8);
+      -webkit-backdrop-filter: blur(16px) saturate(1.8);
+      box-shadow:
+        0 2px 12px rgba(0, 0, 0, 0.10),
+        0 0 0 1px rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.06);
       cursor: pointer;
-      transition: transform 0.15s ease;
       z-index: 10;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+      -webkit-tap-highlight-color: transparent;
+      font-family: inherit;
+      white-space: nowrap;
+
+      &:hover {
+        box-shadow:
+          0 4px 20px rgba(0, 0, 0, 0.14),
+          0 0 0 1px rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.08);
+      }
 
       &:active {
-        transform: scale(0.92);
+        transform: translateX(-50%) scale(0.95);
       }
 
       ion-icon {
-        font-size: 20px;
+        font-size: 18px;
+        color: var(--ion-color-primary);
+      }
+
+      span {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--ion-text-color);
+        letter-spacing: -0.01em;
+      }
+
+      @media (min-width: 768px) {
+        padding: 12px 28px;
+        gap: 8px;
+
+        ion-icon {
+          font-size: 20px;
+        }
+
+        span {
+          font-size: 15px;
+        }
       }
     }
 
