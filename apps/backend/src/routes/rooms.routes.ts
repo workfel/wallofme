@@ -3,7 +3,7 @@ import { zValidator } from "@hono/zod-validator";
 import { eq, sql, desc, ilike, or, and, gt } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { db } from "../db";
-import { room, roomItem, user, trophy, roomLike, roomView } from "../db/schema";
+import { room, roomItem, user, trophy, roomView } from "../db/schema";
 import { requireAuth } from "../middleware/auth";
 import { idParamSchema } from "../validators/common.validator";
 import {

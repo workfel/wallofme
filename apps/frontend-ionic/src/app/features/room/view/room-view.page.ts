@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, input, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, input, CUSTOM_ELEMENTS_SCHEMA, ViewChild, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   IonContent,
@@ -23,6 +23,7 @@ import { heart, heartOutline } from 'ionicons/icons';
 import { ApiService } from '@app/core/services/api.service';
 import { AuthService } from '@app/core/services/auth.service';
 import { SocialService } from '@app/core/services/social.service';
+import { LikeBatchingService } from '@app/core/services/like-batching.service';
 import { ThemeService } from '@app/core/services/theme.service';
 import { PainCaveSceneComponent, type RoomItem3D } from '../components/pain-cave-scene/pain-cave-scene.component';
 import { TrophyInfoSheetComponent, type TrophyInfoData } from '../components/trophy-info-sheet/trophy-info-sheet.component';
@@ -38,6 +39,15 @@ interface RoomData {
   likeCount: number;
   viewCount: number;
   items: RoomItem3D[];
+}
+
+interface FloatingHeart {
+  id: number;
+  x: number;
+  y: number;
+  size: number;
+  delay: number;
+  burst: boolean;
 }
 
 @Component({
@@ -97,22 +107,36 @@ interface RoomData {
           </ngt-canvas>
         </div>
 
-        <!-- Like FAB (only for authenticated users viewing others' rooms) -->
-        @if (canLike()) {
-          <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-            <ion-fab-button
-              [color]="liked() ? 'danger' : 'medium'"
-              (click)="onToggleLike()"
+        <!-- Floating Hearts Container -->
+        <div class="hearts-container" #heartsContainer>
+          @for (heart of floatingHearts(); track heart.id) {
+            <div
+              class="floating-heart"
+              [class.heart-burst]="heart.burst"
+              [style.left.px]="heart.x"
+              [style.bottom.px]="heart.y"
+              [style.animation-delay.ms]="heart.delay"
+              [style.font-size.px]="heart.size"
             >
-              <ion-icon [name]="liked() ? 'heart' : 'heart-outline'" />
-            </ion-fab-button>
-            @if (likeCount() > 0) {
-              <ion-badge class="like-badge" color="danger">
-                {{ likeCount() }}
-              </ion-badge>
-            }
-          </ion-fab>
-        }
+              ❤️
+            </div>
+          }
+        </div>
+
+        <!-- Like FAB (always visible) -->
+        <ion-fab vertical="bottom" horizontal="end" slot="fixed" #likeFab>
+          <ion-fab-button
+            color="danger"
+            (click)="onToggleLike($event)"
+          >
+            <ion-icon name="heart" [class.heart-pop]="showHeartPop()" />
+          </ion-fab-button>
+          @if (likeCount() > 0) {
+            <ion-badge class="like-badge" color="danger">
+              {{ formatLikeCount(likeCount()) }}
+            </ion-badge>
+          }
+        </ion-fab>
       } @else {
         <div class="centered">
           <ion-text color="medium">
@@ -173,29 +197,105 @@ interface RoomData {
       min-width: 20px;
       border-radius: 10px;
     }
+
+    /* Hearts container */
+    .hearts-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 9999;
+      overflow: hidden;
+    }
+
+    /* Floating heart animation */
+    .floating-heart {
+      position: absolute;
+      font-size: 32px;
+      opacity: 1;
+      animation: floatUp 2s ease-out forwards;
+      will-change: transform, opacity;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    }
+
+    .floating-heart.heart-burst {
+      animation: burstUp 1.5s ease-out forwards;
+    }
+
+    @keyframes floatUp {
+      0% {
+        transform: translateY(0) translateX(0) scale(0.8);
+        opacity: 1;
+      }
+      20% {
+        transform: translateY(-30px) translateX(var(--drift-x, 0)) scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-200px) translateX(var(--drift-x-end, 0)) scale(0.6);
+        opacity: 0;
+      }
+    }
+
+    @keyframes burstUp {
+      0% {
+        transform: translateY(0) translateX(0) scale(1.2) rotate(0deg);
+        opacity: 1;
+      }
+      20% {
+        transform: translateY(-40px) translateX(var(--drift-x, 0)) scale(1.4) rotate(15deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-250px) translateX(var(--drift-x-end, 0)) scale(0.4) rotate(30deg);
+        opacity: 0;
+      }
+    }
+
+    /* Heart icon pop on click */
+    .heart-pop {
+      animation: heartPop 0.3s ease-out;
+    }
+
+    @keyframes heartPop {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.3);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
   `,
 })
 export class RoomViewPage implements OnInit {
   userId = input.required<string>();
+  @ViewChild('likeFab', { read: ElementRef }) likeFab?: ElementRef<HTMLElement>;
 
   private api = inject(ApiService);
   private router = inject(Router);
   private themeService = inject(ThemeService);
   authService = inject(AuthService);
   private socialService = inject(SocialService);
+  private likeBatchingService = inject(LikeBatchingService);
 
   room = signal<RoomData | null>(null);
   loading = signal(true);
   inspectedItemId = signal<string | null>(null);
 
-  canLike = computed(() => {
-    const user = this.authService.user();
+  likeCount = computed(() => {
     const r = this.room();
-    return !!user && !!r && r.userId !== user.id;
+    return this.likeBatchingService.getLikeCount(r?.id ?? '')();
   });
 
-  liked = signal(false);
-  likeCount = signal(0);
+  // Floating hearts animation
+  floatingHearts = signal<FloatingHeart[]>([]);
+  private heartIdCounter = 0;
+  showHeartPop = signal(false);
 
   resolvedTheme = computed<RoomTheme>(() => {
     const r = this.room();
@@ -262,13 +362,9 @@ export class RoomViewPage implements OnInit {
         const json = (await res.json()) as { data: RoomData };
         this.room.set(json.data);
 
-        // Track view and fetch like status
+        // Track view and fetch initial like count
         this.socialService.recordView(json.data.id);
-        const likeState = this.socialService.getLikeState(json.data.id);
-        this.socialService.fetchLikeStatus(json.data.id).then(() => {
-          this.liked.set(likeState.liked());
-          this.likeCount.set(likeState.likeCount());
-        });
+        this.likeBatchingService.fetchLikeCount(json.data.id);
       }
     } catch {
       // silently fail
@@ -277,7 +373,7 @@ export class RoomViewPage implements OnInit {
     }
   }
 
-  async onToggleLike(): Promise<void> {
+  async onToggleLike(event: Event): Promise<void> {
     const r = this.room();
     if (!r) return;
 
@@ -289,10 +385,45 @@ export class RoomViewPage implements OnInit {
       // Haptics not available
     }
 
-    await this.socialService.toggleLike(r.id);
-    const likeState = this.socialService.getLikeState(r.id);
-    this.liked.set(likeState.liked());
-    this.likeCount.set(likeState.likeCount());
+    // Trigger heart pop animation on button
+    this.showHeartPop.set(true);
+    setTimeout(() => this.showHeartPop.set(false), 300);
+
+    // Spawn floating hearts
+    this.spawnFloatingHearts(event);
+
+    this.likeBatchingService.addLike(r.id);
+  }
+
+  private spawnFloatingHearts(event: Event): void {
+    // Get FAB position from the event target
+    const target = event.currentTarget as HTMLElement;
+    const rect = target.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = window.innerHeight - rect.bottom + rect.height / 2;
+
+    // Spawn 1-3 hearts
+    const heartCount = 1 + Math.floor(Math.random() * 3);
+
+    for (let i = 0; i < heartCount; i++) {
+      const heart: FloatingHeart = {
+        id: this.heartIdCounter++,
+        x: centerX + (Math.random() - 0.5) * 40,
+        y: centerY,
+        size: 32 + Math.random() * 16,
+        delay: i * 80,
+        burst: false,
+      };
+
+      this.floatingHearts.update(hearts => [...hearts, heart]);
+
+      // Remove heart after animation completes
+      setTimeout(() => {
+        this.floatingHearts.update(hearts =>
+          hearts.filter(h => h.id !== heart.id)
+        );
+      }, 2000);
+    }
   }
 
   onItemPressed(itemId: string): void {
@@ -330,5 +461,15 @@ export class RoomViewPage implements OnInit {
   onSeeFinishers(raceId: string): void {
     this.inspectedItemId.set(null);
     this.router.navigate(['/race', raceId, 'finishers']);
+  }
+
+  formatLikeCount(count: number): string {
+    if (count >= 1_000_000) {
+      return (count / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+    }
+    if (count >= 1_000) {
+      return (count / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+    }
+    return count.toString();
   }
 }

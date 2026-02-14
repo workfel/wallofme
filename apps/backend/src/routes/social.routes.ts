@@ -5,7 +5,6 @@ import { createHash } from "crypto";
 import { db } from "../db";
 import {
   room,
-  roomLike,
   roomView,
   deviceToken,
   notification,
@@ -13,10 +12,10 @@ import {
 import { requireAuth } from "../middleware/auth";
 import { idParamSchema } from "../validators/common.validator";
 import {
+  batchLikeSchema,
   registerDeviceTokenSchema,
   unregisterDeviceTokenSchema,
 } from "../validators/social.validator";
-import { sendLikeNotification } from "../lib/notification-service";
 import type { auth } from "../lib/auth";
 
 const IP_HASH_SALT = process.env.IP_HASH_SALT || "wallofme-view-salt";
@@ -27,14 +26,14 @@ type Variables = {
 };
 
 export const social = new Hono<{ Variables: Variables }>()
-  // Toggle like on a room
+  // Batch increment likes on a room (anonymous, no auth required)
   .post(
     "/rooms/:id/like",
-    requireAuth,
     zValidator("param", idParamSchema),
+    zValidator("json", batchLikeSchema),
     async (c) => {
-      const user = c.get("user")!;
       const { id } = c.req.valid("param");
+      const { count } = c.req.valid("json");
 
       const targetRoom = await db.query.room.findFirst({
         where: eq(room.id, id),
@@ -44,50 +43,18 @@ export const social = new Hono<{ Variables: Variables }>()
         return c.json({ error: "Room not found" }, 404);
       }
 
-      if (targetRoom.userId === user.id) {
-        return c.json({ error: "Cannot like your own room" }, 400);
-      }
+      // Atomically increment like count
+      const [updated] = await db
+        .update(room)
+        .set({ likeCount: sql`${room.likeCount} + ${count}` })
+        .where(eq(room.id, id))
+        .returning();
 
-      const result = await db.transaction(async (tx) => {
-        const existingLike = await tx.query.roomLike.findFirst({
-          where: and(eq(roomLike.roomId, id), eq(roomLike.userId, user.id)),
-        });
-
-        if (existingLike) {
-          await tx
-            .delete(roomLike)
-            .where(eq(roomLike.id, existingLike.id));
-          const [updated] = await tx
-            .update(room)
-            .set({ likeCount: sql`${room.likeCount} - 1` })
-            .where(eq(room.id, id))
-            .returning();
-          return { liked: false, likeCount: updated.likeCount };
-        } else {
-          await tx.insert(roomLike).values({ roomId: id, userId: user.id });
-          const [updated] = await tx
-            .update(room)
-            .set({ likeCount: sql`${room.likeCount} + 1` })
-            .where(eq(room.id, id))
-            .returning();
-          return { liked: true, likeCount: updated.likeCount };
-        }
-      });
-
-      // Fire notification async (don't await)
-      if (result.liked) {
-        sendLikeNotification(
-          targetRoom.userId,
-          targetRoom.id,
-          user.displayName || user.name,
-        );
-      }
-
-      return c.json({ data: result });
+      return c.json({ data: { likeCount: updated.likeCount } });
     },
   )
 
-  // Get like status for a room
+  // Get like count for a room (anonymous, no auth required)
   .get(
     "/rooms/:id/likes",
     zValidator("param", idParamSchema),
@@ -102,21 +69,8 @@ export const social = new Hono<{ Variables: Variables }>()
         return c.json({ error: "Room not found" }, 404);
       }
 
-      const currentUser = c.get("user");
-      let liked = false;
-
-      if (currentUser) {
-        const existingLike = await db.query.roomLike.findFirst({
-          where: and(
-            eq(roomLike.roomId, id),
-            eq(roomLike.userId, currentUser.id),
-          ),
-        });
-        liked = !!existingLike;
-      }
-
       return c.json({
-        data: { liked, likeCount: targetRoom.likeCount },
+        data: { likeCount: targetRoom.likeCount },
       });
     },
   )

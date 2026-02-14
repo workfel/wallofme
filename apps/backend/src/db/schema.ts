@@ -289,24 +289,7 @@ export const tokenTransaction = pgTable("token_transaction", {
 });
 
 // ─── Social Tables ─────────────────────────────────────
-
-export const roomLike = pgTable(
-  "room_like",
-  {
-    id: uuid("id").defaultRandom().primaryKey(),
-    roomId: uuid("room_id")
-      .notNull()
-      .references(() => room.id, { onDelete: "cascade" }),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-  },
-  (table) => ({
-    uniqueLike: unique().on(table.roomId, table.userId),
-    roomIdIdx: index("room_like_room_id_idx").on(table.roomId),
-  }),
-);
+// Note: room_like table removed in favor of anonymous infinite likes
 
 export const roomView = pgTable(
   "room_view",
@@ -375,7 +358,6 @@ export const userRelations = relations(user, ({ many, one }) => ({
   tokenTransactions: many(tokenTransaction),
   deviceTokens: many(deviceToken),
   notifications: many(notification),
-  roomLikes: many(roomLike),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -407,7 +389,6 @@ export const trophyRelations = relations(trophy, ({ one }) => ({
 export const roomRelations = relations(room, ({ one, many }) => ({
   user: one(user, { fields: [room.userId], references: [user.id] }),
   items: many(roomItem),
-  likes: many(roomLike),
   views: many(roomView),
 }));
 
@@ -450,11 +431,6 @@ export const userThemeRelations = relations(userTheme, ({ one }) => ({
 
 export const tokenTransactionRelations = relations(tokenTransaction, ({ one }) => ({
   user: one(user, { fields: [tokenTransaction.userId], references: [user.id] }),
-}));
-
-export const roomLikeRelations = relations(roomLike, ({ one }) => ({
-  room: one(room, { fields: [roomLike.roomId], references: [room.id] }),
-  user: one(user, { fields: [roomLike.userId], references: [user.id] }),
 }));
 
 export const roomViewRelations = relations(roomView, ({ one }) => ({

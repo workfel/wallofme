@@ -8,6 +8,7 @@ import {
   onboardingSchema,
   updateProfileSchema,
 } from "../validators/user.validator";
+import { getPublicUrl } from "../lib/storage";
 import { FREE_SCAN_LIMIT, getMonthlyScansUsed } from "../lib/scan-limit";
 import type { auth } from "../lib/auth";
 
@@ -91,6 +92,8 @@ export const users = new Hono<{ Variables: Variables }>()
       if (body.locale !== undefined) updates.locale = body.locale;
       if (body.sports !== undefined)
         updates.sports = JSON.stringify(body.sports);
+      if (body.image !== undefined)
+        updates.image = body.image ? getPublicUrl(body.image) : null;
 
       const [updated] = await db
         .update(user)

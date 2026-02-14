@@ -1,6 +1,6 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { Component, inject, signal, OnInit } from "@angular/core";
+import { Router } from "@angular/router";
+import { FormsModule } from "@angular/forms";
 import {
   IonContent,
   IonHeader,
@@ -21,40 +21,54 @@ import {
   IonChip,
   IonLabel,
   ToastController,
-} from '@ionic/angular/standalone';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { addIcons } from 'ionicons';
-import { cameraOutline, personCircleOutline, checkmarkOutline } from 'ionicons/icons';
-import { Capacitor } from '@capacitor/core';
+} from "@ionic/angular/standalone";
+import { TranslateModule, TranslateService } from "@ngx-translate/core";
+import { addIcons } from "ionicons";
+import {
+  cameraOutline,
+  personCircleOutline,
+  checkmarkOutline,
+} from "ionicons/icons";
+import { Capacitor } from "@capacitor/core";
 
-import { AuthService } from '@app/core/services/auth.service';
-import { UserService } from '@app/core/services/user.service';
-import { UploadService } from '@app/core/services/upload.service';
+import { AuthService } from "@app/core/services/auth.service";
+import { UserService } from "@app/core/services/user.service";
+import { UploadService } from "@app/core/services/upload.service";
 
 const SPORTS = [
-  'running', 'trail', 'triathlon', 'cycling', 'crossfit',
-  'swimming', 'ocr', 'duathlon', 'hyrox', 'ironman',
-  'marathon', 'ultra', 'other',
+  "running",
+  "trail",
+  "triathlon",
+  "cycling",
+  "crossfit",
+  "swimming",
+  "ocr",
+  "duathlon",
+  "hyrox",
+  "ironman",
+  "marathon",
+  "ultra",
+  "other",
 ] as const;
 
 const SPORT_EMOJIS: Record<string, string> = {
-  running: '\u{1F3C3}',
-  trail: '\u{26F0}\u{FE0F}',
-  triathlon: '\u{1F3CA}',
-  cycling: '\u{1F6B4}',
-  crossfit: '\u{1F3CB}\u{FE0F}',
-  swimming: '\u{1F3CA}',
-  ocr: '\u{1F9D7}',
-  duathlon: '\u{1F3C3}',
-  hyrox: '\u{1F4AA}',
-  ironman: '\u{1F94C}',
-  marathon: '\u{1F3C5}',
-  ultra: '\u{1F30D}',
-  other: '\u{2B50}',
+  running: "\u{1F3C3}",
+  trail: "\u{26F0}\u{FE0F}",
+  triathlon: "\u{1F3CA}",
+  cycling: "\u{1F6B4}",
+  crossfit: "\u{1F3CB}\u{FE0F}",
+  swimming: "\u{1F3CA}",
+  ocr: "\u{1F9D7}",
+  duathlon: "\u{1F3C3}",
+  hyrox: "\u{1F4AA}",
+  ironman: "\u{1F94C}",
+  marathon: "\u{1F3C5}",
+  ultra: "\u{1F30D}",
+  other: "\u{2B50}",
 };
 
 @Component({
-  selector: 'app-profile-edit',
+  selector: "app-profile-edit",
   standalone: true,
   imports: [
     FormsModule,
@@ -84,7 +98,7 @@ const SPORT_EMOJIS: Record<string, string> = {
         <ion-buttons slot="start">
           <ion-back-button defaultHref="/tabs/profile" />
         </ion-buttons>
-        <ion-title>{{ 'profileEdit.title' | translate }}</ion-title>
+        <ion-title>{{ "profileEdit.title" | translate }}</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="onSave()" [disabled]="saving()">
             @if (saving()) {
@@ -100,16 +114,30 @@ const SPORT_EMOJIS: Record<string, string> = {
     <ion-content class="ion-padding" [fullscreen]="true">
       <div class="form-container animate-fade-in">
         <!-- Avatar -->
-        <div class="avatar-section" role="button" tabindex="0" (click)="onChangeAvatar()" (keydown.enter)="onChangeAvatar()">
+        <div
+          class="avatar-section"
+          role="button"
+          tabindex="0"
+          (click)="onChangeAvatar()"
+          (keydown.enter)="onChangeAvatar()"
+        >
           <ion-avatar class="avatar">
             @if (avatarPreview() || authService.user()?.image) {
-              <img [src]="avatarPreview() || authService.user()!.image!" alt="avatar" />
+              <img
+                [src]="avatarPreview() || authService.user()!.image!"
+                alt="avatar"
+              />
             } @else {
-              <ion-icon name="person-circle-outline" class="avatar-placeholder" />
+              <ion-icon
+                name="person-circle-outline"
+                class="avatar-placeholder"
+              />
             }
           </ion-avatar>
           <ion-text color="primary">
-            <p class="change-photo">{{ 'profileEdit.changePhoto' | translate }}</p>
+            <p class="change-photo">
+              {{ "profileEdit.changePhoto" | translate }}
+            </p>
           </ion-text>
         </div>
 
@@ -168,7 +196,7 @@ const SPORT_EMOJIS: Record<string, string> = {
         <!-- Sports -->
         <div class="sports-section">
           <ion-text>
-            <h3>{{ 'profileEdit.sports' | translate }}</h3>
+            <h3>{{ "profileEdit.sports" | translate }}</h3>
           </ion-text>
           <div class="sport-chips">
             @for (sport of sports; track sport) {
@@ -177,7 +205,10 @@ const SPORT_EMOJIS: Record<string, string> = {
                 [outline]="!isSelected(sport)"
                 (click)="toggleSport(sport)"
               >
-                <ion-label>{{ getSportEmoji(sport) }} {{ 'sports.' + sport | translate }}</ion-label>
+                <ion-label
+                  >{{ getSportEmoji(sport) }}
+                  {{ "sports." + sport | translate }}</ion-label
+                >
               </ion-chip>
             }
           </div>
@@ -198,7 +229,7 @@ const SPORT_EMOJIS: Record<string, string> = {
           @if (saving()) {
             <ion-spinner name="crescent" />
           } @else {
-            {{ 'common.save' | translate }}
+            {{ "common.save" | translate }}
           }
         </ion-button>
       </div>
@@ -275,16 +306,16 @@ export class ProfileEditPage implements OnInit {
   private translate = inject(TranslateService);
   private toastController = inject(ToastController);
 
-  firstName = '';
-  lastName = '';
-  displayName = '';
-  country = '';
-  locale = 'en';
+  firstName = "";
+  lastName = "";
+  displayName = "";
+  country = "";
+  locale = "en";
   selectedSports = signal<string[]>([]);
   avatarPreview = signal<string | null>(null);
   private avatarBlob = signal<Blob | null>(null);
   saving = signal(false);
-  errorMessage = signal('');
+  errorMessage = signal("");
 
   readonly sports = SPORTS;
 
@@ -297,14 +328,15 @@ export class ProfileEditPage implements OnInit {
   }
 
   private async loadProfile(): Promise<void> {
-    const profile = this.userService.profile() ?? await this.userService.fetchProfile();
+    const profile =
+      this.userService.profile() ?? (await this.userService.fetchProfile());
     if (!profile) return;
 
-    this.firstName = profile.firstName ?? '';
-    this.lastName = profile.lastName ?? '';
-    this.displayName = profile.displayName ?? '';
-    this.country = profile.country ?? '';
-    this.locale = profile.locale ?? this.translate.currentLang ?? 'en';
+    this.firstName = profile.firstName ?? "";
+    this.lastName = profile.lastName ?? "";
+    this.displayName = profile.displayName ?? "";
+    this.country = profile.country ?? "";
+    this.locale = profile.locale ?? this.translate.currentLang ?? "en";
     this.selectedSports.set(profile.sports ?? []);
   }
 
@@ -315,19 +347,20 @@ export class ProfileEditPage implements OnInit {
   toggleSport(sport: string): void {
     const current = this.selectedSports();
     if (current.includes(sport)) {
-      this.selectedSports.set(current.filter(s => s !== sport));
+      this.selectedSports.set(current.filter((s) => s !== sport));
     } else {
       this.selectedSports.set([...current, sport]);
     }
   }
 
   getSportEmoji(sport: string): string {
-    return SPORT_EMOJIS[sport] ?? '';
+    return SPORT_EMOJIS[sport] ?? "";
   }
 
   async onChangeAvatar(): Promise<void> {
     if (Capacitor.isNativePlatform()) {
-      const { Camera, CameraResultType, CameraSource } = await import('@capacitor/camera');
+      const { Camera, CameraResultType, CameraSource } =
+        await import("@capacitor/camera");
       const photo = await Camera.getPhoto({
         resultType: CameraResultType.Uri,
         source: CameraSource.Photos,
@@ -341,9 +374,9 @@ export class ProfileEditPage implements OnInit {
         this.avatarBlob.set(await response.blob());
       }
     } else {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*';
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
       input.onchange = async () => {
         const file = input.files?.[0];
         if (!file) return;
@@ -356,21 +389,28 @@ export class ProfileEditPage implements OnInit {
 
   async onSave(): Promise<void> {
     if (!this.firstName.trim() || !this.lastName.trim()) {
-      this.errorMessage.set(this.translate.instant('onboarding.fieldsRequired'));
+      this.errorMessage.set(
+        this.translate.instant("onboarding.fieldsRequired"),
+      );
       return;
     }
 
     this.saving.set(true);
-    this.errorMessage.set('');
+    this.errorMessage.set("");
 
     try {
+      let avatarKey: string | undefined;
+
       // Upload avatar if changed
       if (this.avatarBlob()) {
-        await this.uploadService.uploadFile(
+        const result = await this.uploadService.uploadFile(
           this.avatarBlob()!,
-          'avatar',
-          'image/webp',
+          "avatar",
+          "image/webp",
         );
+        if (result?.key) {
+          avatarKey = result.key;
+        }
       }
 
       // Update language if changed
@@ -383,10 +423,13 @@ export class ProfileEditPage implements OnInit {
       const success = await this.userService.updateProfile({
         firstName: this.firstName.trim(),
         lastName: this.lastName.trim(),
-        displayName: this.displayName.trim() || `${this.firstName.trim()} ${this.lastName.trim()}`,
+        displayName:
+          this.displayName.trim() ||
+          `${this.firstName.trim()} ${this.lastName.trim()}`,
         country: this.country.trim().toUpperCase() || null,
         locale: this.locale,
         sports: this.selectedSports(),
+        image: avatarKey,
       });
 
       if (success) {
@@ -394,18 +437,20 @@ export class ProfileEditPage implements OnInit {
         await this.authService.refreshSession();
 
         const toast = await this.toastController.create({
-          message: this.translate.instant('profileEdit.saved'),
+          message: this.translate.instant("profileEdit.saved"),
           duration: 2000,
-          position: 'bottom',
-          color: 'success',
+          position: "bottom",
+          color: "success",
         });
         await toast.present();
-        this.router.navigate(['/tabs/profile']);
+        this.router.navigate(["/tabs/profile"]);
       } else {
-        this.errorMessage.set(this.translate.instant('common.error'));
+        this.errorMessage.set(this.translate.instant("common.error"));
       }
     } catch (e: unknown) {
-      this.errorMessage.set(e instanceof Error ? e.message : this.translate.instant('common.error'));
+      this.errorMessage.set(
+        e instanceof Error ? e.message : this.translate.instant("common.error"),
+      );
     } finally {
       this.saving.set(false);
     }

@@ -1,5 +1,5 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
-import { ApiService } from './api.service';
+import { Injectable, inject, signal, computed } from "@angular/core";
+import { ApiService } from "./api.service";
 
 export interface UserProfile {
   id: string;
@@ -20,7 +20,7 @@ export interface UserProfile {
   updatedAt: string;
 }
 
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class UserService {
   private api = inject(ApiService);
 
@@ -30,12 +30,14 @@ export class UserService {
   readonly profile = this._profile.asReadonly();
   readonly loading = this._loading.asReadonly();
 
-  readonly scansRemaining = computed(() => this._profile()?.scansRemaining ?? null);
+  readonly scansRemaining = computed(
+    () => this._profile()?.scansRemaining ?? null,
+  );
   readonly scanLimit = computed(() => this._profile()?.scanLimit ?? null);
   readonly isPro = computed(() => this._profile()?.isPro ?? false);
 
   readonly scansDisplay = computed(() => {
-    if (this.isPro()) return 'unlimited';
+    if (this.isPro()) return "unlimited";
     const remaining = this.scansRemaining();
     if (remaining === null) return null;
     return remaining;
@@ -65,6 +67,7 @@ export class UserService {
     country?: string | null;
     locale?: string;
     sports?: string[];
+    image?: string;
   }): Promise<boolean> {
     try {
       const res = await (this.api.client.api.users.me as any).$patch({

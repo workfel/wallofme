@@ -32,4 +32,5 @@ export const updateProfileSchema = z.object({
   country: z.string().length(2).optional().nullable(),
   locale: z.enum(["en", "fr"]).optional(),
   sports: sportsSchema.optional(),
+  image: z.string().optional().nullable(),
 });
