@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, OnDestroy, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import {
   IonHeader,
   IonToolbar,
@@ -16,6 +16,7 @@ import {
   ToastController,
   ViewDidEnter,
 } from '@ionic/angular/standalone';
+import { Capacitor } from '@capacitor/core';
 import { addIcons } from 'ionicons';
 import {
   flameOutline,
@@ -24,6 +25,7 @@ import {
   cartOutline,
   chevronBackOutline,
   timerOutline,
+  phonePortraitOutline,
 } from 'ionicons/icons';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { TokenService } from '@app/core/services/token.service';
@@ -96,7 +98,12 @@ const TOKEN_PACKS: TokenPack[] = [
           <ion-icon name="videocam-outline" slot="start" color="primary" />
           <ion-label>
             <h3>{{ 'tokens.watchAd' | translate }}</h3>
-            @if (videoCooldownMinutes() > 0) {
+            @if (!isNativePlatform()) {
+              <p class="web-only-message">
+                <ion-icon name="phone-portrait-outline" />
+                {{ 'tokens.watchAdWebOnly' | translate }}
+              </p>
+            } @else if (videoCooldownMinutes() > 0) {
               <p class="cooldown-text">
                 <ion-icon name="timer-outline" />
                 {{ 'tokens.cooldown' | translate: { minutes: videoCooldownMinutes() } }}
@@ -114,7 +121,7 @@ const TOKEN_PACKS: TokenPack[] = [
               slot="end"
               fill="solid"
               size="small"
-              [disabled]="videoLoading() || adService.loading()"
+              [disabled]="!isNativePlatform() || videoLoading() || adService.loading()"
               (click)="watchAd()"
             >
               @if (videoLoading() || adService.loading()) {
@@ -239,6 +246,18 @@ const TOKEN_PACKS: TokenPack[] = [
       }
     }
 
+    .web-only-message {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--ion-color-warning);
+      font-size: 12px;
+
+      ion-icon {
+        font-size: 14px;
+      }
+    }
+
     .packs-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -313,6 +332,12 @@ export class GetTokensPage implements OnInit, OnDestroy, ViewDidEnter {
   dailyClaimed = signal(false);
   videoCooldownMinutes = signal(0);
 
+  // Platform detection - ads only available on native apps (iOS/Android)
+  isNativePlatform = computed(() => {
+    const platform = Capacitor.getPlatform();
+    return platform === 'ios' || platform === 'android';
+  });
+
   private cooldownTimer: ReturnType<typeof setInterval> | null = null;
 
   private readonly fallbackPrices: Record<string, string> = {
@@ -331,6 +356,7 @@ export class GetTokensPage implements OnInit, OnDestroy, ViewDidEnter {
       cartOutline,
       chevronBackOutline,
       timerOutline,
+      phonePortraitOutline,
     });
   }
 

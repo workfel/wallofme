@@ -153,6 +153,7 @@
     "freeTokens": "Free Tokens",
     "watchAd": "Watch Ad",
     "watchAdDesc": "Earn 15 flames per video",
+    "watchAdWebOnly": "Available on mobile app only",
     "remaining": "{{count}} remaining today",
     "cooldown": "Available in {{minutes}} min",
     "dailyLogin": "Daily Login Bonus",

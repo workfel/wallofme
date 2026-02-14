@@ -153,6 +153,7 @@
     "freeTokens": "Tokens gratuits",
     "watchAd": "Regarder une pub",
     "watchAdDesc": "Gagnez 15 flammes par vidéo",
+    "watchAdWebOnly": "Disponible uniquement sur l'app mobile",
     "remaining": "{{count}} restants aujourd'hui",
     "cooldown": "Disponible dans {{minutes}} min",
     "dailyLogin": "Bonus de connexion",
