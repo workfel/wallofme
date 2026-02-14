@@ -1,9 +1,6 @@
 # ── Stage 1: Install dependencies ───────────────────────────────
-FROM oven/bun:1-alpine AS deps
+FROM oven/bun:1-debian AS deps
 WORKDIR /app
-
-# Native dependencies needed by sharp
-RUN apk add --no-cache python3 make g++ vips-dev
 
 # Copy workspace root files
 COPY package.json bun.lock ./
@@ -15,11 +12,8 @@ COPY apps/backend/package.json apps/backend/
 RUN cd apps/backend && bun install
 
 # ── Stage 2: Production image ──────────────────────────────────
-FROM oven/bun:1-alpine AS runner
+FROM oven/bun:1-debian AS runner
 WORKDIR /app
-
-# Runtime dependency for sharp
-RUN apk add --no-cache vips
 
 # Copy installed node_modules from deps stage
 COPY --from=deps /app/node_modules ./node_modules
@@ -40,5 +34,4 @@ WORKDIR /app/apps/backend
 ENV NODE_ENV=production
 EXPOSE 3333
 
-# Run migrations then start the server
 CMD ["bun", "run", "src/index.ts"]
