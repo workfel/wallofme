@@ -2,6 +2,9 @@
 FROM oven/bun:1-debian AS deps
 WORKDIR /app
 
+# Install Node.js (needed to rebuild native addons that Bun can't handle)
+RUN apt-get update && apt-get install -y nodejs npm python3 make g++ && rm -rf /var/lib/apt/lists/*
+
 # Copy workspace root files
 COPY package.json bun.lock ./
 
@@ -10,6 +13,10 @@ COPY apps/backend/package.json apps/backend/
 
 # Install all dependencies
 RUN cd apps/backend && bun install
+
+# Rebuild sharp native binaries (the nested copy inside @imgly/background-removal-node)
+RUN cd /app/node_modules/@imgly/background-removal-node/node_modules/sharp && npm install
+RUN npm rebuild sharp --platform=linux --arch=x64
 
 # ── Stage 2: Production image ──────────────────────────────────
 FROM oven/bun:1-debian AS runner
