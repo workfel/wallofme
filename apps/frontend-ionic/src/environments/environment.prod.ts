@@ -1,13 +1,12 @@
 export const environment = {
   production: true,
-  apiUrl: 'http://localhost:3333',
+  apiUrl: 'https://api-wallofme.workfel.cloud/',
   revenueCat: {
-    // TODO: Replace with production RevenueCat API key
-    apiKey: 'YOUR_PRODUCTION_REVENUECAT_API_KEY',       // Capacitor iOS (Apple IAP)
-    webApiKey: 'YOUR_PRODUCTION_WEB_BILLING_KEY',       // Web Billing (Stripe)
+    apiKey: "test_QEJHSVEYBAtNAnbuxKcQMkSRUqW",       // Capacitor iOS (Apple IAP)
+    webApiKey: "rcb_sb_YzwEVuZjxZTuatoqNHjplHBus", // Web Billing (Stripe)
   },
   admob: {
-    // TODO: Replace with production rewarded ad unit ID
-    rewardedAdId: 'ca-app-pub-1183226769995410/XXXXXXXXXX',
+    // Use AdMob test ad unit IDs for development
+    rewardedAdId: "ca-app-pub-3940256099942544/5224354917",
   },
 };
