@@ -1,5 +1,15 @@
-import { Component, inject, signal, computed, OnInit, input, CUSTOM_ELEMENTS_SCHEMA, ViewChild, ElementRef } from '@angular/core';
-import { Router } from '@angular/router';
+import {
+  Component,
+  inject,
+  signal,
+  computed,
+  OnInit,
+  input,
+  CUSTOM_ELEMENTS_SCHEMA,
+  ViewChild,
+  ElementRef,
+} from "@angular/core";
+import { Router } from "@angular/router";
 import {
   IonContent,
   IonHeader,
@@ -14,21 +24,27 @@ import {
   IonFabButton,
   IonIcon,
   IonBadge,
-} from '@ionic/angular/standalone';
-import { TranslateModule } from '@ngx-translate/core';
-import { NgtCanvas } from 'angular-three/dom';
-import { addIcons } from 'ionicons';
-import { heart, heartOutline } from 'ionicons/icons';
+} from "@ionic/angular/standalone";
+import { TranslateModule } from "@ngx-translate/core";
+import { NgtCanvas } from "angular-three/dom";
+import { addIcons } from "ionicons";
+import { heart, heartOutline } from "ionicons/icons";
 
-import { ApiService } from '@app/core/services/api.service';
-import { AuthService } from '@app/core/services/auth.service';
-import { SocialService } from '@app/core/services/social.service';
-import { LikeBatchingService } from '@app/core/services/like-batching.service';
-import { ThemeService } from '@app/core/services/theme.service';
-import { PainCaveSceneComponent, type RoomItem3D } from '../components/pain-cave-scene/pain-cave-scene.component';
-import { TrophyInfoSheetComponent, type TrophyInfoData } from '../components/trophy-info-sheet/trophy-info-sheet.component';
-import type { RoomTheme } from '@app/types/room-theme';
-import { DEFAULT_THEME } from '@app/types/room-theme';
+import { ApiService } from "@app/core/services/api.service";
+import { AuthService } from "@app/core/services/auth.service";
+import { SocialService } from "@app/core/services/social.service";
+import { LikeBatchingService } from "@app/core/services/like-batching.service";
+import { ThemeService } from "@app/core/services/theme.service";
+import {
+  PainCaveSceneComponent,
+  type RoomItem3D,
+} from "../components/pain-cave-scene/pain-cave-scene.component";
+import {
+  TrophyInfoSheetComponent,
+  type TrophyInfoData,
+} from "../components/trophy-info-sheet/trophy-info-sheet.component";
+import type { RoomTheme } from "@app/types/room-theme";
+import { DEFAULT_THEME } from "@app/types/room-theme";
 
 interface RoomData {
   id: string;
@@ -51,7 +67,7 @@ interface FloatingHeart {
 }
 
 @Component({
-  selector: 'app-room-view',
+  selector: "app-room-view",
   standalone: true,
   imports: [
     TranslateModule,
@@ -79,7 +95,7 @@ interface FloatingHeart {
         <ion-buttons slot="start">
           <ion-back-button defaultHref="/tabs/home" />
         </ion-buttons>
-        <ion-title>{{ 'home.title' | translate }}</ion-title>
+        <ion-title>{{ "home.title" | translate }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -125,10 +141,7 @@ interface FloatingHeart {
 
         <!-- Like FAB (always visible) -->
         <ion-fab vertical="bottom" horizontal="end" slot="fixed" #likeFab>
-          <ion-fab-button
-            color="danger"
-            (click)="onToggleLike($event)"
-          >
+          <ion-fab-button color="danger" (click)="onToggleLike($event)">
             <ion-icon name="heart" [class.heart-pop]="showHeartPop()" />
           </ion-fab-button>
           @if (likeCount() > 0) {
@@ -140,7 +153,7 @@ interface FloatingHeart {
       } @else {
         <div class="centered">
           <ion-text color="medium">
-            <p>{{ 'room.empty' | translate }}</p>
+            <p>{{ "room.empty" | translate }}</p>
           </ion-text>
         </div>
       }
@@ -148,6 +161,7 @@ interface FloatingHeart {
 
     <!-- Trophy Info Bottom Sheet -->
     <ion-modal
+      class="trophy-info-modal"
       [isOpen]="inspectedItemId() !== null"
       [initialBreakpoint]="0.55"
       [breakpoints]="[0, 0.55, 0.85]"
@@ -171,6 +185,10 @@ interface FloatingHeart {
     </ion-modal>
   `,
   styles: `
+    ::ng-deep {
+      --backdrop-opacity: 0;
+    }
+
     .centered {
       display: flex;
       align-items: center;
@@ -234,7 +252,8 @@ interface FloatingHeart {
         opacity: 1;
       }
       100% {
-        transform: translateY(-200px) translateX(var(--drift-x-end, 0)) scale(0.6);
+        transform: translateY(-200px) translateX(var(--drift-x-end, 0))
+          scale(0.6);
         opacity: 0;
       }
     }
@@ -245,11 +264,13 @@ interface FloatingHeart {
         opacity: 1;
       }
       20% {
-        transform: translateY(-40px) translateX(var(--drift-x, 0)) scale(1.4) rotate(15deg);
+        transform: translateY(-40px) translateX(var(--drift-x, 0)) scale(1.4)
+          rotate(15deg);
         opacity: 1;
       }
       100% {
-        transform: translateY(-250px) translateX(var(--drift-x-end, 0)) scale(0.4) rotate(30deg);
+        transform: translateY(-250px) translateX(var(--drift-x-end, 0))
+          scale(0.4) rotate(30deg);
         opacity: 0;
       }
     }
@@ -274,7 +295,7 @@ interface FloatingHeart {
 })
 export class RoomViewPage implements OnInit {
   userId = input.required<string>();
-  @ViewChild('likeFab', { read: ElementRef }) likeFab?: ElementRef<HTMLElement>;
+  @ViewChild("likeFab", { read: ElementRef }) likeFab?: ElementRef<HTMLElement>;
 
   private api = inject(ApiService);
   private router = inject(Router);
@@ -289,7 +310,7 @@ export class RoomViewPage implements OnInit {
 
   likeCount = computed(() => {
     const r = this.room();
-    return this.likeBatchingService.getLikeCount(r?.id ?? '')();
+    return this.likeBatchingService.getLikeCount(r?.id ?? "")();
   });
 
   // Floating hearts animation
@@ -305,7 +326,7 @@ export class RoomViewPage implements OnInit {
 
   trophyItems = computed(() => {
     return (this.room()?.items ?? []).filter(
-      (item) => item.trophyId && item.trophy
+      (item) => item.trophyId && item.trophy,
     );
   });
 
@@ -355,7 +376,7 @@ export class RoomViewPage implements OnInit {
   async fetchRoom(): Promise<void> {
     this.loading.set(true);
     try {
-      const res = await this.api.client.api.rooms.user[':id'].$get({
+      const res = await this.api.client.api.rooms.user[":id"].$get({
         param: { id: this.userId() },
       });
       if (res.ok) {
@@ -379,7 +400,7 @@ export class RoomViewPage implements OnInit {
 
     // Haptic feedback
     try {
-      const { Haptics, ImpactStyle } = await import('@capacitor/haptics');
+      const { Haptics, ImpactStyle } = await import("@capacitor/haptics");
       Haptics.impact({ style: ImpactStyle.Light });
     } catch {
       // Haptics not available
@@ -415,12 +436,12 @@ export class RoomViewPage implements OnInit {
         burst: false,
       };
 
-      this.floatingHearts.update(hearts => [...hearts, heart]);
+      this.floatingHearts.update((hearts) => [...hearts, heart]);
 
       // Remove heart after animation completes
       setTimeout(() => {
-        this.floatingHearts.update(hearts =>
-          hearts.filter(h => h.id !== heart.id)
+        this.floatingHearts.update((hearts) =>
+          hearts.filter((h) => h.id !== heart.id),
         );
       }, 2000);
     }
@@ -455,20 +476,20 @@ export class RoomViewPage implements OnInit {
 
   onViewDetails(trophyId: string): void {
     this.inspectedItemId.set(null);
-    this.router.navigate(['/trophy', trophyId]);
+    this.router.navigate(["/trophy", trophyId]);
   }
 
   onSeeFinishers(raceId: string): void {
     this.inspectedItemId.set(null);
-    this.router.navigate(['/race', raceId, 'finishers']);
+    this.router.navigate(["/race", raceId, "finishers"]);
   }
 
   formatLikeCount(count: number): string {
     if (count >= 1_000_000) {
-      return (count / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+      return (count / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
     }
     if (count >= 1_000) {
-      return (count / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+      return (count / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
     }
     return count.toString();
   }

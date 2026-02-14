@@ -8,9 +8,9 @@ import {
   viewChild,
   ElementRef,
   OnDestroy,
-} from '@angular/core';
-import { extend, injectBeforeRender, NgtArgs } from 'angular-three';
-import { textureResource } from 'angular-three-soba/loaders';
+} from "@angular/core";
+import { extend, injectBeforeRender, NgtArgs } from "angular-three";
+import { textureResource } from "angular-three-soba/loaders";
 import {
   Mesh,
   Group,
@@ -21,33 +21,43 @@ import {
   DoubleSide,
   Color,
   SRGBColorSpace,
-} from 'three';
+} from "three";
 
-extend({ Mesh, Group, PlaneGeometry, BoxGeometry, MeshStandardMaterial, MeshBasicMaterial });
+extend({
+  Mesh,
+  Group,
+  PlaneGeometry,
+  BoxGeometry,
+  MeshStandardMaterial,
+  MeshBasicMaterial,
+});
 
 // Trophy aspect ratios: medals ~1:1, bibs ~1.3:1 (landscape)
 const FRAME_HEIGHT = 0.38;
 const MEDAL_ASPECT = 1;
 const BIB_ASPECT = 1.3;
+const FRAME_MARGIN = 0.02; // Total extra width/height for the frame
+const FRAME_DEPTH = 0.06; // Thickness of the frame
+const FRAME_COLOR = "#fff"; // Dark frame color
 
 const GIZMO_GREEN = new Color(0x44cc44);
 const HIGHLIGHT_COLOR = new Color(0x4fc3f7);
 const LONG_PRESS_MS = 400;
 
 @Component({
-  selector: 'app-trophy-frame',
+  selector: "app-trophy-frame",
   standalone: true,
   imports: [NgtArgs],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
-    <ngt-group
-      [position]="position()"
-      [rotation]="rotation()"
-    >
-      @if (loadedTexture(); as tex) {
+    <ngt-group [position]="position()" [rotation]="rotation()">
+      <!-- Inner group for animation (sway) -->
+      <ngt-group #animGroup>
+        <!-- FRAME / BACKING -->
         <ngt-mesh
-          #meshRef
           [castShadow]="true"
+          [receiveShadow]="true"
+          [position]="[0, 0, -FRAME_DEPTH / 2]"
           (click)="onClick($event)"
           (pointerdown)="onPointerDown($event)"
           (pointerup)="onPointerUp($event)"
@@ -55,68 +65,100 @@ const LONG_PRESS_MS = 400;
           (pointerover)="onHover(true)"
           (pointerout)="onHover(false)"
         >
-          <ngt-plane-geometry *args="[width(), FRAME_HEIGHT]" />
-          <ngt-mesh-standard-material
-            [map]="tex"
-            [transparent]="true"
-            [side]="DoubleSide"
-            [emissive]="hovered() && editable() && !selected() ? hoverColor : undefined"
-            [emissiveIntensity]="hovered() && editable() && !selected() ? 0.3 : 0"
+          <ngt-box-geometry
+            *args="[
+              width() + FRAME_MARGIN,
+              FRAME_HEIGHT + FRAME_MARGIN,
+              FRAME_DEPTH,
+            ]"
           />
+          <ngt-mesh-standard-material [color]="frameColor" [roughness]="0.6" />
         </ngt-mesh>
-      } @else {
-        <ngt-mesh
-          #meshRef
-          [castShadow]="true"
-          (click)="onClick($event)"
-          (pointerdown)="onPointerDown($event)"
-          (pointerup)="onPointerUp($event)"
-          (pointerleave)="onPointerCancel()"
-          (pointerover)="onHover(true)"
-          (pointerout)="onHover(false)"
-        >
-          <ngt-plane-geometry *args="[width(), FRAME_HEIGHT]" />
-          <ngt-mesh-standard-material
-            [color]="'#cccccc'"
-            [transparent]="true"
-            [opacity]="0.5"
-            [side]="DoubleSide"
-          />
-        </ngt-mesh>
-      }
 
-      <!-- Hover overlay (visible when hovered, not selected, in edit mode) -->
-      @if (hovered() && editable() && !selected()) {
-        <ngt-mesh [position]="[0, 0, 0.01]">
-          <ngt-plane-geometry *args="[width() + 0.08, FRAME_HEIGHT + 0.08]" />
-          <ngt-mesh-basic-material
-            [color]="highlightColor"
-            [transparent]="true"
-            [opacity]="0.15"
-            [depthWrite]="false"
-            [side]="DoubleSide"
-          />
-        </ngt-mesh>
-      }
+        <!-- TROPHY IMAGE / TEXTURE -->
+        @if (loadedTexture(); as tex) {
+          <ngt-mesh
+            [position]="[0, 0, 0.002]"
+            (click)="onClick($event)"
+            (pointerdown)="onPointerDown($event)"
+            (pointerup)="onPointerUp($event)"
+            (pointerleave)="onPointerCancel()"
+            (pointerover)="onHover(true)"
+            (pointerout)="onHover(false)"
+          >
+            <!-- Image is slightly smaller than frame/box context, effectively 'inset' or mounted -->
+            <ngt-plane-geometry *args="[width(), FRAME_HEIGHT]" />
+            <ngt-mesh-basic-material
+              [map]="tex"
+              [transparent]="true"
+              [side]="DoubleSide"
+            />
+          </ngt-mesh>
+        } @else {
+          <!-- Placeholder if no texture -->
+          <ngt-mesh
+            [position]="[0, 0, 0.002]"
+            (click)="onClick($event)"
+            (pointerdown)="onPointerDown($event)"
+            (pointerup)="onPointerUp($event)"
+            (pointerleave)="onPointerCancel()"
+            (pointerover)="onHover(true)"
+            (pointerout)="onHover(false)"
+          >
+            <ngt-plane-geometry *args="[width(), FRAME_HEIGHT]" />
+            <ngt-mesh-basic-material
+              [color]="'#cccccc'"
+              [transparent]="true"
+              [opacity]="0.5"
+              [side]="DoubleSide"
+            />
+          </ngt-mesh>
+        }
 
-      <!-- Selection gizmo: green wireframe box -->
-      @if (selected()) {
-        <ngt-mesh [position]="[0, 0, 0.005]">
-          <ngt-box-geometry *args="[width() + 0.1, FRAME_HEIGHT + 0.1, 0.02]" />
-          <ngt-mesh-basic-material
-            [color]="gizmoGreen"
-            [wireframe]="true"
-            [transparent]="true"
-            [opacity]="0.6"
-          />
-        </ngt-mesh>
-      }
+        <!-- Hover overlay -->
+        @if (hovered() && editable() && !selected()) {
+          <ngt-mesh [position]="[0, 0, 0.02]">
+            <ngt-plane-geometry
+              *args="[
+                width() + FRAME_MARGIN + 0.04,
+                FRAME_HEIGHT + FRAME_MARGIN + 0.04,
+              ]"
+            />
+            <ngt-mesh-basic-material
+              [color]="highlightColor"
+              [transparent]="true"
+              [opacity]="0.15"
+              [depthWrite]="false"
+              [side]="DoubleSide"
+            />
+          </ngt-mesh>
+        }
+
+        <!-- Selection gizmo -->
+        @if (selected()) {
+          <ngt-mesh [position]="[0, 0, 0.015]">
+            <ngt-box-geometry
+              *args="[
+                width() + FRAME_MARGIN + 0.04,
+                FRAME_HEIGHT + FRAME_MARGIN + 0.04,
+                FRAME_DEPTH + 0.02,
+              ]"
+            />
+            <ngt-mesh-basic-material
+              [color]="gizmoGreen"
+              [wireframe]="true"
+              [transparent]="true"
+              [opacity]="0.6"
+            />
+          </ngt-mesh>
+        }
+      </ngt-group>
     </ngt-group>
   `,
 })
 export class TrophyFrameComponent implements OnDestroy {
   textureUrl = input.required<string>();
-  trophyType = input<'medal' | 'bib'>('medal');
+  trophyType = input<"medal" | "bib">("medal");
   position = input<[number, number, number]>([0, 1.5, 0]);
   rotation = input<[number, number, number]>([0, 0, 0]);
   editable = input(false);
@@ -128,6 +170,9 @@ export class TrophyFrameComponent implements OnDestroy {
   hovered = signal(false);
   readonly DoubleSide = DoubleSide;
   readonly FRAME_HEIGHT = FRAME_HEIGHT;
+  readonly FRAME_MARGIN = FRAME_MARGIN;
+  readonly FRAME_DEPTH = FRAME_DEPTH;
+  readonly frameColor = FRAME_COLOR;
   readonly hoverColor = new Color(0xffcc66);
   readonly gizmoGreen = GIZMO_GREEN;
   readonly highlightColor = HIGHLIGHT_COLOR;
@@ -135,7 +180,8 @@ export class TrophyFrameComponent implements OnDestroy {
   private longPressTimer: ReturnType<typeof setTimeout> | null = null;
   private didLongPress = false;
 
-  meshRef = viewChild<ElementRef<Mesh>>('meshRef');
+  // We rotate the inner group now
+  animGroup = viewChild<ElementRef<Group>>("animGroup");
 
   // Load texture via angular-three-soba resource
   texture = textureResource(() => this.textureUrl(), {
@@ -146,7 +192,7 @@ export class TrophyFrameComponent implements OnDestroy {
 
   /** Safely access texture value — returns null if loading or errored */
   loadedTexture = computed(() => {
-    if (this.texture.status() !== 'resolved') return null;
+    if (this.texture.status() !== "resolved") return null;
     try {
       return this.texture.value();
     } catch {
@@ -155,23 +201,21 @@ export class TrophyFrameComponent implements OnDestroy {
   });
 
   width(): number {
-    const aspect = this.trophyType() === 'bib' ? BIB_ASPECT : MEDAL_ASPECT;
+    const aspect = this.trophyType() === "bib" ? BIB_ASPECT : MEDAL_ASPECT;
     return FRAME_HEIGHT * aspect;
   }
 
   constructor() {
-    // Subtle idle sway animation
+    // Subtle idle sway animation applied to the group
     injectBeforeRender(({ clock }) => {
-      const mesh = this.meshRef()?.nativeElement;
-      if (mesh) {
-        mesh.rotation.z = Math.sin(clock.elapsedTime * 0.5) * 0.01;
+      const group = this.animGroup()?.nativeElement;
+      if (group) {
+        group.rotation.z = Math.sin(clock.elapsedTime * 0.5) * 0.01;
       }
     });
   }
 
-  /** Click = selection (or no-op if long-press drag occurred).
-   *  We use click instead of pointerup because angular-three
-   *  does not reliably fire pointerup on meshes. */
+  /** Click = selection (or no-op if long-press drag occurred). */
   onClick(event: any): void {
     event?.stopPropagation?.();
 
