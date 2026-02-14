@@ -72,14 +72,20 @@ export const auth = betterAuth({
       },
     },
   },
-  plugins: [capacitor({
-    disableOriginOverride: false,
-  }), bearer()],
+  plugins: [
+    capacitor({
+      disableOriginOverride: false,
+    }),
+    bearer(),
+  ],
   trustedOrigins: [
     "wallofme://",
     "wallofme://*",
     "capacitor://localhost",
     "http://localhost",
+    // Production
+    "https://wallofme.workfel.cloud",
+    "https://api-wallofme.workfel.cloud",
     ...(process.env.NODE_ENV !== "production"
       ? [
           "exp://",
