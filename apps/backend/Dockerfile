@@ -12,7 +12,7 @@ COPY package.json bun.lock ./
 COPY apps/backend/package.json apps/backend/
 
 # Install all dependencies
-RUN cd apps/backend && bun install --frozen-lockfile
+RUN cd apps/backend && bun install
 
 # ── Stage 2: Production image ──────────────────────────────────
 FROM oven/bun:1-alpine AS runner

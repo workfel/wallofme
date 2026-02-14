@@ -11,6 +11,11 @@ COPY apps/frontend-ionic/package.json apps/frontend-ionic/
 # Install all dependencies (workspace-aware)
 RUN npm ci
 
+# Copy backend source (needed for @backend/* type imports via Hono RPC)
+COPY apps/backend/src apps/backend/src
+COPY apps/backend/package.json apps/backend/
+COPY apps/backend/tsconfig.json apps/backend/
+
 # Copy frontend source code
 COPY apps/frontend-ionic/ apps/frontend-ionic/
 
