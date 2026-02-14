@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
@@ -11,12 +11,23 @@ import {
   IonSpinner,
   IonChip,
   IonLabel,
+  IonModal,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonButtons,
+  IonSearchbar,
+  IonIcon,
 } from '@ionic/angular/standalone';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { addIcons } from 'ionicons';
+import { chevronDown, closeOutline } from 'ionicons/icons';
 
 import { AuthService } from '@app/core/services/auth.service';
 import { ApiService } from '@app/core/services/api.service';
 import { GeolocationService } from '@app/core/services/geolocation.service';
+import { I18nService } from '@app/core/services/i18n.service';
+import { COUNTRIES, countryFlag, type Country } from '@app/shared/data/countries';
 
 const SPORTS = [
   'running', 'trail', 'triathlon', 'cycling', 'crossfit',
@@ -55,6 +66,13 @@ const SPORT_EMOJIS: Record<string, string> = {
     IonSpinner,
     IonChip,
     IonLabel,
+    IonModal,
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonButtons,
+    IonSearchbar,
+    IonIcon,
   ],
   template: `
     <ion-content class="ion-padding" [fullscreen]="true">
@@ -93,17 +111,18 @@ const SPORT_EMOJIS: Record<string, string> = {
                   [clearInput]="true"
                 />
               </ion-item>
-              <ion-item>
-                <ion-input
-                  type="text"
-                  [label]="'onboarding.country' | translate"
-                  labelPlacement="floating"
-                  [(ngModel)]="country"
-                  [clearInput]="true"
-                  maxlength="3"
-                />
-              </ion-item>
             </ion-list>
+
+            <!-- Country picker -->
+            <button class="country-picker" (click)="showCountryModal.set(true)">
+              @if (selectedCountry()) {
+                <span class="country-flag">{{ getFlag(selectedCountry()!.code) }}</span>
+                <span class="country-name">{{ getCountryName(selectedCountry()!) }}</span>
+              } @else {
+                <span class="country-placeholder">{{ 'onboarding.countryPlaceholder' | translate }}</span>
+              }
+              <ion-icon name="chevron-down" class="country-chevron" />
+            </button>
 
             @if (errorMessage()) {
               <ion-text color="danger">
@@ -171,6 +190,44 @@ const SPORT_EMOJIS: Record<string, string> = {
         }
       </div>
     </ion-content>
+
+    <!-- Country selection modal -->
+    <ion-modal [isOpen]="showCountryModal()" (didDismiss)="showCountryModal.set(false)">
+      <ng-template>
+        <ion-header>
+          <ion-toolbar>
+            <ion-title>{{ 'onboarding.country' | translate }}</ion-title>
+            <ion-buttons slot="end">
+              <ion-button (click)="showCountryModal.set(false)">
+                <ion-icon name="close-outline" />
+              </ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+          <ion-toolbar>
+            <ion-searchbar
+              [placeholder]="'onboarding.searchCountry' | translate"
+              (ionInput)="onCountrySearch($event)"
+              [debounce]="150"
+            />
+          </ion-toolbar>
+        </ion-header>
+        <ion-content>
+          <ion-list lines="full">
+            @for (c of filteredCountries(); track c.code) {
+              <ion-item
+                button
+                [detail]="false"
+                (click)="selectCountry(c)"
+                [class.selected]="selectedCountry()?.code === c.code"
+              >
+                <span class="modal-flag" slot="start">{{ getFlag(c.code) }}</span>
+                <ion-label>{{ getCountryName(c) }}</ion-label>
+              </ion-item>
+            }
+          </ion-list>
+        </ion-content>
+      </ng-template>
+    </ion-modal>
   `,
   styles: `
     .onboarding-container {
@@ -250,6 +307,51 @@ const SPORT_EMOJIS: Record<string, string> = {
       margin-bottom: 8px;
     }
 
+    .country-picker {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 14px 4px;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--ion-color-step-200);
+      cursor: pointer;
+      font-size: 16px;
+      color: var(--ion-text-color);
+      text-align: left;
+      margin-top: 4px;
+    }
+
+    .country-flag {
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .country-name {
+      flex: 1;
+    }
+
+    .country-placeholder {
+      flex: 1;
+      opacity: 0.5;
+    }
+
+    .country-chevron {
+      font-size: 18px;
+      opacity: 0.4;
+    }
+
+    .modal-flag {
+      font-size: 24px;
+      margin-right: 8px;
+    }
+
+    ion-modal ion-item.selected {
+      --background: rgba(var(--ion-color-primary-rgb), 0.08);
+      font-weight: 600;
+    }
+
     .sports-section {
       display: flex;
       flex-direction: column;
@@ -284,19 +386,36 @@ export class OnboardingPage implements OnInit {
   private router = inject(Router);
   private translate = inject(TranslateService);
   private geoService = inject(GeolocationService);
+  private i18n = inject(I18nService);
 
   firstName = '';
   lastName = '';
-  country = '';
   step = signal(1);
+  selectedCountry = signal<Country | null>(null);
   selectedSports = signal<string[]>([]);
   isLoading = signal(false);
   errorMessage = signal('');
+  showCountryModal = signal(false);
+  countrySearch = signal('');
 
   readonly sports = SPORTS;
 
+  filteredCountries = computed(() => {
+    const query = this.countrySearch().toLowerCase();
+    if (!query) return COUNTRIES;
+    return COUNTRIES.filter(c =>
+      c.name.toLowerCase().includes(query) ||
+      c.nameFr.toLowerCase().includes(query) ||
+      c.code.toLowerCase().includes(query)
+    );
+  });
+
   get canProceedStep1(): boolean {
     return this.firstName.trim().length > 0 && this.lastName.trim().length > 0;
+  }
+
+  constructor() {
+    addIcons({ chevronDown, closeOutline });
   }
 
   ngOnInit(): void {
@@ -305,7 +424,10 @@ export class OnboardingPage implements OnInit {
 
     if (user.firstName) this.firstName = user.firstName;
     if (user.lastName) this.lastName = user.lastName;
-    if (user.country) this.country = user.country;
+    if (user.country) {
+      const found = COUNTRIES.find(c => c.code === user.country?.toUpperCase());
+      if (found) this.selectedCountry.set(found);
+    }
 
     // Fallback: parse from name (e.g. Google OAuth sets "Johan Pujol")
     if (!this.firstName && !this.lastName && user.name) {
@@ -313,6 +435,24 @@ export class OnboardingPage implements OnInit {
       this.firstName = parts[0] ?? '';
       this.lastName = parts.slice(1).join(' ');
     }
+  }
+
+  getFlag(code: string): string {
+    return countryFlag(code);
+  }
+
+  getCountryName(c: Country): string {
+    return this.i18n.currentLang === 'fr' ? c.nameFr : c.name;
+  }
+
+  onCountrySearch(event: CustomEvent): void {
+    this.countrySearch.set((event.detail.value ?? '') as string);
+  }
+
+  selectCountry(c: Country): void {
+    this.selectedCountry.set(c);
+    this.showCountryModal.set(false);
+    this.countrySearch.set('');
   }
 
   onNextStep(): void {
@@ -359,7 +499,7 @@ export class OnboardingPage implements OnInit {
         json: {
           firstName: this.firstName.trim(),
           lastName: this.lastName.trim(),
-          country: this.country.trim().toUpperCase() || undefined,
+          country: this.selectedCountry()?.code || undefined,
           sports: this.selectedSports(),
           latitude: position?.latitude,
           longitude: position?.longitude,

@@ -1,40 +1,40 @@
-import { Component, inject, signal, computed, OnInit, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import {
-  IonContent,
-  IonButton,
-  IonText,
-  IonSpinner,
-  IonIcon,
-  IonModal,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonAvatar,
+    IonAvatar,
+    IonButton,
+    IonContent,
+    IonHeader,
+    IonIcon,
+    IonModal,
+    IonSpinner,
+    IonText,
+    IonTitle,
+    IonToolbar,
 } from '@ionic/angular/standalone';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgtCanvas } from 'angular-three/dom';
 import { addIcons } from 'ionicons';
 import {
-  cameraOutline,
-  createOutline,
-  lockClosedOutline,
-  rocketOutline,
-  infiniteOutline,
-  trophyOutline,
-  heartOutline,
-  eyeOutline,
-  personCircleOutline,
+    cameraOutline,
+    createOutline,
+    eyeOutline,
+    heartOutline,
+    infiniteOutline,
+    lockClosedOutline,
+    personCircleOutline,
+    rocketOutline,
+    trophyOutline,
 } from 'ionicons/icons';
 
+import { AuthService } from '@app/core/services/auth.service';
 import { RoomService } from '@app/core/services/room.service';
 import { ThemeService } from '@app/core/services/theme.service';
 import { UserService } from '@app/core/services/user.service';
-import { AuthService } from '@app/core/services/auth.service';
-import { PainCaveSceneComponent, type RoomItem3D } from '../../room/components/pain-cave-scene/pain-cave-scene.component';
-import { TrophyInfoSheetComponent, type TrophyInfoData } from '../../room/components/trophy-info-sheet/trophy-info-sheet.component';
 import type { RoomTheme } from '@app/types/room-theme';
 import { DEFAULT_THEME } from '@app/types/room-theme';
+import { PainCaveSceneComponent } from '../../room/components/pain-cave-scene/pain-cave-scene.component';
+import { TrophyInfoSheetComponent, type TrophyInfoData } from '../../room/components/trophy-info-sheet/trophy-info-sheet.component';
 
 @Component({
   selector: 'app-home',
@@ -63,6 +63,7 @@ import { DEFAULT_THEME } from '@app/types/room-theme';
         <div class="dashboard-header animate-fade-in-down">
           <!-- Greeting row -->
           <div class="greeting-row">
+
             <div class="greeting-left" (click)="goToProfile()">
               <ion-avatar class="greeting-avatar">
                 @if (authService.user()?.image) {
@@ -86,20 +87,28 @@ import { DEFAULT_THEME } from '@app/types/room-theme';
           </div>
 
           <!-- Stats row -->
-          <div class="stats-row animate-fade-in-up">
-            <div class="stat-card">
-              <ion-icon name="trophy-outline" color="primary" />
-              <span class="stat-value">{{ trophyItemCount() }}</span>
+          <div class="stats-strip animate-fade-in-up">
+            <div class="stat-item">
+              <div class="stat-top">
+                <ion-icon name="trophy-outline" color="primary" />
+                <span class="stat-value">{{ trophyItemCount() }}</span>
+              </div>
               <span class="stat-label">{{ 'home.statTrophies' | translate }}</span>
             </div>
-            <div class="stat-card">
-              <ion-icon name="heart-outline" color="danger" />
-              <span class="stat-value">{{ roomService.room()?.likeCount || 0 }}</span>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <div class="stat-top">
+                <ion-icon name="heart-outline" color="danger" />
+                <span class="stat-value">{{ roomService.room()?.likeCount || 0 }}</span>
+              </div>
               <span class="stat-label">{{ 'home.statLikes' | translate }}</span>
             </div>
-            <div class="stat-card">
-              <ion-icon name="eye-outline" color="medium" />
-              <span class="stat-value">{{ roomService.room()?.viewCount || 0 }}</span>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <div class="stat-top">
+                <ion-icon name="eye-outline" color="medium" />
+                <span class="stat-value">{{ roomService.room()?.viewCount || 0 }}</span>
+              </div>
               <span class="stat-label">{{ 'home.statViews' | translate }}</span>
             </div>
           </div>
@@ -269,36 +278,52 @@ import { DEFAULT_THEME } from '@app/types/room-theme';
       }
     }
 
-    .stats-row {
+    .stats-strip {
       display: flex;
-      gap: 8px;
+      align-items: center;
+      background: var(--ion-color-step-50);
+      border-radius: 14px;
+      padding: 10px 0;
     }
 
-    .stat-card {
+    .stat-item {
       flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 2px;
-      padding: 10px 4px;
-      background: var(--ion-color-step-50);
-      border-radius: 16px;
+    }
+
+    .stat-top {
+      display: flex;
+      align-items: center;
+      gap: 5px;
 
       ion-icon {
-        font-size: 18px;
+        font-size: 15px;
+        opacity: 0.8;
       }
     }
 
     .stat-value {
-      font-size: 18px;
+      font-size: 20px;
       font-weight: 800;
+      letter-spacing: -0.02em;
     }
 
     .stat-label {
-      font-size: 11px;
+      font-size: 10px;
       color: var(--ion-color-medium);
       text-transform: uppercase;
-      letter-spacing: 0.03em;
+      letter-spacing: 0.06em;
+      font-weight: 500;
+    }
+
+    .stat-divider {
+      width: 1px;
+      height: 28px;
+      background: var(--ion-color-step-150);
+      flex-shrink: 0;
     }
 
     .room-container {

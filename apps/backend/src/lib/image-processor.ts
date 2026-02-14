@@ -29,6 +29,8 @@ export async function processTrophyImage(
   textureUrl: string;
   thumbnailUrl: string;
 }> {
+
+  try{
   const id = nanoid();
   const prefix = `trophy-processed/${userId}`;
 
@@ -57,4 +59,9 @@ export async function processTrophyImage(
     textureUrl: getPublicUrl(textureKey),
     thumbnailUrl: getPublicUrl(thumbnailKey),
   };
+  }
+  catch(error){
+    console.error(error);
+    throw error;
+  }
 }
