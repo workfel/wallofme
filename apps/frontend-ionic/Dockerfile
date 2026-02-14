@@ -5,15 +5,15 @@ WORKDIR /app
 # Copy root workspace files (needed for monorepo dependency resolution)
 COPY package.json package-lock.json ./
 
-# Copy frontend package.json for workspace install
+# Copy BOTH workspace package.json files (npm ci needs them to install all deps)
 COPY apps/frontend-ionic/package.json apps/frontend-ionic/
+COPY apps/backend/package.json apps/backend/
 
-# Install all dependencies (workspace-aware)
+# Install all workspace dependencies (frontend + backend for type resolution)
 RUN npm ci
 
 # Copy backend source (needed for @backend/* type imports via Hono RPC)
 COPY apps/backend/src apps/backend/src
-COPY apps/backend/package.json apps/backend/
 COPY apps/backend/tsconfig.json apps/backend/
 
 # Copy frontend source code
