@@ -1,48 +1,48 @@
-import { Component, inject, OnInit, signal, computed } from "@angular/core";
+import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { Router } from "@angular/router";
 import {
-  IonContent,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonButton,
-  IonButtons,
-  IonText,
-  IonList,
-  IonItem,
-  IonLabel,
-  IonIcon,
-  IonAvatar,
-  IonChip,
-  IonSpinner,
-  IonModal,
-  IonRefresher,
-  IonRefresherContent,
-  ActionSheetController,
+    ActionSheetController,
+    IonAvatar,
+    IonButton,
+    IonButtons,
+    IonChip,
+    IonContent,
+    IonHeader,
+    IonIcon,
+    IonItem,
+    IonLabel,
+    IonList,
+    IonModal,
+    IonRefresher,
+    IonRefresherContent,
+    IonSpinner,
+    IonText,
+    IonTitle,
+    IonToolbar,
 } from "@ionic/angular/standalone";
-import { TranslateService, TranslateModule } from "@ngx-translate/core";
+import { TranslateModule, TranslateService } from "@ngx-translate/core";
 import { addIcons } from "ionicons";
 import {
-  logOutOutline,
-  languageOutline,
-  moonOutline,
-  starOutline,
-  personCircleOutline,
-  flameOutline,
-  settingsOutline,
-  ribbonOutline,
-  checkmarkOutline,
-  documentTextOutline,
-  createOutline,
-  arrowForwardOutline,
+    arrowForwardOutline,
+    checkmarkOutline,
+    createOutline,
+    documentTextOutline,
+    flameOutline,
+    languageOutline,
+    logOutOutline,
+    moonOutline,
+    personCircleOutline,
+    ribbonOutline,
+    settingsOutline,
+    starOutline,
 } from "ionicons/icons";
 
-import { AuthService } from "@app/core/services/auth.service";
 import { AppThemeService } from "@app/core/services/app-theme.service";
-import { TokenService } from "@app/core/services/token.service";
+import { AuthService } from "@app/core/services/auth.service";
 import { RoomService } from "@app/core/services/room.service";
-import { TrophyService, type Trophy } from "@app/core/services/trophy.service";
+import { TokenService } from "@app/core/services/token.service";
+import { TrophyService } from "@app/core/services/trophy.service";
 import { UserService } from "@app/core/services/user.service";
 import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.component";
 
@@ -100,7 +100,7 @@ import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.co
               />
             }
           </ion-avatar>
-          <div class="avatar-edit-badge" (click)="onEditProfile()">
+          <div class="avatar-edit-badge" (click)="onEditProfile()" aria-hidden>
             <ion-icon name="create-outline" />
           </div>
         </div>
@@ -157,7 +157,7 @@ import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.co
 
       <!-- Pro Banner -->
       @if (!authService.user()?.isPro) {
-        <div class="pro-banner" (click)="onUpgradePro()">
+        <div class="pro-banner" (click)="onUpgradePro()" aria-hidden>
           <div class="pro-banner-content">
             <ion-icon name="star-outline" color="warning" />
             <span>{{ "profile.proBanner" | translate }}</span>
@@ -184,7 +184,7 @@ import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.co
       } @else {
         <div class="trophy-grid animate-fade-in-up">
           @for (trophy of trophyService.trophies(); track trophy.id) {
-            <div class="trophy-cell" (click)="goToTrophy(trophy.id)">
+            <div class="trophy-cell" (click)="goToTrophy(trophy.id)" aria-hidden>
               @if (trophy.thumbnailUrl) {
                 <img
                   [src]="trophy.thumbnailUrl"

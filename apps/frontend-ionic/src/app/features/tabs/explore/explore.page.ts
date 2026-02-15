@@ -151,7 +151,7 @@ const GRADIENT_PALETTES = [
 
         <div class="explore-container">
           <!-- Globe Teaser Card -->
-          <div class="globe-teaser" (click)="switchView('globe')">
+          <div class="globe-teaser" (click)="switchView('globe')" aria-hidden>
             <div class="globe-teaser-icon">
               <ion-icon name="globe-outline" />
             </div>
