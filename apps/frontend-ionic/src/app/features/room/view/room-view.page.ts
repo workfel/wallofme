@@ -9,14 +9,10 @@ import {
   ViewChild,
   ElementRef,
 } from "@angular/core";
+import { Location } from "@angular/common";
 import { Router } from "@angular/router";
 import {
   IonContent,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonButtons,
-  IonBackButton,
   IonSpinner,
   IonText,
   IonModal,
@@ -28,7 +24,12 @@ import {
 import { TranslateModule } from "@ngx-translate/core";
 import { NgtCanvas } from "angular-three/dom";
 import { addIcons } from "ionicons";
-import { heart, heartOutline } from "ionicons/icons";
+import {
+  arrowBackOutline,
+  ellipsisVerticalOutline,
+  heart,
+  heartOutline,
+} from "ionicons/icons";
 
 import { ApiService } from "@app/core/services/api.service";
 import { AuthService } from "@app/core/services/auth.service";
@@ -55,6 +56,11 @@ interface RoomData {
   likeCount: number;
   viewCount: number;
   items: RoomItem3D[];
+  user?: {
+    displayName: string | null;
+    firstName: string | null;
+    image: string | null;
+  };
 }
 
 interface FloatingHeart {
@@ -75,11 +81,6 @@ interface FloatingHeart {
     PainCaveSceneComponent,
     TrophyInfoSheetComponent,
     IonContent,
-    IonHeader,
-    IonToolbar,
-    IonTitle,
-    IonButtons,
-    IonBackButton,
     IonSpinner,
     IonText,
     IonModal,
@@ -90,16 +91,24 @@ interface FloatingHeart {
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
-    <ion-header>
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-back-button defaultHref="/tabs/home" />
-        </ion-buttons>
-        <ion-title>{{ "home.title" | translate }}</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
     <ion-content [fullscreen]="true">
+      <!-- Floating toolbar overlay -->
+      <div class="floating-toolbar">
+        <button class="toolbar-pill back-pill" (click)="goBack()">
+          <ion-icon name="arrow-back-outline" />
+        </button>
+
+        @if (ownerName()) {
+          <button class="toolbar-pill username-pill" (click)="goToOwnerProfile()">
+            <span class="username-text">{{ ownerName() }}</span>
+          </button>
+        }
+
+        <button class="toolbar-pill more-pill" (click)="goToOwnerProfile()">
+          <ion-icon name="ellipsis-vertical-outline" />
+        </button>
+      </div>
+
       @if (loading()) {
         <div class="centered">
           <ion-spinner name="crescent" />
@@ -185,8 +194,77 @@ interface FloatingHeart {
     </ion-modal>
   `,
   styles: `
+    :host {
+      --toolbar-top: var(--ion-safe-area-top, 20px);
+    }
+
     ::ng-deep {
       --backdrop-opacity: 0;
+    }
+
+    /* Floating toolbar */
+    .floating-toolbar {
+      position: absolute;
+      top: calc(var(--toolbar-top) + 8px);
+      left: 16px;
+      right: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    .toolbar-pill {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 100px;
+      background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.72);
+      backdrop-filter: blur(16px) saturate(1.8);
+      -webkit-backdrop-filter: blur(16px) saturate(1.8);
+      box-shadow:
+        0 2px 12px rgba(0, 0, 0, 0.10),
+        0 0 0 1px rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.06);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      font-family: inherit;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+
+      &:active {
+        transform: scale(0.92);
+      }
+    }
+
+    .back-pill,
+    .more-pill {
+      width: 40px;
+      height: 40px;
+      flex-shrink: 0;
+
+      ion-icon {
+        font-size: 20px;
+        color: var(--ion-text-color);
+      }
+    }
+
+    .username-pill {
+      padding: 12px 18px;
+      gap: 6px;
+    }
+
+    .username-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ion-text-color);
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      max-width: 180px;
+      text-overflow: ellipsis;
+      text-transform: capitalize;
+      cursor: pointer;
     }
 
     .centered {
@@ -299,6 +377,7 @@ export class RoomViewPage implements OnInit {
 
   private api = inject(ApiService);
   private router = inject(Router);
+  private location = inject(Location);
   private themeService = inject(ThemeService);
   authService = inject(AuthService);
   private socialService = inject(SocialService);
@@ -307,6 +386,12 @@ export class RoomViewPage implements OnInit {
   room = signal<RoomData | null>(null);
   loading = signal(true);
   inspectedItemId = signal<string | null>(null);
+
+  ownerName = computed(() => {
+    const r = this.room();
+    if (!r?.user) return null;
+    return r.user.displayName || r.user.firstName || null;
+  });
 
   likeCount = computed(() => {
     const r = this.room();
@@ -366,7 +451,7 @@ export class RoomViewPage implements OnInit {
   });
 
   constructor() {
-    addIcons({ heart, heartOutline });
+    addIcons({ heart, heartOutline, arrowBackOutline, ellipsisVerticalOutline });
   }
 
   ngOnInit(): void {
@@ -474,6 +559,14 @@ export class RoomViewPage implements OnInit {
     const idx = this.currentTrophyIndex();
     const newIdx = idx >= items.length - 1 ? 0 : idx + 1;
     this.inspectedItemId.set(items[newIdx].id);
+  }
+
+  goBack(): void {
+    this.location.back();
+  }
+
+  goToOwnerProfile(): void {
+    this.router.navigate(["/profile", this.userId()]);
   }
 
   onViewDetails(trophyId: string): void {

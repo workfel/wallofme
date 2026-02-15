@@ -355,6 +355,10 @@
     "locationUpdated": "Position mise à jour",
     "locationFailed": "Impossible d'obtenir votre position. Vérifiez vos autorisations."
   },
+  "publicProfile": {
+    "visitRoom": "Visiter la Pain Cave",
+    "noTrophies": "Pas encore de trophées"
+  },
   "pro": {
     "title": "WallOfMe Pro",
     "heroTitle": "Libérez tout votre potentiel",

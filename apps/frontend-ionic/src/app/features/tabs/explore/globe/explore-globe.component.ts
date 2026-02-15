@@ -65,15 +65,28 @@ export class ExploreGlobeComponent implements OnDestroy {
         // .backgroundImageUrl(
         //   '//unpkg.com/three-globe/example/img/night-sky.png',
         // )
-        .globeTileEngineUrl((x, y, l) => `https://tile.openstreetmap.org/${l}/${x}/${y}.png`)
+        .globeTileEngineUrl((x, y, z) => `https://tile.openstreetmap.org/${z}/${x}/${y}.png`)
         .showAtmosphere(true)
-        .atmosphereColor('#3a228a')
+        .atmosphereColor('#224f8a')
         .atmosphereAltitude(0.25)
         .width(container.clientWidth)
         .height(container.clientHeight);
 
-      // Initial camera position
-      this.globe.pointOfView({ lat: 30, lng: 10, altitude: 2.5 });
+      // Initial camera position — use user geolocation if available
+      this.globe.pointOfView({ lat: 30, lng: 10, altitude: 1.8 });
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            this.globe?.pointOfView(
+              { lat: pos.coords.latitude, lng: pos.coords.longitude, altitude: 1.8 },
+              1000,
+            );
+          },
+          (err) => {
+            console.error('Error getting user location:', err);
+          }
+        );
+      }
 
       // Setup markers once points arrive
       const pts = this.points();

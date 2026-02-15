@@ -336,6 +336,13 @@ export const rooms = new Hono<{ Variables: Variables }>()
       const userRoom = await db.query.room.findFirst({
         where: eq(room.userId, id),
         with: {
+          user: {
+            columns: {
+              displayName: true,
+              firstName: true,
+              image: true,
+            },
+          },
           items: {
             with: {
               trophy: { with: { raceResult: { with: { race: true } } } },

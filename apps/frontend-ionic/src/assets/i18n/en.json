@@ -375,6 +375,10 @@
     "ultra": "Ultra",
     "other": "Other"
   },
+  "publicProfile": {
+    "visitRoom": "Visit Pain Cave",
+    "noTrophies": "No trophies yet"
+  },
   "pro": {
     "title": "WallOfMe Pro",
     "heroTitle": "Unlock Your Full Potential",

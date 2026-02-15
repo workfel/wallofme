@@ -103,6 +103,13 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'profile/:userId',
+    loadComponent: () =>
+      import('./features/profile/public-profile.page').then(
+        (m) => m.PublicProfilePage
+      ),
+  },
+  {
     path: 'room/:userId',
     loadComponent: () =>
       import('./features/room/view/room-view.page').then(

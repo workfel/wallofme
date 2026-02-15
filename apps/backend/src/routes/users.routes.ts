@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { db } from "../db";
-import { user, tokenTransaction } from "../db/schema";
+import { user, tokenTransaction, trophy, room } from "../db/schema";
 import { requireAuth } from "../middleware/auth";
 import {
   onboardingSchema,
@@ -84,6 +84,55 @@ export const users = new Hono<{ Variables: Variables }>()
         scansRemaining,
         scanLimit: profile.isPro ? null : FREE_SCAN_LIMIT,
         streakDays,
+      },
+    });
+  })
+
+  // Get public user profile by ID
+  .get("/:id", async (c) => {
+    const userId = c.req.param("id");
+
+    const profile = await db.query.user.findFirst({
+      where: eq(user.id, userId),
+      columns: {
+        id: true,
+        displayName: true,
+        firstName: true,
+        image: true,
+        country: true,
+        sports: true,
+        isPro: true,
+      },
+    });
+
+    if (!profile) {
+      return c.json({ error: "Not found" }, 404);
+    }
+
+    const [trophyCountResult] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(trophy)
+      .where(and(eq(trophy.userId, userId), eq(trophy.status, "ready")));
+
+    const trophies = await db.query.trophy.findMany({
+      where: and(eq(trophy.userId, userId), eq(trophy.status, "ready")),
+      columns: { id: true, type: true, thumbnailUrl: true },
+      orderBy: desc(trophy.createdAt),
+    });
+
+    const userRoom = await db.query.room.findFirst({
+      where: eq(room.userId, userId),
+      columns: { likeCount: true, viewCount: true },
+    });
+
+    return c.json({
+      data: {
+        ...profile,
+        sports: profile.sports ? JSON.parse(profile.sports) : [],
+        trophyCount: trophyCountResult?.count ?? 0,
+        likeCount: userRoom?.likeCount ?? 0,
+        viewCount: userRoom?.viewCount ?? 0,
+        trophies,
       },
     });
   })
