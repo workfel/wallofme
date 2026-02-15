@@ -146,3 +146,23 @@ ion-content {
     box-shadow: 0 4px 24px rgba(var(--ion-color-primary-rgb), 0.6);
   }
 }
+
+/* Desktop responsive layout */
+@media (min-width: 768px) {
+  /* Hide the floating tab bar on desktop */
+  ion-tab-bar {
+    display: none !important;
+  }
+
+  /* Shift ion-tabs to the right to make room for the fixed sidebar */
+  app-tabs ion-tabs {
+    left: var(--wom-sidebar-width, 220px) !important;
+  }
+
+  /* Limit content width on all pages */
+  ion-content::part(scroll) {
+    max-width: var(--wom-content-max-width, 1080px);
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
