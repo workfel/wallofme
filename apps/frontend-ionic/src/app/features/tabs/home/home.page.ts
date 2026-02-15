@@ -78,32 +78,32 @@ import {
             <div class="greeting-left" (click)="goToProfile()">
               <ion-avatar class="greeting-avatar">
                 @if (authService.user()?.image) {
-                  <img [src]="authService.user()!.image!" alt="avatar" />
+                <img [src]="authService.user()!.image!" alt="avatar" />
                 } @else {
-                  <ion-icon
-                    name="person-circle-outline"
-                    class="avatar-fallback"
-                  />
+                <ion-icon
+                  name="person-circle-outline"
+                  class="avatar-fallback"
+                />
                 }
               </ion-avatar>
               <span class="greeting-text">{{
                 "home.greeting"
-                  | translate: { name: authService.user()?.firstName || "" }
+                  | translate : { name: authService.user()?.firstName || "" }
               }}</span>
             </div>
             @if (userService.scansDisplay(); as display) {
-              <div
-                class="scan-pill"
-                [class.pro]="display === 'unlimited'"
-                [class.danger]="display === 0"
-              >
-                @if (display === "unlimited") {
-                  <ion-icon name="infinite-outline" />
-                } @else {
-                  <ion-icon name="camera-outline" />
-                  <span>{{ display }}</span>
-                }
-              </div>
+            <div
+              class="scan-pill"
+              [class.pro]="display === 'unlimited'"
+              [class.danger]="display === 0"
+            >
+              @if (display === "unlimited") {
+              <ion-icon name="infinite-outline" />
+              } @else {
+              <ion-icon name="camera-outline" />
+              <span>{{ display }}</span>
+              }
+            </div>
             }
           </div>
 
@@ -144,47 +144,47 @@ import {
         <!-- Room 3D -->
         <div class="room-container animate-fade-in">
           @if (roomService.loading()) {
-            <div class="centered">
-              <ion-spinner name="crescent" />
-            </div>
+          <div class="centered">
+            <ion-spinner name="crescent" />
+          </div>
           } @else if (error()) {
-            <div class="centered">
-              <ion-text>{{ "common.error" | translate }}</ion-text>
-              <ion-button fill="clear" (click)="fetchRoom()">
-                {{ "common.retry" | translate }}
-              </ion-button>
-            </div>
+          <div class="centered">
+            <ion-text>{{ "common.error" | translate }}</ion-text>
+            <ion-button fill="clear" (click)="fetchRoom()">
+              {{ "common.retry" | translate }}
+            </ion-button>
+          </div>
           } @else if (!hasItems()) {
-            <div class="centered">
-              <h2 class="empty-title">{{ "home.emptyTitle" | translate }}</h2>
-              <ion-text color="medium">
-                <p class="empty-subtitle">
-                  {{ "home.emptySubtitle" | translate }}
-                </p>
-              </ion-text>
-            </div>
+          <div class="centered">
+            <h2 class="empty-title">{{ "home.emptyTitle" | translate }}</h2>
+            <ion-text color="medium">
+              <p class="empty-subtitle">
+                {{ "home.emptySubtitle" | translate }}
+              </p>
+            </ion-text>
+          </div>
           } @else {
-            <ngt-canvas
-              [shadows]="true"
-              [dpr]="[1, 2]"
-              [camera]="{ position: [5, 5, 5], fov: 45 }"
-            >
-              <app-pain-cave-scene
-                *canvasContent
-                [items]="roomService.room()!.items"
-                [inspectedItemId]="inspectedItemId()"
-                [theme]="resolvedTheme()"
-                (itemPressed)="onItemPressed($event)"
-              />
-            </ngt-canvas>
+          <ngt-canvas
+            [shadows]="true"
+            [dpr]="[1, 2]"
+            [camera]="{ position: [5, 5, 5], fov: 45 }"
+          >
+            <app-pain-cave-scene
+              *canvasContent
+              [items]="roomService.room()!.items"
+              [inspectedItemId]="inspectedItemId()"
+              [theme]="resolvedTheme()"
+              (itemPressed)="onItemPressed($event)"
+            />
+          </ngt-canvas>
           }
 
           <!-- Edit room button -->
           @if (!roomService.loading() && !error()) {
-            <button class="edit-room-btn" (click)="goToEdit()">
-              <ion-icon name="create-outline" />
-              <span>{{ "home.editRoom" | translate }}</span>
-            </button>
+          <button class="edit-room-btn" (click)="goToEdit()">
+            <ion-icon name="create-outline" />
+            <span>{{ "home.editRoom" | translate }}</span>
+          </button>
           }
         </div>
       </div>
@@ -238,7 +238,7 @@ import {
                 <p>{{ "scan.limitReachedMessage" | translate }}</p>
               </ion-text>
               <p class="reset-info">
-                {{ "scan.resetsIn" | translate: { days: daysUntilReset() } }}
+                {{ "scan.resetsIn" | translate : { days: daysUntilReset() } }}
               </p>
               <ion-button expand="block" (click)="onUpgrade()">
                 <ion-icon slot="start" name="rocket-outline" />
@@ -557,6 +557,7 @@ import {
 })
 export class HomePage implements OnInit, ViewWillEnter {
   private router = inject(Router);
+  private tutorialRedirected = false;
   private themeService = inject(ThemeService);
   private tutorialService = inject(TutorialService);
   roomService = inject(RoomService);
@@ -576,7 +577,7 @@ export class HomePage implements OnInit, ViewWillEnter {
 
   trophyItems = computed(() => {
     return (this.roomService.room()?.items ?? []).filter(
-      (item) => item.trophyId && item.trophy,
+      (item) => item.trophyId && item.trophy
     );
   });
 
@@ -616,7 +617,7 @@ export class HomePage implements OnInit, ViewWillEnter {
     const now = new Date();
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     return Math.ceil(
-      (endOfMonth.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+      (endOfMonth.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
     );
   });
 
@@ -642,13 +643,13 @@ export class HomePage implements OnInit, ViewWillEnter {
     await this.fetchRoom();
 
     const room = this.roomService.room();
-    const trophyItemCount = (room?.items ?? []).filter(i => i.trophyId).length;
-    if (trophyItemCount === 1) {
+    const itemCount = (room?.items ?? []).length;
+    if (itemCount === 1 && !this.tutorialRedirected) {
       const tutorialCompleted = await this.tutorialService.hasCompleted();
       if (!tutorialCompleted) {
-        this.router.navigate(['/room/edit'], {
-          queryParams: { tutorial: 'true' },
-          replaceUrl: true,
+        this.tutorialRedirected = true;
+        this.router.navigate(["/room/edit"], {
+          queryParams: { tutorial: "true" },
         });
       }
     }

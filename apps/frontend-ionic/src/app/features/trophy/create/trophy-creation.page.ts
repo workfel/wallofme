@@ -383,8 +383,9 @@ export class TrophyCreationPage {
     this.scanService.reset();
 
     if (isFirstTrophy && !tutorialCompleted) {
-      this.router.navigate(["/room/edit"], {
-        queryParams: { tutorial: "true" },
+      this.navCtrl.navigateRoot("/tabs/home", {
+        animated: true,
+        animationDirection: "forward",
       });
     } else {
       this.router.navigate(["/tabs/home"]);
