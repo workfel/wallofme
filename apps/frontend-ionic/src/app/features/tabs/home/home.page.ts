@@ -18,6 +18,7 @@ import {
   IonText,
   IonTitle,
   IonToolbar,
+  ViewWillEnter,
 } from "@ionic/angular/standalone";
 import { TranslateModule } from "@ngx-translate/core";
 import { NgtCanvas } from "angular-three/dom";
@@ -37,6 +38,7 @@ import {
 import { AuthService } from "@app/core/services/auth.service";
 import { RoomService } from "@app/core/services/room.service";
 import { ThemeService } from "@app/core/services/theme.service";
+import { TutorialService } from "@app/core/services/tutorial.service";
 import { UserService } from "@app/core/services/user.service";
 import type { RoomTheme } from "@app/types/room-theme";
 import { DEFAULT_THEME } from "@app/types/room-theme";
@@ -553,9 +555,10 @@ import {
     }
   `,
 })
-export class HomePage implements OnInit {
+export class HomePage implements OnInit, ViewWillEnter {
   private router = inject(Router);
   private themeService = inject(ThemeService);
+  private tutorialService = inject(TutorialService);
   roomService = inject(RoomService);
   userService = inject(UserService);
   authService = inject(AuthService);
@@ -632,8 +635,23 @@ export class HomePage implements OnInit {
   }
 
   ngOnInit(): void {
-    this.fetchRoom();
     this.userService.fetchProfile();
+  }
+
+  async ionViewWillEnter(): Promise<void> {
+    await this.fetchRoom();
+
+    const room = this.roomService.room();
+    const trophyItemCount = (room?.items ?? []).filter(i => i.trophyId).length;
+    if (trophyItemCount === 1) {
+      const tutorialCompleted = await this.tutorialService.hasCompleted();
+      if (!tutorialCompleted) {
+        this.router.navigate(['/room/edit'], {
+          queryParams: { tutorial: 'true' },
+          replaceUrl: true,
+        });
+      }
+    }
   }
 
   async fetchRoom(): Promise<void> {

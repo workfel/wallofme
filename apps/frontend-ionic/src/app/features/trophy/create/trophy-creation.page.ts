@@ -351,16 +351,22 @@ export class TrophyCreationPage {
   }
 
   async onFinish(): Promise<void> {
-    const comp = this.resultsSearchComponent();
-    if (comp) {
-      const edits = comp.getEditedResults();
-      await this.scanService.updateRaceResult(edits);
-    }
-    await this.scanService.autoPlaceTrophy();
+    try {
+      const comp = this.resultsSearchComponent();
+      if (comp) {
+        const edits = comp.getEditedResults();
+        await this.scanService.updateRaceResult(edits);
+      }
+    } catch { /* best-effort — don't block tutorial redirect */ }
 
-    // Check if this is the user's first trophy (room had <= 1 items since we just placed one)
+    try {
+      await this.scanService.autoPlaceTrophy();
+    } catch { /* best-effort — don't block tutorial redirect */ }
+
+    // Check if this is the user's first trophy (filter by trophyId to exclude decorations)
     const room = this.roomService.room();
-    const isFirstTrophy = (room?.items?.length ?? 0) <= 1;
+    const trophyItemCount = (room?.items ?? []).filter(i => i.trophyId).length;
+    const isFirstTrophy = trophyItemCount <= 1;
     const tutorialCompleted = await this.tutorialService.hasCompleted();
 
     // Show success toast
