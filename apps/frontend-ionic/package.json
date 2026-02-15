@@ -14,7 +14,8 @@
     "cap:ios": "npx cap open ios",
     "cap:android": "npx cap open android",
     "cap:build:ios": "ng build --configuration production && npx cap sync ios",
-    "cap:build:android": "ng build --configuration production && npx cap sync android"
+    "cap:build:android": "ng build --configuration production && npx cap sync android",
+    "generate:models": "bun scripts/generate-model-configs.ts"
   },
   "dependencies": {
     "@angular/animations": "^21.1.3",
