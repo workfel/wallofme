@@ -1,6 +1,6 @@
-import { Component, computed, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { Component, computed, inject, signal } from "@angular/core";
+import { Router, RouterLink } from "@angular/router";
+import { FormsModule } from "@angular/forms";
 import {
   IonContent,
   IonButton,
@@ -10,18 +10,27 @@ import {
   IonText,
   IonSpinner,
   IonIcon,
-} from '@ionic/angular/standalone';
-import { TranslateModule } from '@ngx-translate/core';
-import { addIcons } from 'ionicons';
-import { logoGoogle, logoApple, sunnyOutline, moonOutline, contrastOutline } from 'ionicons/icons';
+} from "@ionic/angular/standalone";
+import { TranslateModule } from "@ngx-translate/core";
+import { addIcons } from "ionicons";
+import {
+  logoGoogle,
+  logoApple,
+  sunnyOutline,
+  moonOutline,
+  contrastOutline,
+} from "ionicons/icons";
 
-import { TranslateService } from '@ngx-translate/core';
-import { AuthService } from '@app/core/services/auth.service';
-import { I18nService } from '@app/core/services/i18n.service';
-import { AppThemeService, type AppThemeMode } from '@app/core/services/app-theme.service';
+import { TranslateService } from "@ngx-translate/core";
+import { AuthService } from "@app/core/services/auth.service";
+import { I18nService } from "@app/core/services/i18n.service";
+import {
+  AppThemeService,
+  type AppThemeMode,
+} from "@app/core/services/app-theme.service";
 
 @Component({
-  selector: 'app-login',
+  selector: "app-login",
   standalone: true,
   imports: [
     FormsModule,
@@ -45,13 +54,17 @@ import { AppThemeService, type AppThemeMode } from '@app/core/services/app-theme
               class="lang-btn"
               [class.active]="i18n.currentLang === 'en'"
               (click)="i18n.setLanguage('en')"
-            >EN</button>
+            >
+              EN
+            </button>
             <span class="lang-sep">|</span>
             <button
               class="lang-btn"
               [class.active]="i18n.currentLang === 'fr'"
               (click)="i18n.setLanguage('fr')"
-            >FR</button>
+            >
+              FR
+            </button>
           </div>
           <button class="theme-btn" (click)="cycleTheme()">
             <ion-icon [name]="themeIcon()" />
@@ -59,7 +72,7 @@ import { AppThemeService, type AppThemeMode } from '@app/core/services/app-theme
         </div>
         <div class="logo-section">
           <h1 class="app-title">WallOfMe</h1>
-          <p class="app-subtitle">{{ 'auth.appSubtitle' | translate }}</p>
+          <p class="app-subtitle">{{ "auth.appSubtitle" | translate }}</p>
         </div>
 
         <div class="form-section">
@@ -84,9 +97,9 @@ import { AppThemeService, type AppThemeMode } from '@app/core/services/app-theme
           </ion-list>
 
           @if (errorMessage()) {
-            <ion-text color="danger">
-              <p class="error-text">{{ errorMessage() }}</p>
-            </ion-text>
+          <ion-text color="danger">
+            <p class="error-text">{{ errorMessage() }}</p>
+          </ion-text>
           }
 
           <ion-button
@@ -96,15 +109,15 @@ import { AppThemeService, type AppThemeMode } from '@app/core/services/app-theme
             class="login-btn"
           >
             @if (isLoading()) {
-              <ion-spinner name="crescent" />
+            <ion-spinner name="crescent" />
             } @else {
-              {{ 'auth.login' | translate }}
+            {{ "auth.login" | translate }}
             }
           </ion-button>
         </div>
 
         <div class="divider">
-          <span>{{ 'auth.orContinueWith' | translate }}</span>
+          <span>{{ "auth.orContinueWith" | translate }}</span>
         </div>
 
         <div class="social-section">
@@ -115,10 +128,10 @@ import { AppThemeService, type AppThemeMode } from '@app/core/services/app-theme
             [disabled]="isLoading()"
           >
             <ion-icon slot="start" name="logo-google" />
-            {{ 'auth.google' | translate }}
+            {{ "auth.google" | translate }}
           </ion-button>
 
-          <ion-button
+          <!-- <ion-button
             expand="block"
             fill="outline"
             color="dark"
@@ -127,14 +140,14 @@ import { AppThemeService, type AppThemeMode } from '@app/core/services/app-theme
           >
             <ion-icon slot="start" name="logo-apple" />
             {{ 'auth.apple' | translate }}
-          </ion-button>
+          </ion-button> -->
         </div>
 
         <div class="footer-section">
           <ion-text>
-            {{ 'auth.noAccount' | translate }}
+            {{ "auth.noAccount" | translate }}
             <a routerLink="/auth/register" class="link">
-              {{ 'auth.register' | translate }}
+              {{ "auth.register" | translate }}
             </a>
           </ion-text>
         </div>
@@ -291,26 +304,36 @@ export class LoginPage {
   i18n = inject(I18nService);
   appTheme = inject(AppThemeService);
 
-  email = '';
-  password = '';
+  email = "";
+  password = "";
   isLoading = signal(false);
-  errorMessage = signal('');
+  errorMessage = signal("");
 
   themeIcon = computed(() => {
     switch (this.appTheme.mode()) {
-      case 'light': return 'sunny-outline';
-      case 'dark': return 'moon-outline';
-      default: return 'contrast-outline';
+      case "light":
+        return "sunny-outline";
+      case "dark":
+        return "moon-outline";
+      default:
+        return "contrast-outline";
     }
   });
 
   constructor() {
-    addIcons({ logoGoogle, logoApple, sunnyOutline, moonOutline, contrastOutline });
+    addIcons({
+      logoGoogle,
+      logoApple,
+      sunnyOutline,
+      moonOutline,
+      contrastOutline,
+    });
   }
 
   cycleTheme(): void {
-    const order: AppThemeMode[] = ['system', 'light', 'dark'];
-    const next = order[(order.indexOf(this.appTheme.mode()) + 1) % order.length];
+    const order: AppThemeMode[] = ["system", "light", "dark"];
+    const next =
+      order[(order.indexOf(this.appTheme.mode()) + 1) % order.length];
     this.appTheme.setTheme(next);
   }
 
@@ -318,23 +341,25 @@ export class LoginPage {
     if (!this.email || !this.password) return;
 
     this.isLoading.set(true);
-    this.errorMessage.set('');
+    this.errorMessage.set("");
 
     try {
       await this.authService.signInEmail(this.email, this.password);
       this.navigateAfterAuth();
     } catch (e: unknown) {
       this.errorMessage.set(
-        e instanceof Error ? e.message : this.translate.instant('auth.loginFailed')
+        e instanceof Error
+          ? e.message
+          : this.translate.instant("auth.loginFailed")
       );
     } finally {
       this.isLoading.set(false);
     }
   }
 
-  async onSocialLogin(provider: 'google' | 'apple'): Promise<void> {
+  async onSocialLogin(provider: "google" | "apple"): Promise<void> {
     this.isLoading.set(true);
-    this.errorMessage.set('');
+    this.errorMessage.set("");
     try {
       await this.authService.signInSocial(provider);
       // On native: signInSocial resolves after OAuth completes
@@ -342,7 +367,9 @@ export class LoginPage {
       this.navigateAfterAuth();
     } catch (e: unknown) {
       this.errorMessage.set(
-        e instanceof Error ? e.message : this.translate.instant('auth.socialLoginFailed')
+        e instanceof Error
+          ? e.message
+          : this.translate.instant("auth.socialLoginFailed")
       );
     } finally {
       this.isLoading.set(false);
@@ -351,9 +378,9 @@ export class LoginPage {
 
   private navigateAfterAuth(): void {
     if (this.authService.hasCompletedOnboarding()) {
-      this.router.navigate(['/tabs']);
+      this.router.navigate(["/tabs"]);
     } else {
-      this.router.navigate(['/onboarding']);
+      this.router.navigate(["/onboarding"]);
     }
   }
 }

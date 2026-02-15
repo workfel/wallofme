@@ -140,7 +140,7 @@ import {
             {{ "auth.google" | translate }}
           </ion-button>
 
-          <ion-button
+          <!-- <ion-button
             expand="block"
             fill="outline"
             color="dark"
@@ -149,7 +149,7 @@ import {
           >
             <ion-icon slot="start" name="logo-apple" />
             {{ "auth.apple" | translate }}
-          </ion-button>
+          </ion-button> -->
         </div>
 
         <div class="footer-section">
