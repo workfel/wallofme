@@ -43,6 +43,10 @@ export const searchDateSchema = z.object({
   country: z.string().nullable().optional(),
 });
 
+export const rotateSchema = z.object({
+  trophyId: z.string().uuid(),
+});
+
 export const refineSearchSchema = z.object({
   raceName: z.string().min(1),
   year: z.string().regex(/^\d{4}$/),

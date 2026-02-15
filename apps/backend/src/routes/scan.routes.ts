@@ -11,10 +11,13 @@ import {
   searchResultsSchema,
   searchDateSchema,
   refineSearchSchema,
+  rotateSchema,
 } from "../validators/scan.validator";
 import { analyzeImage, searchRaceDate, searchRaceInfo, searchRaceResults } from "../lib/ai-analyzer";
 import { processTrophyImage } from "../lib/image-processor";
-import { downloadBuffer } from "../lib/storage";
+import { downloadBuffer, uploadBuffer, getPublicUrl } from "../lib/storage";
+import sharp from "sharp";
+import { nanoid } from "nanoid";
 import type { auth } from "../lib/auth";
 
 type Variables = {
@@ -274,5 +277,66 @@ export const scan = new Hono<{ Variables: Variables }>()
       const { raceName, year, sportKind, city, country } = c.req.valid("json");
       const result = await searchRaceInfo(raceName, year, sportKind, city, country);
       return c.json({ data: result });
+    },
+  )
+
+  // Rotate processed trophy images 90° clockwise
+  .post(
+    "/rotate",
+    requireAuth,
+    zValidator("json", rotateSchema),
+    async (c) => {
+      const currentUser = c.get("user")!;
+      const { trophyId } = c.req.valid("json");
+
+      const item = await db.query.trophy.findFirst({
+        where: eq(trophy.id, trophyId),
+      });
+
+      if (!item || item.userId !== currentUser.id) {
+        return c.json({ error: "Not found" }, 404);
+      }
+
+      if (!item.processedImageUrl || !item.textureUrl || !item.thumbnailUrl) {
+        return c.json({ error: "No processed images to rotate" }, 400);
+      }
+
+      try {
+        const prefix = `trophy-processed/${currentUser.id}`;
+        const id = nanoid();
+
+        // Download, rotate 90° clockwise, re-upload all three variants
+        const rotate = async (url: string, suffix: string, resize?: { w: number; h: number; fit: "inside" | "cover" }) => {
+          const key = url.replace(`${process.env.R2_PUBLIC_URL}/`, "");
+          const buf = await downloadBuffer(key);
+          let pipeline = sharp(buf).rotate(90);
+          if (resize) {
+            pipeline = pipeline.resize(resize.w, resize.h, {
+              fit: resize.fit,
+              withoutEnlargement: resize.fit === "inside",
+            });
+          }
+          const out = await pipeline.webp({ quality: 85 }).toBuffer();
+          const newKey = `${prefix}/${id}${suffix}.webp`;
+          await uploadBuffer(out, newKey, "image/webp");
+          return getPublicUrl(newKey);
+        };
+
+        const [processedImageUrl, textureUrl, thumbnailUrl] = await Promise.all([
+          rotate(item.processedImageUrl, ""),
+          rotate(item.textureUrl, "-texture", { w: 1024, h: 1024, fit: "inside" }),
+          rotate(item.thumbnailUrl, "-thumb", { w: 256, h: 256, fit: "cover" }),
+        ]);
+
+        await db
+          .update(trophy)
+          .set({ processedImageUrl, textureUrl, thumbnailUrl, updatedAt: new Date() })
+          .where(eq(trophy.id, trophyId));
+
+        return c.json({ data: { processedImageUrl, textureUrl, thumbnailUrl } });
+      } catch (error) {
+        console.error("Rotation failed:", error);
+        return c.json({ error: "Rotation failed" }, 500);
+      }
     },
   );

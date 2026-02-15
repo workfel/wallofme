@@ -7,8 +7,9 @@ export async function removeImageBackground(
   imageBuffer: Buffer,
 ): Promise<Buffer> {
   try {
-    // Downscale before remove-bg for faster processing
+    // Auto-apply EXIF orientation then downscale before remove-bg
     const optimized = await sharp(imageBuffer)
+      .rotate() // fix EXIF orientation (prevents 90° rotation on phone photos)
       .resize(MAX_DIMENSION, MAX_DIMENSION, {
         fit: "inside",
         withoutEnlargement: true,

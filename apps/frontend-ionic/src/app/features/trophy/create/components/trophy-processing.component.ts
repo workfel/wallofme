@@ -1,37 +1,37 @@
-import { Component, inject, computed } from "@angular/core";
-import { IonIcon } from "@ionic/angular/standalone";
+import { Component, inject, computed, signal } from "@angular/core";
+import { IonButton, IonIcon } from "@ionic/angular/standalone";
 import { TranslateModule } from "@ngx-translate/core";
 import { addIcons } from "ionicons";
-import { checkmarkCircle } from "ionicons/icons";
+import { checkmarkCircle, refreshOutline } from "ionicons/icons";
 
 import { ScanService } from "@app/core/services/scan.service";
 
 @Component({
   selector: "app-trophy-processing",
   standalone: true,
-  imports: [TranslateModule, IonIcon],
+  imports: [TranslateModule, IonButton, IonIcon],
   template: `
     <div class="processing-container animate-fade-in">
       <!-- 3-step progress indicator -->
       <div class="progress-steps">
         @for (step of progressSteps; track step.key; let i = $index) {
-          <div
-            class="progress-step"
-            [class.active]="stepState(i) === 'active'"
-            [class.done]="stepState(i) === 'done'"
-            [class.pending]="stepState(i) === 'pending'"
-          >
-            <div class="step-indicator">
-              @if (stepState(i) === "done") {
-                <ion-icon name="checkmark-circle" color="success" />
-              } @else if (stepState(i) === "active") {
-                <div class="step-spinner"></div>
-              } @else {
-                <div class="step-number">{{ i + 1 }}</div>
-              }
-            </div>
-            <span class="step-text">{{ step.label | translate }}</span>
+        <div
+          class="progress-step"
+          [class.active]="stepState(i) === 'active'"
+          [class.done]="stepState(i) === 'done'"
+          [class.pending]="stepState(i) === 'pending'"
+        >
+          <div class="step-indicator">
+            @if (stepState(i) === "done") {
+            <ion-icon name="checkmark-circle" color="success" />
+            } @else if (stepState(i) === "active") {
+            <div class="step-spinner"></div>
+            } @else {
+            <div class="step-number">{{ i + 1 }}</div>
+            }
           </div>
+          <span class="step-text">{{ step.label | translate }}</span>
+        </div>
         }
       </div>
 
@@ -40,54 +40,67 @@ import { ScanService } from "@app/core/services/scan.service";
         <div class="image-card" [class.shrink-in]="currentPhaseIndex() >= 0">
           <!-- Original image -->
           @if (scan.originalImageUrl()) {
-            <img
-              [src]="scan.originalImageUrl()"
-              alt="trophy"
-              class="trophy-img"
-              [class.fade-out]="showProcessed()"
-            />
+          <img
+            [src]="scan.originalImageUrl()"
+            alt="trophy"
+            class="trophy-img"
+            [class.fade-out]="showProcessed()"
+          />
           }
 
           <!-- Processed image (crossfade reveal) -->
           @if (scan.processedImageUrl()) {
-            <img
-              [src]="scan.processedImageUrl()"
-              alt="processed"
-              class="trophy-img processed-img"
-              [class.fade-in]="showProcessed()"
-            />
+          <img
+            [src]="scan.processedImageUrl()"
+            alt="processed"
+            class="trophy-img processed-img"
+            [class.fade-in]="showProcessed()"
+          />
           }
 
           <!-- Scan line overlay during bg removal -->
           @if (scan.processingPhase() === "removing-bg") {
-            <div class="scan-line-overlay">
-              <div class="scan-line"></div>
-            </div>
+          <div class="scan-line-overlay">
+            <div class="scan-line"></div>
+          </div>
           }
 
           <!-- Glow overlay during analysis -->
           @if (scan.processingPhase() === "analyzing") {
-            <div class="glow-overlay"></div>
+          <div class="glow-overlay"></div>
+          }
+
+          <!-- Rotate button (visible after background removal) -->
+          @if (showProcessed()) {
+          <ion-button
+            fill="clear"
+            size="small"
+            class="rotate-btn"
+            (click)="onRotate()"
+            [disabled]="rotating()"
+          >
+            <ion-icon slot="icon-only" name="refresh-outline" />
+          </ion-button>
           }
         </div>
       </div>
 
       <!-- Skeleton fields during analysis -->
       @if (scan.processingPhase() === "analyzing") {
-        <div class="skeleton-fields animate-fade-in-up">
-          <div class="skeleton-row">
-            <div class="skeleton-label"></div>
-            <div class="skeleton-value wide"></div>
-          </div>
-          <div class="skeleton-row" style="animation-delay: 0.1s">
-            <div class="skeleton-label"></div>
-            <div class="skeleton-value"></div>
-          </div>
-          <div class="skeleton-row" style="animation-delay: 0.2s">
-            <div class="skeleton-label"></div>
-            <div class="skeleton-value narrow"></div>
-          </div>
+      <div class="skeleton-fields animate-fade-in-up">
+        <div class="skeleton-row">
+          <div class="skeleton-label"></div>
+          <div class="skeleton-value wide"></div>
         </div>
+        <div class="skeleton-row" style="animation-delay: 0.1s">
+          <div class="skeleton-label"></div>
+          <div class="skeleton-value"></div>
+        </div>
+        <div class="skeleton-row" style="animation-delay: 0.2s">
+          <div class="skeleton-label"></div>
+          <div class="skeleton-value narrow"></div>
+        </div>
+      </div>
       }
     </div>
   `,
@@ -198,6 +211,20 @@ import { ScanService } from "@app/core/services/scan.service";
       &.shrink-in {
         animation: shrinkToCard 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
       }
+    }
+
+    .rotate-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 10;
+      --background: rgba(0, 0, 0, 0.5);
+      --color: white;
+      --border-radius: 50%;
+      --padding-start: 8px;
+      --padding-end: 8px;
+      min-height: 36px;
+      backdrop-filter: blur(8px);
     }
 
     .trophy-img {
@@ -406,8 +433,20 @@ export class TrophyProcessingComponent {
     );
   });
 
+  rotating = signal(false);
+
   constructor() {
-    addIcons({ checkmarkCircle });
+    addIcons({ checkmarkCircle, refreshOutline });
+  }
+
+  async onRotate(): Promise<void> {
+    if (this.rotating()) return;
+    this.rotating.set(true);
+    try {
+      await this.scan.rotateTrophy();
+    } finally {
+      this.rotating.set(false);
+    }
   }
 
   stepState(index: number): "pending" | "active" | "done" {

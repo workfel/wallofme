@@ -278,6 +278,31 @@ export class ScanService {
   }
 
   /**
+   * Rotate processed trophy images 90° clockwise via backend.
+   * Updates processedUrls after rotation.
+   */
+  async rotateTrophy(): Promise<boolean> {
+    const tId = this.trophyId();
+    if (!tId) return false;
+
+    try {
+      const res = await this.api.client.api.scan.rotate.$post({
+        json: { trophyId: tId },
+      });
+
+      if (res.ok) {
+        const json = (await res.json()) as { data: ProcessedUrls };
+        this.processedUrls.set(json.data);
+        this.processedImageUrl.set(json.data.processedImageUrl);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Search for matching races in the database
    */
   async searchMatchingRaces(
