@@ -1,94 +1,79 @@
-import { Component, input, output } from "@angular/core";
-import {
-  IonToolbar,
-  IonButtons,
-  IonButton,
-  IonIcon,
-  IonBackButton,
-  IonTitle,
-} from "@ionic/angular/standalone";
+import { Component, output } from "@angular/core";
+import { IonIcon } from "@ionic/angular/standalone";
 import { addIcons } from "ionicons";
-import {
-  eyeOutline,
-  colorPaletteOutline,
-  shareOutline,
-  heartOutline,
-} from "ionicons/icons";
-import { TranslateModule } from "@ngx-translate/core";
+import { arrowBackOutline, colorPaletteOutline } from "ionicons/icons";
+import { NavController } from "@ionic/angular/standalone";
+import { inject } from "@angular/core";
 
 @Component({
   selector: "app-editor-toolbar",
   standalone: true,
-  imports: [
-    IonToolbar,
-    IonButtons,
-    IonButton,
-    IonIcon,
-    IonBackButton,
-    IonTitle,
-    TranslateModule,
-  ],
+  imports: [IonIcon],
   template: `
-    <ion-toolbar>
-      <ion-buttons slot="start">
-        <ion-back-button defaultHref="/tabs/home" />
-      </ion-buttons>
-      <ion-title>{{ "room.edit" | translate }}</ion-title>
-      <ion-buttons slot="end">
-        @if (viewCount() > 0 || likeCount() > 0) {
-          <div class="stats-badges">
-            @if (viewCount() > 0) {
-              <span class="stat-badge">
-                <ion-icon name="eye-outline" />
-                {{ viewCount() }}
-              </span>
-            }
-            @if (likeCount() > 0) {
-              <span class="stat-badge">
-                <ion-icon name="heart-outline" />
-                {{ likeCount() }}
-              </span>
-            }
-          </div>
-        }
-        <ion-button (click)="openThemes.emit()" title="Themes">
-          <ion-icon slot="icon-only" name="color-palette-outline" />
-        </ion-button>
-        <ion-button (click)="share.emit()" title="Share">
-          <ion-icon slot="icon-only" name="share-outline" />
-        </ion-button>
-      </ion-buttons>
-    </ion-toolbar>
+    <div class="floating-toolbar">
+      <button class="toolbar-pill" (click)="goBack()">
+        <ion-icon name="arrow-back-outline" />
+      </button>
+
+      <button class="toolbar-pill" (click)="openThemes.emit()">
+        <ion-icon name="color-palette-outline" />
+      </button>
+    </div>
   `,
   styles: `
-    .stats-badges {
+    .floating-toolbar {
+      position: absolute;
+      top: calc(var(--ion-safe-area-top, 0px) + 8px);
+      left: 16px;
+      right: 16px;
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-right: 4px;
+      justify-content: space-between;
+      z-index: 100;
+      pointer-events: none;
     }
 
-    .stat-badge {
+    .toolbar-pill {
+      pointer-events: auto;
       display: flex;
       align-items: center;
-      gap: 3px;
-      font-size: 12px;
-      color: var(--ion-color-medium);
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 100px;
+      background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.72);
+      backdrop-filter: blur(16px) saturate(1.8);
+      -webkit-backdrop-filter: blur(16px) saturate(1.8);
+      box-shadow:
+        0 2px 12px rgba(0, 0, 0, 0.10),
+        0 0 0 1px rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.06);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      font-family: inherit;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+
+      &:active {
+        transform: scale(0.92);
+      }
 
       ion-icon {
-        font-size: 14px;
+        font-size: 20px;
+        color: var(--ion-text-color);
       }
     }
   `,
 })
 export class EditorToolbarComponent {
-  viewCount = input(0);
-  likeCount = input(0);
+  private navCtrl = inject(NavController);
 
   openThemes = output<void>();
-  share = output<void>();
 
   constructor() {
-    addIcons({ eyeOutline, colorPaletteOutline, shareOutline, heartOutline });
+    addIcons({ arrowBackOutline, colorPaletteOutline });
+  }
+
+  goBack(): void {
+    this.navCtrl.back();
   }
 }

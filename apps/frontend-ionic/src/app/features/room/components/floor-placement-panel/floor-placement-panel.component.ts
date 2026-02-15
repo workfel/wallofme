@@ -110,9 +110,14 @@ export interface FloorPlacementValues {
   styles: `
     .floor-panel {
       padding: 10px 16px 16px;
-      background: var(--ion-background-color, #fff);
-      border-top: 1px solid var(--ion-color-step-100);
-      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+      margin: 0 16px 16px;
+      background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.72);
+      backdrop-filter: blur(16px) saturate(1.8);
+      -webkit-backdrop-filter: blur(16px) saturate(1.8);
+      border-radius: 20px;
+      box-shadow:
+        0 2px 12px rgba(0, 0, 0, 0.10),
+        0 0 0 1px rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.06);
     }
 
     .panel-header {
@@ -152,7 +157,7 @@ export interface FloorPlacementValues {
       display: flex;
       flex-direction: column;
       align-items: center;
-      background: var(--ion-color-step-50, #f4f4f4);
+      background: rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.06);
       border-radius: 10px;
       min-width: 64px;
       overflow: hidden;
@@ -175,7 +180,7 @@ export interface FloorPlacementValues {
       }
 
       &:active {
-        background: var(--ion-color-step-100);
+        background: rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.10);
       }
     }
 

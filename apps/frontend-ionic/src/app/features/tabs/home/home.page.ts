@@ -361,7 +361,7 @@ import { TrophyInfoSheetComponent, type TrophyInfoData } from '../../room/compon
 
     .edit-room-btn {
       position: absolute;
-      bottom: 20px;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 76px);
       left: 50%;
       transform: translateX(-50%);
       display: flex;

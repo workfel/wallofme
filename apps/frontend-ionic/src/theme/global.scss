@@ -33,10 +33,27 @@ ion-select {
   --border-radius: 12px;
 }
 
-/* Tab bar premium feel */
+/* Floating pill tab bar */
 ion-tab-bar {
   --border: none;
-  box-shadow: 0 -1px 8px rgba(0, 0, 0, 0.06);
+  position: absolute;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+  left: 16px;
+  right: 16px;
+  width: auto;
+  border-radius: 28px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+  height: 56px;
+  padding: 0 6px;
+  z-index: 99;
+}
+
+ion-tab-button {
+  --ripple-color: transparent;
+}
+
+ion-tab-button ion-icon {
+  font-size: 24px;
 }
 
 /* Remove Ionic default focus ring, use subtle one */

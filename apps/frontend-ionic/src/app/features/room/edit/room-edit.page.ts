@@ -9,7 +9,6 @@ import {
 import { Router } from "@angular/router";
 import {
   IonContent,
-  IonHeader,
   IonIcon,
   IonSpinner,
   IonFab,
@@ -89,7 +88,6 @@ type EditorState =
     ShareRoomSheetComponent,
     WallPlacementPanelComponent,
     IonContent,
-    IonHeader,
     IonIcon,
     IonSpinner,
     IonFab,
@@ -99,18 +97,13 @@ type EditorState =
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
-    <!-- Toolbar -->
-    <ion-header>
-      <app-editor-toolbar
-        [viewCount]="roomService.room()?.viewCount ?? 0"
-        [likeCount]="roomService.room()?.likeCount ?? 0"
-        (openThemes)="openThemeSelector()"
-        (share)="onShare()"
-      />
-    </ion-header>
-
     <ion-content [fullscreen]="true">
       <div class="editor-layout">
+        <!-- Floating toolbar overlay -->
+        <app-editor-toolbar
+          (openThemes)="openThemeSelector()"
+        />
+
         <!-- Loading overlay (non-destructive — canvas stays alive) -->
         @if (roomService.loading()) {
           <div class="loading-overlay">
@@ -137,6 +130,13 @@ type EditorState =
             />
           </ngt-canvas>
         </div>
+
+        <!-- Floating share pill -->
+        @if (state().kind === "IDLE") {
+          <button class="share-pill" (click)="onShare()">
+            <ion-icon name="share-outline" />
+          </button>
+        }
 
         <!-- Context Action Bar (shown when item selected) -->
         @if (isDecorationSelected()) {
@@ -285,6 +285,53 @@ type EditorState =
         display: block;
         width: 100%;
         height: 100%;
+      }
+    }
+
+    .share-pill {
+      position: absolute;
+      bottom: calc(var(--ion-safe-area-bottom, 0px) + 24px);
+      left: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 100px;
+      background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.72);
+      box-shadow:
+        0 2px 12px rgba(0, 0, 0, 0.10),
+        0 0 0 1px rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.06);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      z-index: 100;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+
+      &:active {
+        transform: scale(0.92);
+      }
+
+      ion-icon {
+        font-size: 20px;
+        color: var(--ion-text-color);
+      }
+    }
+
+    ion-fab-button {
+      --background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.72);
+      --background-activated: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.85);
+      --box-shadow:
+        0 2px 12px rgba(0, 0, 0, 0.10),
+        0 0 0 1px rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.06);
+      --border-radius: 100px;
+      backdrop-filter: blur(16px) saturate(1.8);
+      -webkit-backdrop-filter: blur(16px) saturate(1.8);
+      --color: var(--ion-text-color);
+      transition: transform 0.18s ease;
+
+      &:active {
+        transform: scale(0.92);
       }
     }
   `,
