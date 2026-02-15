@@ -135,6 +135,11 @@ export const trophies = new Hono<{ Variables: Variables }>()
         return c.json({ error: "Not found" }, 404);
       }
 
+      // Clean up orphan raceResult before deleting trophy
+      if (existing.raceResultId) {
+        await db.delete(raceResult).where(eq(raceResult.id, existing.raceResultId));
+      }
+
       await db.delete(trophy).where(eq(trophy.id, id));
       return c.json({ success: true });
     }

@@ -249,19 +249,6 @@ export const scan = new Hono<{ Variables: Variables }>()
         result.race.location?.split(", ")[1],
       );
 
-      if (searchResult.found) {
-        await db
-          .update(raceResult)
-          .set({
-            time: searchResult.time,
-            ranking: searchResult.ranking,
-            categoryRanking: searchResult.categoryRanking,
-            totalParticipants: searchResult.totalParticipants,
-            updatedAt: new Date(),
-          })
-          .where(eq(raceResult.id, raceResultId));
-      }
-
       return c.json({ data: searchResult });
     },
   )

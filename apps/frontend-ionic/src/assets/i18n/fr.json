@@ -334,7 +334,10 @@
     "stepRefine": "Préciser",
     "enterResults": "Saisissez vos résultats",
     "aiDisclaimer": "Les résultats trouvés par l'IA peuvent contenir des erreurs — n'hésitez pas à les corriger.",
-    "totalParticipants": "Nombre de participants"
+    "totalParticipants": "Nombre de participants",
+    "addMyTrophy": "Ajouter mon trophée",
+    "wrongResults": "Ce ne sont pas mes résultats",
+    "trophyAdded": "Trophée ajouté !"
   },
   "refinement": {
     "raceNameTitle": "Quel est le nom de la course ?",

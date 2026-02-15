@@ -134,36 +134,38 @@ export interface ResultsEdit {
         </ion-card-content>
       </ion-card>
 
-      @if (!scan.searchResult()?.found) {
-        <div class="retry-row">
-          @if (scan.resultsRetryLoading()) {
-            <ion-spinner name="dots" />
-            <ion-text color="medium"
-              ><small>{{
-                "review.retryingResults" | translate
-              }}</small></ion-text
-            >
-          } @else if (resultsRetryMaxed()) {
-            <ion-text color="medium"
-              ><small class="search-hint">{{
-                "review.resultsRetryMaxAttempts" | translate
-              }}</small></ion-text
-            >
-          } @else if (scan.resultsRetryCooldownRemaining() > 0) {
-            <ion-button size="small" fill="outline" disabled="true">
-              {{
-                "review.retryResultsCooldown"
-                  | translate: { seconds: scan.resultsRetryCooldownRemaining() }
-              }}
-            </ion-button>
-          } @else {
-            <ion-button size="small" fill="outline" (click)="onRetryResults()">
-              <ion-icon slot="start" name="refresh-outline" />
+      <div class="retry-row">
+        @if (scan.resultsRetryLoading()) {
+          <ion-spinner name="dots" />
+          <ion-text color="medium"
+            ><small>{{
+              "review.retryingResults" | translate
+            }}</small></ion-text
+          >
+        } @else if (resultsRetryMaxed()) {
+          <ion-text color="medium"
+            ><small class="search-hint">{{
+              "review.resultsRetryMaxAttempts" | translate
+            }}</small></ion-text
+          >
+        } @else if (scan.resultsRetryCooldownRemaining() > 0) {
+          <ion-button size="small" fill="outline" disabled="true">
+            {{
+              "review.retryResultsCooldown"
+                | translate: { seconds: scan.resultsRetryCooldownRemaining() }
+            }}
+          </ion-button>
+        } @else {
+          <ion-button size="small" fill="outline" (click)="onRetryResults()">
+            <ion-icon slot="start" name="refresh-outline" />
+            @if (scan.searchResult()?.found) {
+              {{ "review.wrongResults" | translate }}
+            } @else {
               {{ "review.retryResults" | translate }}
-            </ion-button>
-          }
-        </div>
-      }
+            }
+          </ion-button>
+        }
+      </div>
     }
   `,
   styles: `
@@ -332,7 +334,7 @@ export interface ResultsEdit {
 export class TrophyResultsSearchComponent {
   scan = inject(ScanService);
 
-  resultsRetryMaxed = computed(() => this.scan.resultsRetryAttempts() >= 2);
+  resultsRetryMaxed = computed(() => this.scan.resultsRetryAttempts() >= 3);
 
   // Editable fields
   editTime = "";

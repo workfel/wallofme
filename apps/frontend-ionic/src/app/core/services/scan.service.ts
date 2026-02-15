@@ -6,7 +6,7 @@ import { UploadService } from './upload.service';
 import { RoomService } from './room.service';
 import { UserService } from './user.service';
 
-const MAX_RETRY_ATTEMPTS = 2;
+const MAX_RETRY_ATTEMPTS = 3;
 const RETRY_COOLDOWN_MS = 15_000;
 
 export type ScanStep = 'idle' | 'processing' | 'refining' | 'details' | 'matching' | 'search' | 'done';
@@ -377,6 +377,25 @@ export class ScanService {
 
     await this.roomService.fetchMyRoom();
     return this.roomService.addItemToRoom(tId);
+  }
+
+  /**
+   * Cancel trophy creation: delete the trophy from DB (cascades raceResult cleanup), then reset.
+   * Best-effort — silently fails.
+   */
+  async cancelCreation(): Promise<void> {
+    const tId = this.trophyId();
+    if (!tId) return;
+
+    try {
+      await this.api.client.api.trophies[':id'].$delete({
+        param: { id: tId },
+      });
+    } catch {
+      // best-effort
+    }
+
+    this.reset();
   }
 
   /**

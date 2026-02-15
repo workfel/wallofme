@@ -12,10 +12,11 @@ import {
   IonIcon,
   IonModal,
   NavController,
+  ToastController,
 } from "@ionic/angular/standalone";
 import { addIcons } from "ionicons";
-import { arrowBackOutline } from "ionicons/icons";
-import { TranslateModule } from "@ngx-translate/core";
+import { arrowBackOutline, checkmarkCircle } from "ionicons/icons";
+import { TranslateModule, TranslateService } from "@ngx-translate/core";
 
 import { ScanService } from "@app/core/services/scan.service";
 import { UserService } from "@app/core/services/user.service";
@@ -91,7 +92,7 @@ type CreationPhase =
         }
         @case ("done") {
           <app-trophy-results-search />
-          <app-trophy-done (done)="onFinish()" />
+          <app-trophy-done [saving]="scanService.savingResults()" (done)="onFinish()" />
         }
       }
 
@@ -187,8 +188,10 @@ type CreationPhase =
 export class TrophyCreationPage {
   private router = inject(Router);
   private navCtrl = inject(NavController);
-  private scanService = inject(ScanService);
+  readonly scanService = inject(ScanService);
   private userService = inject(UserService);
+  private toastController = inject(ToastController);
+  private translate = inject(TranslateService);
 
   private resultsSearchComponent = viewChild(TrophyResultsSearchComponent);
 
@@ -234,7 +237,7 @@ export class TrophyCreationPage {
   });
 
   constructor() {
-    addIcons({ arrowBackOutline });
+    addIcons({ arrowBackOutline, checkmarkCircle });
     this.scanService.reset();
 
     // Watch scanService.step to auto-transition phases
@@ -332,7 +335,14 @@ export class TrophyCreationPage {
     // applyRefinement already sets step to 'details'
   }
 
-  goBack(): void {
+  async goBack(): Promise<void> {
+    if (this.scanService.savingResults()) return;
+
+    // Clean up trophy if one was created (post-processing steps)
+    if (this.scanService.trophyId()) {
+      this.scanService.cancelCreation();
+    }
+
     this.navCtrl.back();
   }
 
@@ -343,6 +353,18 @@ export class TrophyCreationPage {
       await this.scanService.updateRaceResult(edits);
     }
     await this.scanService.autoPlaceTrophy();
+
+    // Show success toast
+    const message = this.translate.instant('review.trophyAdded');
+    const toast = await this.toastController.create({
+      message,
+      duration: 3000,
+      position: 'bottom',
+      color: 'success',
+      icon: 'checkmark-circle',
+    });
+    await toast.present();
+
     this.scanService.reset();
     this.router.navigate(["/tabs/home"]);
   }

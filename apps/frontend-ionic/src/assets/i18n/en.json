@@ -334,7 +334,10 @@
     "stepRefine": "Refine",
     "enterResults": "Enter Your Results",
     "aiDisclaimer": "Results found by AI may contain errors — feel free to correct them.",
-    "totalParticipants": "Total Participants"
+    "totalParticipants": "Total Participants",
+    "addMyTrophy": "Add My Trophy",
+    "wrongResults": "These aren't my results",
+    "trophyAdded": "Trophy added!"
   },
   "refinement": {
     "raceNameTitle": "What's the race name?",

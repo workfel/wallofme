@@ -20,12 +20,25 @@ import {
   IonIcon,
   IonSegment,
   IonSegmentButton,
+  IonModal,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonButtons,
+  IonContent,
+  IonSearchbar,
 } from "@ionic/angular/standalone";
 import { TranslateModule } from "@ngx-translate/core";
 import { addIcons } from "ionicons";
 import { searchOutline, calendarOutline } from "ionicons/icons";
 
 import { ScanService } from "@app/core/services/scan.service";
+import { I18nService } from "@app/core/services/i18n.service";
+import {
+  COUNTRIES,
+  countryFlag,
+  type Country,
+} from "@app/shared/data/countries";
 
 @Component({
   selector: "app-trophy-details-form",
@@ -44,6 +57,13 @@ import { ScanService } from "@app/core/services/scan.service";
     IonIcon,
     IonSegment,
     IonSegmentButton,
+    IonModal,
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonButtons,
+    IonContent,
+    IonSearchbar,
   ],
   template: `
     <div class="form-section animate-fade-in-up">
@@ -136,14 +156,18 @@ import { ScanService } from "@app/core/services/scan.service";
             [clearInput]="true"
           />
         </ion-item>
-        <ion-item>
+        <ion-item button (click)="showCountryModal.set(true)">
           <ion-input
             [label]="'review.country' | translate"
             labelPlacement="floating"
-            [value]="country()"
-            (ionInput)="country.set($any($event).detail.value ?? '')"
-            [clearInput]="true"
-            maxlength="3"
+            [value]="
+              selectedCountry()
+                ? countryFlag(selectedCountry()!.code) +
+                  ' ' +
+                  countryDisplayName(selectedCountry()!)
+                : ''
+            "
+            readonly
           />
         </ion-item>
         <ion-item>
@@ -170,6 +194,43 @@ import { ScanService } from "@app/core/services/scan.service";
           </ion-select>
         </ion-item>
       </ion-list>
+
+      <!-- Country picker modal -->
+      <ion-modal
+        [isOpen]="showCountryModal()"
+        (didDismiss)="showCountryModal.set(false)"
+      >
+        <ng-template>
+          <ion-header>
+            <ion-toolbar>
+              <ion-title>{{ "onboarding.country" | translate }}</ion-title>
+              <ion-buttons slot="end">
+                <ion-button (click)="showCountryModal.set(false)">
+                  {{ "common.cancel" | translate }}
+                </ion-button>
+              </ion-buttons>
+            </ion-toolbar>
+            <ion-toolbar>
+              <ion-searchbar
+                [placeholder]="'onboarding.searchCountry' | translate"
+                (ionInput)="
+                  countrySearch.set($any($event).detail.value ?? '')
+                "
+                [debounce]="150"
+              />
+            </ion-toolbar>
+          </ion-header>
+          <ion-content>
+            <ion-list>
+              @for (c of filteredCountries(); track c.code) {
+                <ion-item button (click)="onSelectCountry(c)">
+                  {{ countryFlag(c.code) }} {{ countryDisplayName(c) }}
+                </ion-item>
+              }
+            </ion-list>
+          </ion-content>
+        </ng-template>
+      </ion-modal>
 
       @if (formError()) {
         <ion-text color="danger">
@@ -277,15 +338,20 @@ import { ScanService } from "@app/core/services/scan.service";
 })
 export class TrophyDetailsFormComponent implements OnInit, OnDestroy {
   scan = inject(ScanService);
+  private i18n = inject(I18nService);
 
   formType = signal<"medal" | "bib">("medal");
   raceName = signal("");
   raceDate = signal("");
   city = signal("");
-  country = signal("");
+  selectedCountry = signal<Country | null>(null);
+  showCountryModal = signal(false);
+  countrySearch = signal("");
   distance = signal("");
   sport = signal("running");
   formError = signal("");
+
+  countryFlag = countryFlag;
 
   submitted = output<{
     type: "medal" | "bib";
@@ -318,6 +384,17 @@ export class TrophyDetailsFormComponent implements OnInit, OnDestroy {
 
   dateSearchMaxed = computed(() => this.scan.dateSearchAttempts() >= 2);
 
+  filteredCountries = computed(() => {
+    const search = this.countrySearch().toLowerCase();
+    if (!search) return COUNTRIES;
+    return COUNTRIES.filter(
+      (c) =>
+        c.name.toLowerCase().includes(search) ||
+        c.nameFr.toLowerCase().includes(search) ||
+        c.code.toLowerCase().includes(search),
+    );
+  });
+
   constructor() {
     addIcons({ searchOutline, calendarOutline });
   }
@@ -331,8 +408,15 @@ export class TrophyDetailsFormComponent implements OnInit, OnDestroy {
       if (analysis.sportKind) {
         this.sport.set(analysis.sportKind);
       }
+      // Pre-fill country with flag picker (no typewriter for this field)
+      if (analysis.country) {
+        const found = COUNTRIES.find(
+          (c) => c.code === analysis.country!.toUpperCase(),
+        );
+        if (found) this.selectedCountry.set(found);
+      }
 
-      // Typewriter pre-fill for text fields
+      // Typewriter pre-fill for text fields (country excluded — uses flag picker)
       const fields: {
         signal: ReturnType<typeof signal<string>>;
         value: string;
@@ -340,7 +424,6 @@ export class TrophyDetailsFormComponent implements OnInit, OnDestroy {
         { signal: this.raceName, value: analysis.raceName ?? "" },
         { signal: this.raceDate, value: analysis.date ?? "" },
         { signal: this.city, value: analysis.city ?? "" },
-        { signal: this.country, value: analysis.country ?? "" },
         { signal: this.distance, value: analysis.distance ?? "" },
       ];
 
@@ -368,6 +451,15 @@ export class TrophyDetailsFormComponent implements OnInit, OnDestroy {
     }
   }
 
+  countryDisplayName(c: Country): string {
+    return this.i18n.currentLang === "fr" ? c.nameFr : c.name;
+  }
+
+  onSelectCountry(c: Country): void {
+    this.selectedCountry.set(c);
+    this.showCountryModal.set(false);
+  }
+
   async onSearchDate(): Promise<void> {
     if (!this.raceName().trim()) return;
     const year = this.raceDate()
@@ -378,7 +470,7 @@ export class TrophyDetailsFormComponent implements OnInit, OnDestroy {
       year,
       sportKind: this.sport() || null,
       city: this.city().trim() || null,
-      country: this.country().trim().toUpperCase() || null,
+      country: this.selectedCountry()?.code ?? null,
     });
     if (date) {
       this.raceDate.set(date);
@@ -397,7 +489,7 @@ export class TrophyDetailsFormComponent implements OnInit, OnDestroy {
       raceName: this.raceName().trim(),
       date: this.raceDate() || undefined,
       city: this.city().trim() || undefined,
-      country: this.country().trim().toUpperCase() || undefined,
+      country: this.selectedCountry()?.code ?? undefined,
       distance: this.distance().trim() || undefined,
       sport:
         (this.sport() as
