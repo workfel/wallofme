@@ -3,12 +3,13 @@ import { DecimalPipe } from '@angular/common';
 import { IonButton, IonIcon, IonToggle } from '@ionic/angular/standalone';
 import { TranslateModule } from '@ngx-translate/core';
 import { addIcons } from 'ionicons';
-import { trashOutline, chevronUpOutline, chevronDownOutline } from 'ionicons/icons';
+import { trashOutline, chevronUpOutline, chevronDownOutline, swapHorizontalOutline } from 'ionicons/icons';
 
 export interface WallPlacementValues {
   positionX: number;
   positionY: number;
   positionZ: number;
+  wall?: 'left' | 'right';
 }
 
 @Component({
@@ -18,10 +19,13 @@ export interface WallPlacementValues {
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="wall-panel">
-      <!-- Header with name + free movement toggle + delete -->
+      <!-- Header with name + switch wall + free movement toggle + delete -->
       <div class="panel-header">
         <span class="panel-title">{{ name() || ('room.wallPlacement' | translate) }}</span>
         <div class="header-actions">
+          <ion-button fill="clear" size="small" (click)="switchWall()">
+            <ion-icon slot="icon-only" name="swap-horizontal-outline" />
+          </ion-button>
           <div class="free-move-toggle">
             <span class="toggle-label">{{ 'room.freeMovement' | translate }}</span>
             <ion-toggle [checked]="freeMovement()" (ionChange)="onFreeMovementToggle($event)" size="small" />
@@ -214,7 +218,7 @@ export class WallPlacementPanelComponent {
   });
 
   constructor() {
-    addIcons({ trashOutline, chevronUpOutline, chevronDownOutline });
+    addIcons({ trashOutline, chevronUpOutline, chevronDownOutline, swapHorizontalOutline });
   }
 
   onFreeMovementToggle(event: CustomEvent): void {
@@ -240,6 +244,22 @@ export class WallPlacementPanelComponent {
     const v = Math.round((this.positionY() + delta) * 10) / 10;
     const clamped = Math.max(minY, Math.min(maxY, v));
     this.emitChange({ positionY: clamped });
+  }
+
+  switchWall(): void {
+    const currentWall = this.wall();
+    const newWall = currentWall === 'left' ? 'right' : 'left';
+
+    // Transfer the horizontal coordinate to the other axis.
+    // Left wall uses Z for horizontal, right wall uses X.
+    const horizontalVal = currentWall === 'left' ? this.positionZ() : this.positionX();
+    const y = this.positionY();
+
+    if (newWall === 'left') {
+      this.changed.emit({ positionX: 0, positionY: y, positionZ: horizontalVal, wall: newWall });
+    } else {
+      this.changed.emit({ positionX: horizontalVal, positionY: y, positionZ: 0, wall: newWall });
+    }
   }
 
   private emitChange(partial: Partial<WallPlacementValues>): void {

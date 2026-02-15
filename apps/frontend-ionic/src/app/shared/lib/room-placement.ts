@@ -4,7 +4,7 @@ const ROOM_DEPTH = 6;
 const ROOM_HEIGHT = 3;
 
 // Wall offset from center
-const WALL_OFFSET = 0.30; // wall thickness / 2 + small gap (WALL_THICKNESS=0.55)
+const WALL_OFFSET = 0.02; // Small gap from wall surface (Wall aligned at -ROOM_WIDTH/2)
 
 // Grid: 9 columns x 6 rows = 54 slots per wall, 108 total
 const COLUMNS = 9;
@@ -19,13 +19,15 @@ const COL_SPACING = USABLE_WIDTH / (COLUMNS - 1); // ~0.675
 const ROW_SPACING = USABLE_HEIGHT / (ROWS - 1); // ~0.48
 
 // Y positions: top to bottom [2.7, 2.22, 1.74, 1.26, 0.78, 0.3]
-const Y_POSITIONS = Array.from({ length: ROWS }, (_, i) =>
-  ROOM_HEIGHT - MARGIN - i * ROW_SPACING
+const Y_POSITIONS = Array.from(
+  { length: ROWS },
+  (_, i) => ROOM_HEIGHT - MARGIN - i * ROW_SPACING,
 );
 
 // Axis positions: left to right [-2.7, -2.025, -1.35, -0.675, 0, 0.675, 1.35, 2.025, 2.7]
-const AXIS_POSITIONS = Array.from({ length: COLUMNS }, (_, i) =>
-  -USABLE_WIDTH / 2 + i * COL_SPACING
+const AXIS_POSITIONS = Array.from(
+  { length: COLUMNS },
+  (_, i) => -USABLE_WIDTH / 2 + i * COL_SPACING,
 );
 
 // Tolerance for occupied-slot check (tighter for dense grid)
@@ -84,13 +86,16 @@ export function getWallSlots(wall: Wall): SlotPosition[] {
 /**
  * Checks whether a slot is already occupied by an existing item.
  */
-function isSlotOccupied(slot: SlotPosition, existingItems: ExistingItem[]): boolean {
+function isSlotOccupied(
+  slot: SlotPosition,
+  existingItems: ExistingItem[],
+): boolean {
   return existingItems.some(
     (item) =>
       item.wall === slot.wall &&
       Math.abs(item.positionY - slot.positionY) < OCCUPIED_TOLERANCE &&
       Math.abs(item.positionZ - slot.positionZ) < OCCUPIED_TOLERANCE &&
-      Math.abs(item.positionX - slot.positionX) < OCCUPIED_TOLERANCE
+      Math.abs(item.positionX - slot.positionX) < OCCUPIED_TOLERANCE,
   );
 }
 
@@ -107,7 +112,9 @@ export function isWallFull(existingItems: ExistingItem[], wall: Wall): boolean {
  * Fills left wall first (top-left → bottom-right), then back wall.
  * Returns null if both walls are full.
  */
-export function getNextSlotPosition(existingItems: ExistingItem[]): SlotPosition | null {
+export function getNextSlotPosition(
+  existingItems: ExistingItem[],
+): SlotPosition | null {
   // Try left wall first
   const leftSlots = getWallSlots("left");
   for (const slot of leftSlots) {

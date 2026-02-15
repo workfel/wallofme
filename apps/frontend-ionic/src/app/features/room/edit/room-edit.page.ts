@@ -551,6 +551,7 @@ export class RoomEditPage implements OnInit {
       positionX: values.positionX,
       positionY: values.positionY,
       positionZ: values.positionZ,
+      ...(values.wall !== undefined && { wall: values.wall }),
     });
   }
 
@@ -561,6 +562,11 @@ export class RoomEditPage implements OnInit {
     if (s.kind === "SELECTED") {
       this.state.set({ kind: "DRAGGING", itemId: s.itemId });
       this.hapticMedium();
+    }
+
+    // Haptic feedback on wall change
+    if (event.wall !== undefined) {
+      this.hapticLight();
     }
 
     // Optimistic local update during drag (no API call)
@@ -574,6 +580,7 @@ export class RoomEditPage implements OnInit {
         ...(event.positionY !== undefined && { positionY: event.positionY }),
         positionZ: event.positionZ,
         ...(event.rotationY !== undefined && { rotationY: event.rotationY }),
+        ...(event.wall !== undefined && { wall: event.wall }),
       };
     });
     this.roomService.room.set({ ...room, items });
@@ -596,6 +603,7 @@ export class RoomEditPage implements OnInit {
       positionY: event.positionY ?? item.positionY,
       positionZ: event.positionZ,
       rotationY: event.rotationY ?? item.rotationY,
+      ...(event.wall !== undefined && { wall: event.wall }),
     });
   }
 
