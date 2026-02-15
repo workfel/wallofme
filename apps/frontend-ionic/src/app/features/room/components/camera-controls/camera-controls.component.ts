@@ -45,7 +45,7 @@ const LERP_SPEED = 3;
         maxPolarAngle: 1.42,
         enableDamping: true,
         makeDefault: true,
-        enabled: enabled()
+        enabled: enabled() && !isAnimating()
       }"
       (changed)="onControlsChange()"
     />
@@ -62,7 +62,7 @@ export class CameraControlsComponent {
   // Animation targets
   private targetCamPos = new Vector3().copy(DEFAULT_POSITION);
   private targetLookAt = new Vector3().copy(DEFAULT_TARGET);
-  private isAnimating = signal(false);
+  isAnimating = signal(false);
   private wasInspecting = false;
 
   private wasZoomedOut = false;
@@ -137,6 +137,9 @@ export class CameraControlsComponent {
     });
 
     // Smooth camera animation
+    // OrbitControls are disabled during animation (enabled: !isAnimating) so we
+    // drive the camera directly without conflicts from controls.update() clamping
+    // (minDistance would fight close-up FACE_DISTANCE targets).
     injectBeforeRender(({ camera, delta }) => {
       if (!this.isAnimating()) return;
 
@@ -149,8 +152,10 @@ export class CameraControlsComponent {
       // Lerp orbit controls target
       if (controls.target) {
         controls.target.lerp(this.targetLookAt, LERP_SPEED * delta);
-        controls.update?.();
       }
+
+      // Orient camera toward the current look-at target
+      camera.lookAt(controls.target ?? this.targetLookAt);
 
       // Invalidate to keep rendering during animation (needed for demand frameloop)
       this.store.snapshot.invalidate();
@@ -161,6 +166,12 @@ export class CameraControlsComponent {
         ? controls.target.distanceTo(this.targetLookAt)
         : 0;
       if (posDist < 0.01 && targetDist < 0.01) {
+        // Snap to exact final position
+        camera.position.copy(this.targetCamPos);
+        if (controls.target) {
+          controls.target.copy(this.targetLookAt);
+        }
+        camera.lookAt(this.targetLookAt);
         this.isAnimating.set(false);
       }
     });
