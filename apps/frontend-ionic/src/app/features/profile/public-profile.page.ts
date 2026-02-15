@@ -20,6 +20,8 @@ import {
 
 import { ApiService } from "@app/core/services/api.service";
 import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.component";
+import { countryFlag, COUNTRIES } from "@app/shared/data/countries";
+import { I18nService } from "@app/core/services/i18n.service";
 
 interface PublicProfile {
   id: string;
@@ -93,7 +95,7 @@ interface PublicProfile {
             </h2>
 
             @if (p.country) {
-              <p class="subtitle-label">{{ p.country }}</p>
+              <p class="subtitle-label">{{ getCountryDisplay(p.country) }}</p>
             }
 
             @if (p.sports.length > 0) {
@@ -186,14 +188,14 @@ interface PublicProfile {
   styles: `
     :host {
       --toolbar-top: var(--ion-safe-area-top, 20px);
-      --banner-height: 220px;
+      --banner-height: 150px;
       --avatar-size: 110px;
       --avatar-overlap: 55px;
     }
 
     /* Global Background */
     ion-content {
-      --background: radial-gradient(circle at 50% 0%, #e0f7fa 0%, #f0f4f8 100%);
+      /*--background: radial-gradient(circle at 50% 0%, #e0f7fa 0%, #f0f4f8 100%);*/
     }
 
     /* Glass Card Shared Styles */
@@ -285,7 +287,7 @@ interface PublicProfile {
     /* ── Card body ───────────────────────────── */
     .card-body {
       position: relative;
-      margin: -80px 16px 20px; /* Pull up over banner */
+      margin: -80px 0px 0px; /* Pull up over banner */
       padding-top: calc(var(--avatar-overlap) + 8px);
       min-height: 200px;
       background: rgba(255, 255, 255, 0.65);
@@ -470,9 +472,9 @@ interface PublicProfile {
       padding: 0 16px 40px; /* outside the glass card now? No, inside */
     }
 
-    /* Modify trophy grid to be INSIDE or OUTSIDE card? 
-       The HTML structure has it inside .card-body. 
-       Let's keep it there but style appropriately. 
+    /* Modify trophy grid to be INSIDE or OUTSIDE card?
+       The HTML structure has it inside .card-body.
+       Let's keep it there but style appropriately.
     */
     .card-body .trophy-grid {
       padding: 0 16px 32px;
@@ -542,6 +544,7 @@ export class PublicProfilePage implements OnInit {
   private api = inject(ApiService);
   private router = inject(Router);
   private location = inject(Location);
+  private i18n = inject(I18nService);
 
   profile = signal<PublicProfile | null>(null);
   loading = signal(true);
@@ -589,5 +592,16 @@ export class PublicProfilePage implements OnInit {
       return (count / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
     }
     return count.toString();
+  }
+
+  getCountryDisplay(code: string): string {
+    const flag = countryFlag(code);
+    const country = COUNTRIES.find((c) => c.code === code.toUpperCase());
+    if (country) {
+      const name =
+        this.i18n.currentLang === "fr" ? country.nameFr : country.name;
+      return `${flag} ${name}`;
+    }
+    return `${flag} ${code}`;
   }
 }
