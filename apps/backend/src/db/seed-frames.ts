@@ -2,8 +2,8 @@
  * Seed script for frame decoration styles.
  * Run with: cd apps/backend && bun run scripts/seed-frames.ts
  */
-import { db } from "../src/db";
-import { decoration } from "../src/db/schema";
+import { db } from "./index";
+import { decoration } from "./schema";
 
 const frameStyles = [
   {
