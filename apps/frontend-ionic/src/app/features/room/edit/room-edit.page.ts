@@ -129,6 +129,7 @@ type EditorState =
               [selectedItemId]="selectedItemId()"
               [theme]="themeService.activeTheme()"
               [zoomOut]="state().kind === 'MATERIAL_EDITOR_OPEN'"
+              [freeMovement]="freeMovement()"
               (itemPressed)="onItemPressed($event)"
               (itemDragged)="onItemDragged($event)"
               (itemDragEnd)="onItemDragEnd($event)"
@@ -152,7 +153,9 @@ type EditorState =
             [rotationDegrees]="selectedItemRotationDeg()"
             [scale]="selectedItem()?.scaleX ?? 0.5"
             [name]="selectedItem()?.decoration?.name ?? null"
+            [freeMovement]="freeMovement()"
             (changed)="onFloorPlacementChange($event)"
+            (freeMovementChange)="onFreeMovementToggle($event)"
             (delete)="confirmDelete()"
           />
         } @else if (isTrophySelected()) {
@@ -162,7 +165,9 @@ type EditorState =
             [positionY]="selectedItem()?.positionY ?? 1.5"
             [positionZ]="selectedItem()?.positionZ ?? 0"
             [name]="selectedItem()?.trophy?.raceResult?.race?.name ?? null"
+            [freeMovement]="freeMovement()"
             (changed)="onWallPlacementChange($event)"
+            (freeMovementChange)="onFreeMovementToggle($event)"
             (delete)="confirmDelete()"
           />
         } @else if (isItemSelected()) {
@@ -348,8 +353,6 @@ type EditorState =
         0 2px 12px rgba(0, 0, 0, 0.10),
         0 0 0 1px rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.06);
       --border-radius: 100px;
-      backdrop-filter: blur(16px) saturate(1.8);
-      -webkit-backdrop-filter: blur(16px) saturate(1.8);
       --color: var(--ion-text-color);
       transition: transform 0.18s ease;
 
@@ -379,6 +382,7 @@ export class RoomEditPage implements OnInit {
 
   // ─── State Machine ───────────────────────────────
   state = signal<EditorState>({ kind: "IDLE" });
+  freeMovement = signal(false);
 
   isItemSelected = computed(() => this.state().kind === "SELECTED");
   selectedItemId = computed(() => {
@@ -517,6 +521,10 @@ export class RoomEditPage implements OnInit {
       });
     }
     this.state.set({ kind: "IDLE" });
+  }
+
+  onFreeMovementToggle(value: boolean): void {
+    this.freeMovement.set(value);
   }
 
   async onFloorPlacementChange(values: FloorPlacementValues): Promise<void> {

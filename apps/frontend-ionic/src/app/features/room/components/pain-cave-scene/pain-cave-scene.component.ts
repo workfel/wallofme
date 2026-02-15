@@ -303,6 +303,7 @@ export class PainCaveSceneComponent implements OnDestroy {
   theme = input<RoomTheme>(DEFAULT_THEME);
   shadowMapSize = input(1024);
   zoomOut = input(false);
+  freeMovement = input(false);
 
   itemPressed = output<string>();
   itemDragged = output<ItemDragEvent>();
@@ -555,8 +556,10 @@ export class PainCaveSceneComponent implements OnDestroy {
     if (!point) return;
 
     if (this.dragModeSignal() === 'floor') {
-      const x = Math.max(-FLOOR_HALF_X, Math.min(FLOOR_HALF_X, point.x));
-      const z = Math.max(-FLOOR_HALF_Z, Math.min(FLOOR_HALF_Z, point.z));
+      const halfX = this.freeMovement() ? ROOM_WIDTH / 2 : FLOOR_HALF_X;
+      const halfZ = this.freeMovement() ? ROOM_DEPTH / 2 : FLOOR_HALF_Z;
+      const x = Math.max(-halfX, Math.min(halfX, point.x));
+      const z = Math.max(-halfZ, Math.min(halfZ, point.z));
       const rx = Math.round(x * 10) / 10;
       const rz = Math.round(z * 10) / 10;
 
@@ -624,11 +627,16 @@ export class PainCaveSceneComponent implements OnDestroy {
     const point = event.point;
     if (!point) return;
 
-    const y = Math.max(WALL_MIN_Y, Math.min(WALL_MAX_Y, point.y));
+    const minY = this.freeMovement() ? 0 : WALL_MIN_Y;
+    const maxY = this.freeMovement() ? ROOM_HEIGHT : WALL_MAX_Y;
+    const minAxis = this.freeMovement() ? -ROOM_DEPTH / 2 : WALL_MIN_AXIS;
+    const maxAxis = this.freeMovement() ? ROOM_DEPTH / 2 : WALL_MAX_AXIS;
+
+    const y = Math.max(minY, Math.min(maxY, point.y));
     const ry = Math.round(y * 10) / 10;
 
     if (wall === 'left') {
-      const z = Math.max(WALL_MIN_AXIS, Math.min(WALL_MAX_AXIS, point.z));
+      const z = Math.max(minAxis, Math.min(maxAxis, point.z));
       const rz = Math.round(z * 10) / 10;
 
       if (ry !== this.lastDragPosition.y || rz !== this.lastDragPosition.z) {
@@ -641,7 +649,7 @@ export class PainCaveSceneComponent implements OnDestroy {
         });
       }
     } else {
-      const x = Math.max(WALL_MIN_AXIS, Math.min(WALL_MAX_AXIS, point.x));
+      const x = Math.max(minAxis, Math.min(maxAxis, point.x));
       const rx = Math.round(x * 10) / 10;
 
       if (ry !== this.lastDragPosition.y || rx !== this.lastDragPosition.x) {

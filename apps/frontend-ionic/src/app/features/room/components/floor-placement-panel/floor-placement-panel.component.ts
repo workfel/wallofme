@@ -1,6 +1,6 @@
 import { Component, input, output, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
-import { IonButton, IonIcon, IonRange } from '@ionic/angular/standalone';
+import { IonButton, IonIcon, IonRange, IonToggle } from '@ionic/angular/standalone';
 import { TranslateModule } from '@ngx-translate/core';
 import { addIcons } from 'ionicons';
 import { trashOutline, chevronUpOutline, chevronDownOutline } from 'ionicons/icons';
@@ -16,16 +16,22 @@ export interface FloorPlacementValues {
 @Component({
   selector: 'app-floor-placement-panel',
   standalone: true,
-  imports: [DecimalPipe, IonButton, IonIcon, IonRange, TranslateModule],
+  imports: [DecimalPipe, IonButton, IonIcon, IonRange, IonToggle, TranslateModule],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="floor-panel">
-      <!-- Header with name + delete -->
+      <!-- Header with name + free movement toggle + delete -->
       <div class="panel-header">
         <span class="panel-title">{{ name() || ('room.floorPlacement' | translate) }}</span>
-        <ion-button fill="clear" color="danger" size="small" (click)="delete.emit()">
-          <ion-icon slot="icon-only" name="trash-outline" />
-        </ion-button>
+        <div class="header-actions">
+          <div class="free-move-toggle">
+            <span class="toggle-label">{{ 'room.freeMovement' | translate }}</span>
+            <ion-toggle [checked]="freeMovement()" (ionChange)="onFreeMovementToggle($event)" size="small" />
+          </div>
+          <ion-button fill="clear" color="danger" size="small" (click)="delete.emit()">
+            <ion-icon slot="icon-only" name="trash-outline" />
+          </ion-button>
+        </div>
       </div>
 
       <!-- Position row: X, Y, Z -->
@@ -38,7 +44,15 @@ export interface FloorPlacementValues {
             </button>
             <div class="stepper-value">
               <span class="axis">x</span>
-              <span class="val">{{ positionX() | number:'1.1-1' }}</span>
+              <input
+                class="val-input"
+                type="number"
+                inputmode="decimal"
+                step="0.1"
+                [value]="positionX() | number:'1.1-1'"
+                (change)="onDirectInput('positionX', $event)"
+                (keydown.enter)="blurInput($event)"
+              />
             </div>
             <button class="stepper-btn" (click)="step('positionX', -0.5)">
               <ion-icon name="chevron-down-outline" />
@@ -50,7 +64,15 @@ export interface FloorPlacementValues {
             </button>
             <div class="stepper-value">
               <span class="axis">y</span>
-              <span class="val">{{ positionY() | number:'1.1-1' }}</span>
+              <input
+                class="val-input"
+                type="number"
+                inputmode="decimal"
+                step="0.1"
+                [value]="positionY() | number:'1.1-1'"
+                (change)="onDirectInput('positionY', $event)"
+                (keydown.enter)="blurInput($event)"
+              />
             </div>
             <button class="stepper-btn" (click)="step('positionY', -0.5)">
               <ion-icon name="chevron-down-outline" />
@@ -62,7 +84,15 @@ export interface FloorPlacementValues {
             </button>
             <div class="stepper-value">
               <span class="axis">z</span>
-              <span class="val">{{ positionZ() | number:'1.1-1' }}</span>
+              <input
+                class="val-input"
+                type="number"
+                inputmode="decimal"
+                step="0.1"
+                [value]="positionZ() | number:'1.1-1'"
+                (change)="onDirectInput('positionZ', $event)"
+                (keydown.enter)="blurInput($event)"
+              />
             </div>
             <button class="stepper-btn" (click)="step('positionZ', -0.5)">
               <ion-icon name="chevron-down-outline" />
@@ -81,7 +111,15 @@ export interface FloorPlacementValues {
             </button>
             <div class="stepper-value">
               <span class="axis">y</span>
-              <span class="val">{{ rotationDegrees() }}</span>
+              <input
+                class="val-input"
+                type="number"
+                inputmode="numeric"
+                step="1"
+                [value]="rotationDegrees()"
+                (change)="onDirectInput('rotation', $event)"
+                (keydown.enter)="blurInput($event)"
+              />
             </div>
             <button class="stepper-btn" (click)="step('rotation', -15)">
               <ion-icon name="chevron-down-outline" />
@@ -131,6 +169,32 @@ export interface FloorPlacementValues {
       font-size: 16px;
       font-weight: 700;
       color: var(--ion-text-color);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .free-move-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .toggle-label {
+      font-size: 12px;
+      color: var(--ion-color-medium);
+    }
+
+    .free-move-toggle ion-toggle {
+      --handle-width: 16px;
+      --handle-height: 16px;
+      --handle-spacing: 2px;
+      height: 20px;
+      width: 36px;
+      min-width: 36px;
     }
 
     .control-row {
@@ -188,7 +252,7 @@ export interface FloorPlacementValues {
       display: flex;
       align-items: baseline;
       gap: 4px;
-      padding: 2px 8px;
+      padding: 2px 4px;
 
       .axis {
         font-size: 11px;
@@ -196,11 +260,29 @@ export interface FloorPlacementValues {
         color: var(--ion-color-medium);
       }
 
-      .val {
+      .val-input {
         font-size: 15px;
         font-weight: 700;
         color: var(--ion-text-color);
         font-variant-numeric: tabular-nums;
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid transparent;
+        outline: none;
+        width: 44px;
+        text-align: center;
+        padding: 0;
+        -moz-appearance: textfield;
+
+        &::-webkit-inner-spin-button,
+        &::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+
+        &:focus {
+          border-bottom-color: var(--ion-color-primary);
+        }
       }
     }
 
@@ -232,8 +314,10 @@ export class FloorPlacementPanelComponent {
   rotationDegrees = input(0);
   scale = input(0.5);
   name = input<string | null>(null);
+  freeMovement = input(false);
 
   changed = output<FloorPlacementValues>();
+  freeMovementChange = output<boolean>();
   delete = output<void>();
 
   constructor() {
@@ -242,20 +326,47 @@ export class FloorPlacementPanelComponent {
 
   formatScale = (value: number) => value.toFixed(1);
 
+  onFreeMovementToggle(event: CustomEvent): void {
+    this.freeMovementChange.emit(event.detail.checked);
+  }
+
   step(field: 'positionX' | 'positionY' | 'positionZ' | 'rotation', delta: number): void {
+    const limit = this.freeMovement() ? 3 : 2.5;
     if (field === 'positionX') {
       const v = Math.round((this.positionX() + delta) * 10) / 10;
-      this.emitChange({ positionX: Math.max(-2.5, Math.min(2.5, v)) });
+      this.emitChange({ positionX: Math.max(-limit, Math.min(limit, v)) });
     } else if (field === 'positionY') {
       const v = Math.round((this.positionY() + delta) * 10) / 10;
       this.emitChange({ positionY: Math.max(0, Math.min(3, v)) });
     } else if (field === 'positionZ') {
       const v = Math.round((this.positionZ() + delta) * 10) / 10;
-      this.emitChange({ positionZ: Math.max(-2.5, Math.min(2.5, v)) });
+      this.emitChange({ positionZ: Math.max(-limit, Math.min(limit, v)) });
     } else if (field === 'rotation') {
       const newDeg = ((this.rotationDegrees() + delta) % 360 + 360) % 360;
       this.emitChange({ rotationY: (newDeg * Math.PI) / 180 });
     }
+  }
+
+  onDirectInput(field: 'positionX' | 'positionY' | 'positionZ' | 'rotation', event: Event): void {
+    const raw = parseFloat((event.target as HTMLInputElement).value);
+    if (isNaN(raw)) return;
+
+    if (field === 'rotation') {
+      const deg = ((Math.round(raw) % 360) + 360) % 360;
+      this.emitChange({ rotationY: (deg * Math.PI) / 180 });
+    } else {
+      const v = Math.round(raw * 10) / 10;
+      const limit = this.freeMovement() ? 3 : 2.5;
+      if (field === 'positionY') {
+        this.emitChange({ positionY: Math.max(0, Math.min(3, v)) });
+      } else {
+        this.emitChange({ [field]: Math.max(-limit, Math.min(limit, v)) });
+      }
+    }
+  }
+
+  blurInput(event: Event): void {
+    (event.target as HTMLInputElement).blur();
   }
 
   onScaleChange(event: CustomEvent): void {

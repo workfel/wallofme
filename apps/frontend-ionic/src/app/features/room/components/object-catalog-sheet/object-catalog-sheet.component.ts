@@ -54,11 +54,11 @@ import { ThumbnailGeneratorService } from '@app/core/services/thumbnail-generato
 
     <ion-content>
       <ion-segment [value]="activeSegment()" (ionChange)="onSegmentChange($event)">
-        <ion-segment-button value="trophies">
-          <ion-label>{{ 'room.myTrophies' | translate }}</ion-label>
-        </ion-segment-button>
         <ion-segment-button value="objects">
           <ion-label>{{ 'room.objects' | translate }}</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="trophies">
+          <ion-label>{{ 'room.myTrophies' | translate }}</ion-label>
         </ion-segment-button>
       </ion-segment>
 
@@ -232,7 +232,7 @@ export class ObjectCatalogSheetComponent implements OnInit, OnDestroy {
   decorationService = inject(DecorationService);
   tokenService = inject(TokenService);
 
-  activeSegment = signal<'trophies' | 'objects'>('trophies');
+  activeSegment = signal<'trophies' | 'objects'>('objects');
   thumbnails = signal<Map<string, string>>(new Map());
 
   placeTrophy = output<string>();

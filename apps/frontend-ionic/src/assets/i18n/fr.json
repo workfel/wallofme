@@ -166,7 +166,8 @@
     "place": "Placer",
     "designer": "Designer",
     "walls": "Murs",
-    "materials": "Matériaux"
+    "materials": "Matériaux",
+    "freeMovement": "Déplacement libre"
   },
   "materials": {
     "none": "Aucun",

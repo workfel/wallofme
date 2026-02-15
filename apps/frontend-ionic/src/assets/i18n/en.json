@@ -166,7 +166,8 @@
     "place": "Place",
     "designer": "Designer",
     "walls": "Walls",
-    "materials": "Materials"
+    "materials": "Materials",
+    "freeMovement": "Free movement"
   },
   "materials": {
     "none": "None",

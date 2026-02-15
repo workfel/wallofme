@@ -1,6 +1,6 @@
 import { Component, computed, input, output, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
-import { IonButton, IonIcon } from '@ionic/angular/standalone';
+import { IonButton, IonIcon, IonToggle } from '@ionic/angular/standalone';
 import { TranslateModule } from '@ngx-translate/core';
 import { addIcons } from 'ionicons';
 import { trashOutline, chevronUpOutline, chevronDownOutline } from 'ionicons/icons';
@@ -14,16 +14,22 @@ export interface WallPlacementValues {
 @Component({
   selector: 'app-wall-placement-panel',
   standalone: true,
-  imports: [DecimalPipe, IonButton, IonIcon, TranslateModule],
+  imports: [DecimalPipe, IonButton, IonIcon, IonToggle, TranslateModule],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="wall-panel">
-      <!-- Header with name + delete -->
+      <!-- Header with name + free movement toggle + delete -->
       <div class="panel-header">
         <span class="panel-title">{{ name() || ('room.wallPlacement' | translate) }}</span>
-        <ion-button fill="clear" color="danger" size="small" (click)="delete.emit()">
-          <ion-icon slot="icon-only" name="trash-outline" />
-        </ion-button>
+        <div class="header-actions">
+          <div class="free-move-toggle">
+            <span class="toggle-label">{{ 'room.freeMovement' | translate }}</span>
+            <ion-toggle [checked]="freeMovement()" (ionChange)="onFreeMovementToggle($event)" size="small" />
+          </div>
+          <ion-button fill="clear" color="danger" size="small" (click)="delete.emit()">
+            <ion-icon slot="icon-only" name="trash-outline" />
+          </ion-button>
+        </div>
       </div>
 
       <!-- Position row: Horizontal + Height -->
@@ -84,6 +90,32 @@ export interface WallPlacementValues {
       font-size: 16px;
       font-weight: 700;
       color: var(--ion-text-color);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .free-move-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .toggle-label {
+      font-size: 12px;
+      color: var(--ion-color-medium);
+    }
+
+    .free-move-toggle ion-toggle {
+      --handle-width: 16px;
+      --handle-height: 16px;
+      --handle-spacing: 2px;
+      height: 20px;
+      width: 36px;
+      min-width: 36px;
     }
 
     .control-row {
@@ -171,8 +203,10 @@ export class WallPlacementPanelComponent {
   positionY = input(1.5);
   positionZ = input(0);
   name = input<string | null>(null);
+  freeMovement = input(false);
 
   changed = output<WallPlacementValues>();
+  freeMovementChange = output<boolean>();
   delete = output<void>();
 
   horizontalValue = computed(() => {
@@ -183,21 +217,28 @@ export class WallPlacementPanelComponent {
     addIcons({ trashOutline, chevronUpOutline, chevronDownOutline });
   }
 
+  onFreeMovementToggle(event: CustomEvent): void {
+    this.freeMovementChange.emit(event.detail.checked);
+  }
+
   stepHorizontal(delta: number): void {
+    const hLimit = this.freeMovement() ? 3 : 2.7;
     if (this.wall() === 'left') {
       const v = Math.round((this.positionZ() + delta) * 10) / 10;
-      const clamped = Math.max(-2.7, Math.min(2.7, v));
+      const clamped = Math.max(-hLimit, Math.min(hLimit, v));
       this.emitChange({ positionZ: clamped });
     } else {
       const v = Math.round((this.positionX() + delta) * 10) / 10;
-      const clamped = Math.max(-2.7, Math.min(2.7, v));
+      const clamped = Math.max(-hLimit, Math.min(hLimit, v));
       this.emitChange({ positionX: clamped });
     }
   }
 
   stepHeight(delta: number): void {
+    const minY = this.freeMovement() ? 0 : 0.3;
+    const maxY = this.freeMovement() ? 3 : 2.7;
     const v = Math.round((this.positionY() + delta) * 10) / 10;
-    const clamped = Math.max(0.3, Math.min(2.7, v));
+    const clamped = Math.max(minY, Math.min(maxY, v));
     this.emitChange({ positionY: clamped });
   }
 
