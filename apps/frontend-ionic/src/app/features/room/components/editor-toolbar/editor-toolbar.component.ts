@@ -15,7 +15,7 @@ import { inject } from "@angular/core";
         <ion-icon name="arrow-back-outline" />
       </button>
 
-      <button class="toolbar-pill" (click)="openThemes.emit()">
+      <button class="toolbar-pill" data-tutorial="theme-btn" (click)="openThemes.emit()">
         <ion-icon name="color-palette-outline" />
       </button>
     </div>

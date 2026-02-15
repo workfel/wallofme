@@ -3,10 +3,11 @@ import {
   inject,
   signal,
   computed,
+  effect,
   OnInit,
   CUSTOM_ELEMENTS_SCHEMA,
 } from "@angular/core";
-import { Router } from "@angular/router";
+import { Router, ActivatedRoute } from "@angular/router";
 import {
   IonContent,
   IonIcon,
@@ -61,6 +62,8 @@ import {
   type WallPlacementValues,
 } from "../components/wall-placement-panel/wall-placement-panel.component";
 import { MaterialCustomizerSheetComponent } from "../components/material-customizer-sheet/material-customizer-sheet.component";
+import { TutorialOverlayComponent } from "@app/shared/components/tutorial-overlay/tutorial-overlay.component";
+import { TutorialService } from "@app/core/services/tutorial.service";
 
 // ─── Editor State Machine ────────────────────────────────
 type EditorState =
@@ -91,6 +94,7 @@ type EditorState =
     ShareRoomSheetComponent,
     WallPlacementPanelComponent,
     MaterialCustomizerSheetComponent,
+    TutorialOverlayComponent,
     IonContent,
     IonIcon,
     IonSpinner,
@@ -116,7 +120,7 @@ type EditorState =
         }
 
         <!-- 3D Canvas -->
-        <div class="canvas-section">
+        <div class="canvas-section" data-tutorial="canvas">
           <ngt-canvas
             [shadows]="true"
             [dpr]="[1, 2]"
@@ -139,7 +143,7 @@ type EditorState =
 
         <!-- Floating share pill -->
         @if (state().kind === "IDLE") {
-          <button class="share-pill" (click)="onShare()">
+          <button class="share-pill" data-tutorial="share-pill" (click)="onShare()">
             <ion-icon name="share-outline" />
           </button>
         }
@@ -182,12 +186,15 @@ type EditorState =
       <!-- FAB: Add items -->
       @if (state().kind === "IDLE") {
         <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-          <ion-fab-button (click)="openCatalog()">
+          <ion-fab-button data-tutorial="fab-add" (click)="openCatalog()">
             <ion-icon name="add-outline" />
           </ion-fab-button>
         </ion-fab>
       }
     </ion-content>
+
+    <!-- Tutorial Overlay -->
+    <app-tutorial-overlay />
 
     <!-- Theme Selector Bottom Sheet -->
     <ion-modal
@@ -376,7 +383,9 @@ export class RoomEditPage implements OnInit {
   private trophyService = inject(TrophyService);
   private decorationService = inject(DecorationService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private translate = inject(TranslateService);
+  tutorialService = inject(TutorialService);
 
   private thumbnailCaptured = false;
 
@@ -437,6 +446,38 @@ export class RoomEditPage implements OnInit {
       moveOutline,
       shareOutline,
     });
+
+    // Tutorial state watcher — advance steps based on editor state transitions
+    effect(() => {
+      const editorState = this.state();
+      const tStep = this.tutorialService.currentStep();
+      if (!this.tutorialService.active() || !tStep) return;
+
+      // When user clicks a tutorial target and a modal opens → enter waiting mode
+      if (
+        tStep.action === "click" &&
+        this.tutorialService.subStep() === "main"
+      ) {
+        if (tStep.id === "theme" && editorState.kind === "THEME_OPEN") {
+          this.tutorialService.enterWaiting();
+        }
+        if (tStep.id === "add-object" && editorState.kind === "CATALOG_OPEN") {
+          this.tutorialService.enterWaiting();
+        }
+        if (tStep.id === "share" && editorState.kind === "SHARE_OPEN") {
+          this.tutorialService.enterWaiting();
+        }
+      }
+
+      // When action completes (state returns to IDLE after modal) → advance
+      if (
+        tStep.waitForState === "IDLE" &&
+        editorState.kind === "IDLE" &&
+        this.tutorialService.subStep() === "waiting"
+      ) {
+        this.tutorialService.nextStep();
+      }
+    });
   }
 
   async ngOnInit(): Promise<void> {
@@ -447,6 +488,12 @@ export class RoomEditPage implements OnInit {
     this.trophyService.fetchTrophies();
     this.tokenService.fetchBalance();
     this.decorationService.fetchInventory();
+
+    // Start tutorial if query param present
+    const params = this.route.snapshot.queryParams;
+    if (params["tutorial"] === "true") {
+      this.tutorialService.startTutorial();
+    }
   }
 
   // ─── Item Interactions ───────────────────────────

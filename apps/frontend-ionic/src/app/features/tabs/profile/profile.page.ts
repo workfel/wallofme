@@ -28,6 +28,7 @@ import {
   createOutline,
   documentTextOutline,
   flameOutline,
+  helpCircleOutline,
   languageOutline,
   logOutOutline,
   moonOutline,
@@ -44,6 +45,7 @@ import { TokenService } from "@app/core/services/token.service";
 import { TrophyService } from "@app/core/services/trophy.service";
 import { UserService } from "@app/core/services/user.service";
 import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.component";
+import { TutorialService } from "@app/core/services/tutorial.service";
 
 @Component({
   selector: "app-profile",
@@ -254,6 +256,10 @@ import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.co
                   {{ "profile.theme" | translate }}
                   <p>{{ currentTheme() | translate }}</p>
                 </ion-label>
+              </ion-item>
+              <ion-item button [detail]="true" (click)="onReplayTutorial()">
+                <ion-icon slot="start" name="help-circle-outline" />
+                <ion-label>{{ "profile.replayTutorial" | translate }}</ion-label>
               </ion-item>
               @if (!authService.user()?.isPro) {
                 <ion-item button [detail]="true" (click)="onUpgradePro()">
@@ -637,6 +643,7 @@ export class ProfilePage implements OnInit {
   private actionSheetCtrl = inject(ActionSheetController);
   private translate = inject(TranslateService);
   private appThemeService = inject(AppThemeService);
+  private tutorialService = inject(TutorialService);
 
   private langChange = toSignal(this.translate.onLangChange);
   private currentLang = computed(() => {
@@ -650,6 +657,7 @@ export class ProfilePage implements OnInit {
     addIcons({
       logOutOutline,
       languageOutline,
+      helpCircleOutline,
       moonOutline,
       starOutline,
       personCircleOutline,
@@ -695,6 +703,14 @@ export class ProfilePage implements OnInit {
   onUpgradePro(): void {
     this.showSettings.set(false);
     this.router.navigate(["/pro"]);
+  }
+
+  async onReplayTutorial(): Promise<void> {
+    this.showSettings.set(false);
+    await this.tutorialService.resetCompletion();
+    this.router.navigate(["/room/edit"], {
+      queryParams: { tutorial: "true" },
+    });
   }
 
   async onLogout(): Promise<void> {

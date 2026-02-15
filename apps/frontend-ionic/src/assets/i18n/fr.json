@@ -93,7 +93,8 @@
     "statViews": "Vues",
     "noTrophies": "Aucun trophée pour le moment",
     "proBanner": "Libérez votre potentiel",
-    "goProCta": "Passer Pro"
+    "goProCta": "Passer Pro",
+    "replayTutorial": "Revoir le tutoriel"
   },
   "room": {
     "edit": "Modifier la salle",
@@ -454,5 +455,20 @@
     "marathon": "Marathon",
     "ultra": "Ultra",
     "other": "Autre"
+  },
+  "tutorial": {
+    "welcome": "Bienvenue dans ta Pain Cave ! Découvrons comment personnaliser ta chambre.",
+    "welcomeBtn": "C'est parti !",
+    "theme": "Appuie ici pour changer le style de ta chambre",
+    "themeWaiting": "Choisis un thème et appuie sur Appliquer !",
+    "addObject": "Ajoute des décorations et des objets 3D dans ta chambre",
+    "addObjectWaiting": "Choisis un objet pour le placer dans ta chambre !",
+    "move": "Appuie sur un objet pour le sélectionner, puis glisse pour le repositionner. Utilise le panneau de contrôle pour ajuster.",
+    "share": "Partage ta Pain Cave avec tes amis !",
+    "shareWaiting": "Copie le lien ou partage-le directement !",
+    "complete": "C'est prêt ! Ta Pain Cave est prête à être montrée.",
+    "completeBtn": "Terminé",
+    "next": "Suivant",
+    "skip": "Passer le tutoriel"
   }
 }

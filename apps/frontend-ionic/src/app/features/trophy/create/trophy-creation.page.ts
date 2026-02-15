@@ -20,6 +20,8 @@ import { TranslateModule, TranslateService } from "@ngx-translate/core";
 
 import { ScanService } from "@app/core/services/scan.service";
 import { UserService } from "@app/core/services/user.service";
+import { RoomService } from "@app/core/services/room.service";
+import { TutorialService } from "@app/core/services/tutorial.service";
 import { UpgradePromptComponent } from "@app/shared/components/upgrade-prompt/upgrade-prompt.component";
 import { TrophyCaptureComponent } from "./components/trophy-capture.component";
 import { TrophyProcessingComponent } from "./components/trophy-processing.component";
@@ -190,6 +192,8 @@ export class TrophyCreationPage {
   private navCtrl = inject(NavController);
   readonly scanService = inject(ScanService);
   private userService = inject(UserService);
+  private roomService = inject(RoomService);
+  private tutorialService = inject(TutorialService);
   private toastController = inject(ToastController);
   private translate = inject(TranslateService);
 
@@ -354,6 +358,11 @@ export class TrophyCreationPage {
     }
     await this.scanService.autoPlaceTrophy();
 
+    // Check if this is the user's first trophy (room had <= 1 items since we just placed one)
+    const room = this.roomService.room();
+    const isFirstTrophy = (room?.items?.length ?? 0) <= 1;
+    const tutorialCompleted = await this.tutorialService.hasCompleted();
+
     // Show success toast
     const message = this.translate.instant('review.trophyAdded');
     const toast = await this.toastController.create({
@@ -366,7 +375,14 @@ export class TrophyCreationPage {
     await toast.present();
 
     this.scanService.reset();
-    this.router.navigate(["/tabs/home"]);
+
+    if (isFirstTrophy && !tutorialCompleted) {
+      this.router.navigate(["/room/edit"], {
+        queryParams: { tutorial: "true" },
+      });
+    } else {
+      this.router.navigate(["/tabs/home"]);
+    }
   }
 
   private async doValidateAndSearch(raceId?: string): Promise<void> {

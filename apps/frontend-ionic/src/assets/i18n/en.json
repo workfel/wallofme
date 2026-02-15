@@ -93,7 +93,8 @@
     "statViews": "Views",
     "noTrophies": "No trophies yet",
     "proBanner": "Unlock your full potential",
-    "goProCta": "Go Pro"
+    "goProCta": "Go Pro",
+    "replayTutorial": "Replay tutorial"
   },
   "room": {
     "edit": "Edit Room",
@@ -454,5 +455,20 @@
     "unlockFeature": "Unlock This Feature",
     "featureRequiresPro": "{{feature}} requires WallOfMe Pro. Upgrade to unlock all premium features.",
     "viewPlans": "View Pro Plans"
+  },
+  "tutorial": {
+    "welcome": "Welcome to your Pain Cave! Let's discover how to customize your room.",
+    "welcomeBtn": "Let's go!",
+    "theme": "Tap here to change the look of your room",
+    "themeWaiting": "Choose a theme you like and tap Apply!",
+    "addObject": "Add decorations and 3D objects to your room",
+    "addObjectWaiting": "Pick an object to place it in your room!",
+    "move": "Tap any object to select it, then drag to reposition. Use the control panel to fine-tune.",
+    "share": "Share your Pain Cave with friends!",
+    "shareWaiting": "Copy the link or share it directly!",
+    "complete": "You're all set! Your Pain Cave is ready to show off.",
+    "completeBtn": "Done",
+    "next": "Next",
+    "skip": "Skip tutorial"
   }
 }
