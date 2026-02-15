@@ -5,9 +5,9 @@ import {
   OnInit,
   OnDestroy,
   ViewChild,
-} from '@angular/core';
-import { SlicePipe } from '@angular/common';
-import { Router } from '@angular/router';
+} from "@angular/core";
+import { SlicePipe } from "@angular/common";
+import { Router } from "@angular/router";
 import {
   IonContent,
   IonHeader,
@@ -31,9 +31,9 @@ import {
   IonModal,
   ViewWillLeave,
   ViewDidEnter,
-} from '@ionic/angular/standalone';
-import { TranslateModule } from '@ngx-translate/core';
-import { addIcons } from 'ionicons';
+} from "@ionic/angular/standalone";
+import { TranslateModule } from "@ngx-translate/core";
+import { addIcons } from "ionicons";
 import {
   heartOutline,
   personCircleOutline,
@@ -42,46 +42,46 @@ import {
   listOutline,
   globeOutline,
   chevronForwardOutline,
-} from 'ionicons/icons';
+} from "ionicons/icons";
 
 import {
   ExploreService,
   type ExploreRoom,
   type ExploreSortBy,
   type GlobePoint,
-} from '@app/core/services/explore.service';
-import { ProBadgeComponent } from '@app/shared/components/pro-badge/pro-badge.component';
-import { ExploreGlobeComponent } from './globe/explore-globe.component';
-import { UserPreviewSheetComponent } from './globe/user-preview-sheet.component';
+} from "@app/core/services/explore.service";
+import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.component";
+import { ExploreGlobeComponent } from "./globe/explore-globe.component";
+import { UserPreviewSheetComponent } from "./globe/user-preview-sheet.component";
 
 const SPORT_FILTERS = [
-  'running',
-  'trail',
-  'triathlon',
-  'cycling',
-  'crossfit',
-  'swimming',
-  'ocr',
-  'duathlon',
-  'hyrox',
-  'ironman',
-  'marathon',
-  'ultra',
+  "running",
+  "trail",
+  "triathlon",
+  "cycling",
+  "crossfit",
+  "swimming",
+  "ocr",
+  "duathlon",
+  "hyrox",
+  "ironman",
+  "marathon",
+  "ultra",
 ] as const;
 
 const GRADIENT_PALETTES = [
-  ['#667eea', '#764ba2'],
-  ['#f093fb', '#f5576c'],
-  ['#4facfe', '#00f2fe'],
-  ['#43e97b', '#38f9d7'],
-  ['#fa709a', '#fee140'],
-  ['#a18cd1', '#fbc2eb'],
-  ['#fccb90', '#d57eeb'],
-  ['#e0c3fc', '#8ec5fc'],
+  ["#667eea", "#764ba2"],
+  ["#f093fb", "#f5576c"],
+  ["#4facfe", "#00f2fe"],
+  ["#43e97b", "#38f9d7"],
+  ["#fa709a", "#fee140"],
+  ["#a18cd1", "#fbc2eb"],
+  ["#fccb90", "#d57eeb"],
+  ["#e0c3fc", "#8ec5fc"],
 ];
 
 @Component({
-  selector: 'app-explore',
+  selector: "app-explore",
   standalone: true,
   imports: [
     SlicePipe,
@@ -113,24 +113,25 @@ const GRADIENT_PALETTES = [
   template: `
     <ion-header>
       <ion-toolbar>
-        <ion-title>{{ 'explore.title' | translate }}</ion-title>
+        <ion-title>{{ "explore.title" | translate }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
     <ion-content [fullscreen]="true">
-
-
       <!-- View Toggle -->
       <div class="toggle-container">
         <div class="toggle-track">
-          <div class="toggle-slider" [class.globe]="activeView() === 'globe'"></div>
+          <div
+            class="toggle-slider"
+            [class.globe]="activeView() === 'globe'"
+          ></div>
           <button
             class="toggle-btn"
             [class.active]="activeView() === 'list'"
             (click)="switchView('list')"
           >
             <ion-icon name="list-outline" />
-            <span>{{ 'explore.listView' | translate }}</span>
+            <span>{{ "explore.listView" | translate }}</span>
           </button>
           <button
             class="toggle-btn"
@@ -138,12 +139,12 @@ const GRADIENT_PALETTES = [
             (click)="switchView('globe')"
           >
             <ion-icon name="globe-outline" />
-            <span>{{ 'explore.globeView' | translate }}</span>
+            <span>{{ "explore.globeView" | translate }}</span>
           </button>
         </div>
       </div>
 
-      @if (activeView() === 'list') {
+      @if (activeView() === "list") {
         <!-- Pull to refresh -->
         <ion-refresher slot="fixed" (ionRefresh)="onRefresh($event)">
           <ion-refresher-content />
@@ -156,10 +157,17 @@ const GRADIENT_PALETTES = [
               <ion-icon name="globe-outline" />
             </div>
             <div class="globe-teaser-text">
-              <span class="globe-teaser-title">{{ 'explore.globeTeaser' | translate }}</span>
-              <span class="globe-teaser-sub">{{ 'explore.globeTeaserSub' | translate }}</span>
+              <span class="globe-teaser-title">{{
+                "explore.globeTeaser" | translate
+              }}</span>
+              <span class="globe-teaser-sub">{{
+                "explore.globeTeaserSub" | translate
+              }}</span>
             </div>
-            <ion-icon name="chevron-forward-outline" class="globe-teaser-chevron" />
+            <ion-icon
+              name="chevron-forward-outline"
+              class="globe-teaser-chevron"
+            />
           </div>
 
           <!-- Search bar -->
@@ -178,7 +186,7 @@ const GRADIENT_PALETTES = [
                 [color]="activeSport() === sport ? 'primary' : undefined"
                 (click)="onSportFilter(sport)"
               >
-                {{ 'sports.' + sport | translate }}
+                {{ "sports." + sport | translate }}
               </ion-chip>
             }
           </div>
@@ -190,18 +198,20 @@ const GRADIENT_PALETTES = [
             mode="ios"
           >
             <ion-segment-button value="recent">
-              <ion-label>{{ 'explore.recent' | translate }}</ion-label>
+              <ion-label>{{ "explore.recent" | translate }}</ion-label>
             </ion-segment-button>
             <ion-segment-button value="popular">
-              <ion-label>{{ 'explore.popular' | translate }}</ion-label>
+              <ion-label>{{ "explore.popular" | translate }}</ion-label>
             </ion-segment-button>
             <ion-segment-button value="liked">
-              <ion-label>{{ 'explore.mostLiked' | translate }}</ion-label>
+              <ion-label>{{ "explore.mostLiked" | translate }}</ion-label>
             </ion-segment-button>
           </ion-segment>
 
           <!-- Loading state (initial) -->
-          @if (exploreService.loading() && exploreService.rooms().length === 0) {
+          @if (
+            exploreService.loading() && exploreService.rooms().length === 0
+          ) {
             <div class="centered-state">
               <ion-spinner name="crescent" />
             </div>
@@ -211,9 +221,9 @@ const GRADIENT_PALETTES = [
           @if (exploreService.isEmpty()) {
             <div class="centered-state empty-state">
               <ion-icon name="search-outline" class="empty-icon" />
-              <h3>{{ 'explore.noResults' | translate }}</h3>
+              <h3>{{ "explore.noResults" | translate }}</h3>
               <ion-text color="medium">
-                <p>{{ 'explore.noResultsSubtitle' | translate }}</p>
+                <p>{{ "explore.noResultsSubtitle" | translate }}</p>
               </ion-text>
             </div>
           }
@@ -221,9 +231,16 @@ const GRADIENT_PALETTES = [
           <!-- Room cards grid -->
           @if (exploreService.rooms().length > 0) {
             <div class="rooms-grid">
-              @for (room of exploreService.rooms(); track room.id; let i = $index) {
+              @for (
+                room of exploreService.rooms();
+                track room.id;
+                let i = $index
+              ) {
                 <ion-card class="room-card" (click)="openRoom(room)" button>
-                  <div class="card-thumbnail" [style.background]="getGradient(i)">
+                  <div
+                    class="card-thumbnail"
+                    [style.background]="getGradient(i)"
+                  >
                     @if (room.thumbnailUrl) {
                       <img
                         [src]="room.thumbnailUrl"
@@ -244,16 +261,24 @@ const GRADIENT_PALETTES = [
                         @if (room.image) {
                           <img [src]="room.image" alt="" />
                         } @else {
-                          <ion-icon name="person-circle-outline" class="avatar-fallback" />
+                          <ion-icon
+                            name="person-circle-outline"
+                            class="avatar-fallback"
+                          />
                         }
                       </ion-avatar>
-                      <span class="card-name">{{ room.displayName || ('explore.athlete' | translate) }}</span>
+                      <span class="card-name">{{
+                        room.displayName || ("explore.athlete" | translate)
+                      }}</span>
                     </div>
                     @if (room.sports && room.sports.length > 0) {
                       <div class="card-sports">
-                        @for (sport of room.sports | slice:0:2; track sport) {
+                        @for (
+                          sport of room.sports | slice: 0 : 2;
+                          track sport
+                        ) {
                           <ion-chip class="sport-chip" color="medium" outline>
-                            {{ 'sports.' + sport | translate }}
+                            {{ "sports." + sport | translate }}
                           </ion-chip>
                         }
                       </div>
@@ -280,7 +305,7 @@ const GRADIENT_PALETTES = [
         </ion-infinite-scroll>
       }
 
-      @if (activeView() === 'globe') {
+      @if (activeView() === "globe") {
         <!-- Sport filter for globe -->
         <div class="globe-filters">
           <div class="chip-scroll">
@@ -290,17 +315,20 @@ const GRADIENT_PALETTES = [
                 [color]="activeSport() === sport ? 'primary' : undefined"
                 (click)="onSportFilter(sport)"
               >
-                {{ 'sports.' + sport | translate }}
+                {{ "sports." + sport | translate }}
               </ion-chip>
             }
           </div>
         </div>
 
-        @if (exploreService.globeLoading() && exploreService.globePoints().length === 0) {
+        @if (
+          exploreService.globeLoading() &&
+          exploreService.globePoints().length === 0
+        ) {
           <div class="centered-state">
             <ion-spinner name="crescent" />
             <ion-text color="medium">
-              <p>{{ 'globe.loading' | translate }}</p>
+              <p>{{ "globe.loading" | translate }}</p>
             </ion-text>
           </div>
         } @else if (showGlobe()) {
@@ -332,6 +360,16 @@ const GRADIENT_PALETTES = [
     </ion-modal>
   `,
   styles: `
+    /* Global Background */
+    ion-content {
+      /*--background: radial-gradient(circle at 50% 0%, #e0f7fa 0%, #f0f4f8 100%);*/
+    }
+
+    ion-header ion-toolbar {
+      --background: transparent;
+      --border-width: 0;
+    }
+
     .toggle-container {
       padding: 8px 16px 4px;
     }
@@ -339,20 +377,25 @@ const GRADIENT_PALETTES = [
     .toggle-track {
       position: relative;
       display: flex;
-      background: var(--ion-color-step-100);
-      border-radius: 12px;
-      padding: 3px;
+      background: rgba(255, 255, 255, 0.45);
+      backdrop-filter: blur(16px) saturate(1.8);
+      -webkit-backdrop-filter: blur(16px) saturate(1.8);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      border-radius: 16px;
+      padding: 4px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
     }
 
     .toggle-slider {
       position: absolute;
-      top: 3px;
-      left: 3px;
-      width: calc(50% - 3px);
-      height: calc(100% - 6px);
-      background: var(--ion-background-color, #fff);
-      border-radius: 10px;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      top: 4px;
+      left: 4px;
+      width: calc(50% - 4px);
+      height: calc(100% - 8px);
+      /*background: rgba(255, 255, 255, 0.85);*/
+      background : #1a1a1a1a;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
       &.globe {
@@ -366,12 +409,12 @@ const GRADIENT_PALETTES = [
       align-items: center;
       justify-content: center;
       gap: 6px;
-      padding: 8px 0;
+      padding: 10px 0;
       background: none;
       border: none;
       font-size: 14px;
-      font-weight: 600;
-      color: var(--ion-color-medium);
+      font-weight: 700;
+      color: var(--ion-color-step-500);
       cursor: pointer;
       position: relative;
       z-index: 1;
@@ -389,12 +432,16 @@ const GRADIENT_PALETTES = [
     .globe-teaser {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
       margin: 8px 0 4px;
-      padding: 12px 14px;
-      background: linear-gradient(135deg, rgba(var(--ion-color-primary-rgb), 0.08), rgba(var(--ion-color-primary-rgb), 0.03));
-      border: 1px solid rgba(var(--ion-color-primary-rgb), 0.2);
-      border-radius: 14px;
+      padding: 14px 16px;
+      /*background: rgba(255, 255, 255, 0.5);*/
+      background : #1a1a1a1a;
+      backdrop-filter: blur(16px) saturate(1.8);
+      -webkit-backdrop-filter: blur(16px) saturate(1.8);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      border-radius: 20px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
       cursor: pointer;
       transition: transform 0.2s ease;
 
@@ -404,8 +451,8 @@ const GRADIENT_PALETTES = [
     }
 
     .globe-teaser-icon {
-      width: 40px;
-      height: 40px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       background: var(--ion-color-primary);
       color: #fff;
@@ -413,9 +460,10 @@ const GRADIENT_PALETTES = [
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(var(--ion-color-primary-rgb), 0.3);
 
       ion-icon {
-        font-size: 20px;
+        font-size: 22px;
       }
     }
 
@@ -423,38 +471,42 @@ const GRADIENT_PALETTES = [
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 1px;
+      gap: 2px;
     }
 
     .globe-teaser-title {
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 700;
+      color: var(--ion-text-color);
     }
 
     .globe-teaser-sub {
       font-size: 12px;
-      color: var(--ion-color-medium);
+      color: var(--ion-color-step-500);
+      font-weight: 500;
     }
 
     .globe-teaser-chevron {
-      font-size: 18px;
-      color: var(--ion-color-medium);
+      font-size: 20px;
+      color: var(--ion-color-step-400);
       flex-shrink: 0;
     }
 
     .explore-container {
-      padding: 0 8px;
+      padding: 0 12px;
     }
 
     ion-searchbar {
-      --border-radius: 12px;
+      --border-radius: 16px;
+      --background: rgba(255, 255, 255, 0.5);
+      --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
       padding: 8px 0 4px;
     }
 
     .chip-scroll {
       display: flex;
       overflow-x: auto;
-      gap: 4px;
+      gap: 6px;
       padding: 4px 0 8px;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
@@ -466,11 +518,17 @@ const GRADIENT_PALETTES = [
       ion-chip {
         flex-shrink: 0;
         font-size: 13px;
+        font-weight: 600;
+        --background: rgba(255, 255, 255, 0.5);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.4);
       }
     }
 
     ion-segment {
       margin-bottom: 12px;
+      --background: rgba(255, 255, 255, 0.4);
+      border-radius: 12px;
     }
 
     .centered-state {
@@ -484,36 +542,44 @@ const GRADIENT_PALETTES = [
 
     .empty-state {
       .empty-icon {
-        font-size: 48px;
-        color: var(--ion-color-medium);
+        font-size: 56px;
+        color: rgba(var(--ion-color-medium-rgb), 0.5);
         margin-bottom: 16px;
       }
 
       h3 {
         font-size: 18px;
-        font-weight: 600;
+        font-weight: 700;
         margin: 0 0 8px;
       }
 
       p {
         margin: 0;
         font-size: 14px;
+        color: var(--ion-color-step-500);
       }
     }
 
     .rooms-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
-      padding-bottom: 16px;
+      gap: 12px;
+      padding-bottom: 24px;
     }
 
     .room-card {
       margin: 0;
-      border-radius: 14px;
+      border-radius: 20px;
       overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      background: rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(16px) saturate(1.6);
+      -webkit-backdrop-filter: blur(16px) saturate(1.6);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.06),
+        0 1px 2px rgba(0, 0, 0, 0.03);
       transition: transform 0.2s ease;
+      --background: transparent;
 
       &:active {
         transform: scale(0.97);
@@ -524,6 +590,7 @@ const GRADIENT_PALETTES = [
         width: 100%;
         aspect-ratio: 1;
         overflow: hidden;
+        border-radius: 16px 16px 0 0;
       }
 
       .thumbnail-img {
@@ -541,47 +608,50 @@ const GRADIENT_PALETTES = [
     }
 
     .card-body {
-      padding: 8px 10px 10px;
+      padding: 10px 12px 12px;
     }
 
     .card-user {
       display: flex;
       align-items: center;
-      gap: 6px;
-      margin-bottom: 4px;
+      gap: 8px;
+      margin-bottom: 6px;
     }
 
     .card-avatar {
-      width: 22px;
-      height: 22px;
+      width: 24px;
+      height: 24px;
       flex-shrink: 0;
+      border: 1.5px solid rgba(255, 255, 255, 0.8);
     }
 
     .avatar-fallback {
-      font-size: 22px;
+      font-size: 24px;
       color: var(--ion-color-step-400);
     }
 
     .card-name {
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 700;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      color: var(--ion-text-color);
     }
 
     .card-sports {
       display: flex;
-      gap: 2px;
-      margin-bottom: 4px;
+      gap: 4px;
+      margin-bottom: 6px;
     }
 
     .sport-chip {
-      height: 20px;
+      height: 22px;
       font-size: 10px;
       margin: 0;
-      --padding-start: 6px;
-      --padding-end: 6px;
+      --padding-start: 8px;
+      --padding-end: 8px;
+      font-weight: 600;
     }
 
     .card-stats {
@@ -593,9 +663,10 @@ const GRADIENT_PALETTES = [
     .stat {
       display: flex;
       align-items: center;
-      gap: 3px;
+      gap: 4px;
       font-size: 12px;
-      color: var(--ion-color-medium);
+      font-weight: 600;
+      color: var(--ion-color-step-500);
 
       ion-icon {
         font-size: 14px;
@@ -603,7 +674,7 @@ const GRADIENT_PALETTES = [
     }
 
     .globe-filters {
-      padding: 0 8px;
+      padding: 0 12px;
     }
 
     .globe-container {
@@ -612,18 +683,20 @@ const GRADIENT_PALETTES = [
     }
   `,
 })
-export class ExplorePage implements OnInit, OnDestroy, ViewWillLeave, ViewDidEnter {
+export class ExplorePage
+  implements OnInit, OnDestroy, ViewWillLeave, ViewDidEnter
+{
   exploreService = inject(ExploreService);
   private router = inject(Router);
 
   readonly sports = SPORT_FILTERS;
-  activeSort = signal<ExploreSortBy>('recent');
+  activeSort = signal<ExploreSortBy>("recent");
   activeSport = signal<string | null>(null);
-  activeView = signal<'list' | 'globe'>('list');
+  activeView = signal<"list" | "globe">("list");
   showGlobe = signal(true);
   selectedGlobeUser = signal<GlobePoint | null>(null);
 
-  @ViewChild('previewModal') previewModal!: IonModal;
+  @ViewChild("previewModal") previewModal!: IonModal;
 
   private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -655,9 +728,9 @@ export class ExplorePage implements OnInit, OnDestroy, ViewWillLeave, ViewDidEnt
     this.showGlobe.set(true);
   }
 
-  switchView(view: 'list' | 'globe'): void {
+  switchView(view: "list" | "globe"): void {
     this.activeView.set(view);
-    if (view === 'globe' && this.exploreService.globePoints().length === 0) {
+    if (view === "globe" && this.exploreService.globePoints().length === 0) {
       this.exploreService.loadGlobePoints(this.activeSport());
     }
   }
@@ -672,7 +745,7 @@ export class ExplorePage implements OnInit, OnDestroy, ViewWillLeave, ViewDidEnt
     const next = current === sport ? null : sport;
     this.activeSport.set(next);
     this.exploreService.loadRooms({ sport: next, reset: true });
-    if (this.activeView() === 'globe') {
+    if (this.activeView() === "globe") {
       this.exploreService.loadGlobePoints(next);
     }
   }
@@ -694,7 +767,7 @@ export class ExplorePage implements OnInit, OnDestroy, ViewWillLeave, ViewDidEnt
   }
 
   openRoom(room: ExploreRoom): void {
-    this.router.navigate(['/room', room.userId]);
+    this.router.navigate(["/room", room.userId]);
   }
 
   onGlobePointTapped(point: GlobePoint): void {
@@ -704,7 +777,7 @@ export class ExplorePage implements OnInit, OnDestroy, ViewWillLeave, ViewDidEnt
   async onEnterCave(userId: string): Promise<void> {
     this.selectedGlobeUser.set(null);
     await this.previewModal?.dismiss();
-    this.router.navigate(['/room', userId]);
+    this.router.navigate(["/room", userId]);
   }
 
   getGradient(index: number): string {

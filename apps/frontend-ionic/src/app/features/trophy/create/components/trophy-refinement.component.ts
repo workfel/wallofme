@@ -1,5 +1,12 @@
-import { Component, inject, signal, computed, output, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import {
+  Component,
+  inject,
+  signal,
+  computed,
+  output,
+  OnInit,
+} from "@angular/core";
+import { FormsModule } from "@angular/forms";
 import {
   IonButton,
   IonInput,
@@ -15,19 +22,33 @@ import {
   IonButtons,
   IonContent,
   IonSearchbar,
-} from '@ionic/angular/standalone';
-import { TranslateModule } from '@ngx-translate/core';
-import { addIcons } from 'ionicons';
-import { searchOutline, arrowForwardOutline, arrowBackOutline, checkmarkCircleOutline } from 'ionicons/icons';
+} from "@ionic/angular/standalone";
+import { TranslateModule } from "@ngx-translate/core";
+import { addIcons } from "ionicons";
+import {
+  searchOutline,
+  arrowForwardOutline,
+  arrowBackOutline,
+  checkmarkCircleOutline,
+} from "ionicons/icons";
 
-import { ScanService, type RefineSearchResult } from '@app/core/services/scan.service';
-import { I18nService } from '@app/core/services/i18n.service';
-import { COUNTRIES, countryFlag, type Country } from '@app/shared/data/countries';
+import { ScanService } from "@app/core/services/scan.service";
+import { I18nService } from "@app/core/services/i18n.service";
+import {
+  COUNTRIES,
+  countryFlag,
+  type Country,
+} from "@app/shared/data/countries";
 
-type RefinementSubStep = 'raceName' | 'location' | 'year' | 'searching' | 'manualDate';
+type RefinementSubStep =
+  | "raceName"
+  | "location"
+  | "year"
+  | "searching"
+  | "manualDate";
 
 @Component({
-  selector: 'app-trophy-refinement',
+  selector: "app-trophy-refinement",
   standalone: true,
   imports: [
     FormsModule,
@@ -50,10 +71,12 @@ type RefinementSubStep = 'raceName' | 'location' | 'year' | 'searching' | 'manua
   template: `
     <div class="refinement-container animate-fade-in-up">
       <!-- Race Name sub-step -->
-      @if (currentStep() === 'raceName') {
+      @if (currentStep() === "raceName") {
         <div class="step-card animate-fade-in-up">
-          <h2 class="step-title">{{ 'refinement.raceNameTitle' | translate }}</h2>
-          <p class="step-hint">{{ 'refinement.raceNameHint' | translate }}</p>
+          <h2 class="step-title">
+            {{ "refinement.raceNameTitle" | translate }}
+          </h2>
+          <p class="step-hint">{{ "refinement.raceNameHint" | translate }}</p>
 
           <ion-list lines="none">
             <ion-item>
@@ -68,8 +91,12 @@ type RefinementSubStep = 'raceName' | 'location' | 'year' | 'searching' | 'manua
           </ion-list>
 
           <div class="step-actions">
-            <ion-button expand="block" (click)="onNext()" [disabled]="!raceName().trim()">
-              {{ 'refinement.next' | translate }}
+            <ion-button
+              expand="block"
+              (click)="onNext()"
+              [disabled]="!raceName().trim()"
+            >
+              {{ "refinement.next" | translate }}
               <ion-icon slot="end" name="arrow-forward-outline" />
             </ion-button>
           </div>
@@ -77,17 +104,25 @@ type RefinementSubStep = 'raceName' | 'location' | 'year' | 'searching' | 'manua
       }
 
       <!-- Location sub-step -->
-      @if (currentStep() === 'location') {
+      @if (currentStep() === "location") {
         <div class="step-card animate-fade-in-up">
-          <h2 class="step-title">{{ 'refinement.locationTitle' | translate }}</h2>
-          <p class="step-hint">{{ 'refinement.locationHint' | translate }}</p>
+          <h2 class="step-title">
+            {{ "refinement.locationTitle" | translate }}
+          </h2>
+          <p class="step-hint">{{ "refinement.locationHint" | translate }}</p>
 
           <ion-list lines="none">
             <ion-item button (click)="showCountryModal.set(true)">
               <ion-input
                 [label]="'onboarding.country' | translate"
                 labelPlacement="floating"
-                [value]="selectedCountry() ? countryFlag(selectedCountry()!.code) + ' ' + countryDisplayName(selectedCountry()!) : ''"
+                [value]="
+                  selectedCountry()
+                    ? countryFlag(selectedCountry()!.code) +
+                      ' ' +
+                      countryDisplayName(selectedCountry()!)
+                    : ''
+                "
                 readonly
               />
             </ion-item>
@@ -106,32 +141,37 @@ type RefinementSubStep = 'raceName' | 'location' | 'year' | 'searching' | 'manua
             @if (canGoBack()) {
               <ion-button fill="outline" (click)="onBack()">
                 <ion-icon slot="start" name="arrow-back-outline" />
-                {{ 'refinement.back' | translate }}
+                {{ "refinement.back" | translate }}
               </ion-button>
             }
             <ion-button expand="block" (click)="onNext()">
-              {{ 'refinement.next' | translate }}
+              {{ "refinement.next" | translate }}
               <ion-icon slot="end" name="arrow-forward-outline" />
             </ion-button>
           </div>
         </div>
 
         <!-- Country picker modal -->
-        <ion-modal [isOpen]="showCountryModal()" (didDismiss)="showCountryModal.set(false)">
+        <ion-modal
+          [isOpen]="showCountryModal()"
+          (didDismiss)="showCountryModal.set(false)"
+        >
           <ng-template>
             <ion-header>
               <ion-toolbar>
-                <ion-title>{{ 'onboarding.country' | translate }}</ion-title>
+                <ion-title>{{ "onboarding.country" | translate }}</ion-title>
                 <ion-buttons slot="end">
                   <ion-button (click)="showCountryModal.set(false)">
-                    {{ 'common.cancel' | translate }}
+                    {{ "common.cancel" | translate }}
                   </ion-button>
                 </ion-buttons>
               </ion-toolbar>
               <ion-toolbar>
                 <ion-searchbar
                   [placeholder]="'onboarding.searchCountry' | translate"
-                  (ionInput)="countrySearch.set($any($event).detail.value ?? '')"
+                  (ionInput)="
+                    countrySearch.set($any($event).detail.value ?? '')
+                  "
                   [debounce]="150"
                 />
               </ion-toolbar>
@@ -150,10 +190,10 @@ type RefinementSubStep = 'raceName' | 'location' | 'year' | 'searching' | 'manua
       }
 
       <!-- Year sub-step -->
-      @if (currentStep() === 'year') {
+      @if (currentStep() === "year") {
         <div class="step-card animate-fade-in-up">
-          <h2 class="step-title">{{ 'refinement.yearTitle' | translate }}</h2>
-          <p class="step-hint">{{ 'refinement.yearHint' | translate }}</p>
+          <h2 class="step-title">{{ "refinement.yearTitle" | translate }}</h2>
+          <p class="step-hint">{{ "refinement.yearHint" | translate }}</p>
 
           <ion-list lines="none">
             <ion-item>
@@ -179,24 +219,28 @@ type RefinementSubStep = 'raceName' | 'location' | 'year' | 'searching' | 'manua
             </ion-item>
           </ion-list>
 
-          <p class="or-year-hint">{{ 'refinement.orJustYear' | translate }}</p>
+          <p class="or-year-hint">{{ "refinement.orJustYear" | translate }}</p>
 
           <div class="step-actions two-buttons">
             @if (canGoBack()) {
               <ion-button fill="outline" (click)="onBack()">
                 <ion-icon slot="start" name="arrow-back-outline" />
-                {{ 'refinement.back' | translate }}
+                {{ "refinement.back" | translate }}
               </ion-button>
             }
             @if (exactDate()) {
               <ion-button expand="block" (click)="onConfirmExactDate()">
                 <ion-icon slot="start" name="checkmark-circle-outline" />
-                {{ 'common.confirm' | translate }}
+                {{ "common.confirm" | translate }}
               </ion-button>
             } @else {
-              <ion-button expand="block" (click)="onSearch()" [disabled]="!isValidYear()">
+              <ion-button
+                expand="block"
+                (click)="onSearch()"
+                [disabled]="!isValidYear()"
+              >
                 <ion-icon slot="start" name="search-outline" />
-                {{ 'refinement.searchNow' | translate }}
+                {{ "refinement.searchNow" | translate }}
               </ion-button>
             }
           </div>
@@ -204,21 +248,25 @@ type RefinementSubStep = 'raceName' | 'location' | 'year' | 'searching' | 'manua
       }
 
       <!-- Searching sub-step -->
-      @if (currentStep() === 'searching') {
+      @if (currentStep() === "searching") {
         <div class="step-card centered animate-fade-in">
           <ion-spinner name="crescent" />
           <ion-text color="medium">
-            <p>{{ 'refinement.searchingDate' | translate }}</p>
+            <p>{{ "refinement.searchingDate" | translate }}</p>
           </ion-text>
         </div>
       }
 
       <!-- Manual date sub-step (search failed) -->
-      @if (currentStep() === 'manualDate') {
+      @if (currentStep() === "manualDate") {
         <div class="step-card animate-fade-in-up">
           <div class="search-failed">
-            <h2 class="step-title">{{ 'refinement.searchFailedTitle' | translate }}</h2>
-            <p class="step-hint">{{ 'refinement.searchFailedHint' | translate }}</p>
+            <h2 class="step-title">
+              {{ "refinement.searchFailedTitle" | translate }}
+            </h2>
+            <p class="step-hint">
+              {{ "refinement.searchFailedHint" | translate }}
+            </p>
           </div>
 
           <ion-list lines="none">
@@ -233,17 +281,21 @@ type RefinementSubStep = 'raceName' | 'location' | 'year' | 'searching' | 'manua
             </ion-item>
           </ion-list>
 
-          <p class="or-year-hint">{{ 'refinement.orJustYear' | translate }}</p>
+          <p class="or-year-hint">{{ "refinement.orJustYear" | translate }}</p>
 
           <div class="step-actions">
             @if (manualDate()) {
               <ion-button expand="block" (click)="onConfirmManualDate()">
                 <ion-icon slot="start" name="checkmark-circle-outline" />
-                {{ 'common.confirm' | translate }}
+                {{ "common.confirm" | translate }}
               </ion-button>
             } @else {
-              <ion-button expand="block" fill="outline" (click)="onConfirmYearOnly()">
-                {{ 'refinement.confirmYear' | translate }}
+              <ion-button
+                expand="block"
+                fill="outline"
+                (click)="onConfirmYearOnly()"
+              >
+                {{ "refinement.confirmYear" | translate }}
               </ion-button>
             }
           </div>
@@ -257,7 +309,16 @@ type RefinementSubStep = 'raceName' | 'location' | 'year' | 'searching' | 'manua
     }
 
     .step-card {
-      padding: 8px 0;
+      padding: 20px;
+      border-radius: 24px;
+      background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.55);
+      backdrop-filter: blur(16px) saturate(1.8);
+      -webkit-backdrop-filter: blur(16px) saturate(1.8);
+      border: 1px solid rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.06);
+      box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.06),
+        0 1px 2px rgba(0, 0, 0, 0.03);
+      margin-bottom: 16px;
 
       &.centered {
         display: flex;
@@ -321,14 +382,14 @@ export class TrophyRefinementComponent implements OnInit {
 
   // Sub-step state
   currentIndex = signal(0);
-  raceName = signal('');
-  city = signal('');
-  year = signal('');
-  exactDate = signal('');
-  manualDate = signal('');
+  raceName = signal("");
+  city = signal("");
+  year = signal("");
+  exactDate = signal("");
+  manualDate = signal("");
   selectedCountry = signal<Country | null>(null);
   showCountryModal = signal(false);
-  countrySearch = signal('');
+  countrySearch = signal("");
   isSearching = signal(false);
   searchFailed = signal(false);
 
@@ -339,16 +400,16 @@ export class TrophyRefinementComponent implements OnInit {
   plan = computed<RefinementSubStep[]>(() => {
     const missing = this.scan.missingCriticalFields();
     const steps: RefinementSubStep[] = [];
-    if (missing.includes('raceName')) steps.push('raceName');
-    if (missing.includes('location')) steps.push('location');
-    steps.push('year'); // Always ask for year/date confirmation
+    if (missing.includes("raceName")) steps.push("raceName");
+    if (missing.includes("location")) steps.push("location");
+    steps.push("year"); // Always ask for year/date confirmation
     return steps;
   });
 
   currentStep = computed<RefinementSubStep>(() => {
-    if (this.isSearching()) return 'searching';
-    if (this.searchFailed()) return 'manualDate';
-    return this.plan()[this.currentIndex()] ?? 'year';
+    if (this.isSearching()) return "searching";
+    if (this.searchFailed()) return "manualDate";
+    return this.plan()[this.currentIndex()] ?? "year";
   });
 
   canGoBack = computed(() => this.currentIndex() > 0);
@@ -370,7 +431,12 @@ export class TrophyRefinementComponent implements OnInit {
   });
 
   constructor() {
-    addIcons({ searchOutline, arrowForwardOutline, arrowBackOutline, checkmarkCircleOutline });
+    addIcons({
+      searchOutline,
+      arrowForwardOutline,
+      arrowBackOutline,
+      checkmarkCircleOutline,
+    });
   }
 
   ngOnInit(): void {
@@ -392,7 +458,7 @@ export class TrophyRefinementComponent implements OnInit {
   }
 
   countryDisplayName(c: Country): string {
-    return this.i18n.currentLang === 'fr' ? c.nameFr : c.name;
+    return this.i18n.currentLang === "fr" ? c.nameFr : c.name;
   }
 
   onSelectCountry(c: Country): void {
@@ -406,7 +472,7 @@ export class TrophyRefinementComponent implements OnInit {
     if (this.exactDate()) {
       const existingYear = this.exactDate().substring(0, 4);
       if (existingYear !== value) {
-        this.exactDate.set('');
+        this.exactDate.set("");
       }
     }
   }
@@ -446,11 +512,12 @@ export class TrophyRefinementComponent implements OnInit {
     this.searchFailed.set(false);
 
     const result = await this.scan.refineSearch({
-      raceName: this.raceName().trim() || this.scan.analysis()?.raceName || '',
+      raceName: this.raceName().trim() || this.scan.analysis()?.raceName || "",
       year: this.year(),
       sportKind: this.scan.analysis()?.sportKind ?? null,
       city: this.city().trim() || this.scan.analysis()?.city || null,
-      country: this.selectedCountry()?.code ?? this.scan.analysis()?.country ?? null,
+      country:
+        this.selectedCountry()?.code ?? this.scan.analysis()?.country ?? null,
     });
 
     this.isSearching.set(false);

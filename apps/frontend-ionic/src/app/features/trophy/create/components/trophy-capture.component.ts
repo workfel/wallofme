@@ -1,4 +1,4 @@
-import { Component, inject, signal, output } from '@angular/core';
+import { Component, signal, output } from "@angular/core";
 import {
   IonButton,
   IonIcon,
@@ -7,14 +7,14 @@ import {
   IonSegment,
   IonSegmentButton,
   IonLabel,
-} from '@ionic/angular/standalone';
-import { TranslateModule } from '@ngx-translate/core';
-import { addIcons } from 'ionicons';
-import { camera, images, refreshOutline, arrowForward } from 'ionicons/icons';
-import { Capacitor } from '@capacitor/core';
+} from "@ionic/angular/standalone";
+import { TranslateModule } from "@ngx-translate/core";
+import { addIcons } from "ionicons";
+import { camera, images, refreshOutline, arrowForward } from "ionicons/icons";
+import { Capacitor } from "@capacitor/core";
 
 @Component({
-  selector: 'app-trophy-capture',
+  selector: "app-trophy-capture",
   standalone: true,
   imports: [
     TranslateModule,
@@ -51,20 +51,20 @@ import { Capacitor } from '@capacitor/core';
             class="type-segment animate-fade-in"
           >
             <ion-segment-button value="medal">
-              <ion-label>{{ 'trophies.medal' | translate }}</ion-label>
+              <ion-label>{{ "trophies.medal" | translate }}</ion-label>
             </ion-segment-button>
             <ion-segment-button value="bib">
-              <ion-label>{{ 'trophies.bib' | translate }}</ion-label>
+              <ion-label>{{ "trophies.bib" | translate }}</ion-label>
             </ion-segment-button>
           </ion-segment>
 
           <div class="actions animate-fade-in-up">
             <ion-button fill="outline" (click)="retake()">
               <ion-icon slot="start" name="refresh-outline" />
-              {{ 'scan.retake' | translate }}
+              {{ "scan.retake" | translate }}
             </ion-button>
             <ion-button (click)="onContinue()">
-              {{ 'scan.continue' | translate }}
+              {{ "scan.continue" | translate }}
               <ion-icon slot="end" name="arrow-forward" />
             </ion-button>
           </div>
@@ -72,20 +72,22 @@ import { Capacitor } from '@capacitor/core';
       </div>
     } @else {
       <div class="capture-container animate-fade-in-up">
-        <div class="capture-area" role="button" tabindex="0" (click)="capturePhoto()" (keydown.enter)="capturePhoto()">
+        <div
+          class="capture-area"
+          role="button"
+          tabindex="0"
+          (click)="capturePhoto()"
+          (keydown.enter)="capturePhoto()"
+        >
           <ion-icon name="camera" class="capture-icon" />
           <ion-text>
-            <p>{{ 'scan.tapToPhoto' | translate }}</p>
+            <p>{{ "scan.tapToPhoto" | translate }}</p>
           </ion-text>
         </div>
 
-        <ion-button
-          expand="block"
-          fill="outline"
-          (click)="pickFromGallery()"
-        >
+        <ion-button expand="block" fill="outline" (click)="pickFromGallery()">
           <ion-icon slot="start" name="images" />
-          {{ 'scan.pickFromGallery' | translate }}
+          {{ "scan.pickFromGallery" | translate }}
         </ion-button>
       </div>
     }
@@ -102,7 +104,7 @@ import { Capacitor } from '@capacitor/core';
       flex-direction: column;
       flex: 1;
       gap: 16px;
-      padding-top: 24px;
+      padding-top: 8px;
     }
 
     .capture-area {
@@ -111,26 +113,44 @@ import { Capacitor } from '@capacitor/core';
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      border: 2px dashed var(--ion-color-step-300);
-      border-radius: 16px;
+      border-radius: 24px;
       cursor: pointer;
-      transition: border-color 0.2s;
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+      background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.55);
+      backdrop-filter: blur(16px) saturate(1.8);
+      -webkit-backdrop-filter: blur(16px) saturate(1.8);
+      border: 1px solid rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.06);
+      box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.06),
+        0 1px 2px rgba(0, 0, 0, 0.03);
 
-      &:hover {
-        border-color: var(--ion-color-primary);
+      &:active {
+        transform: scale(0.98);
       }
     }
 
     .capture-icon {
       font-size: 64px;
-      color: var(--ion-color-step-400);
+      color: var(--ion-color-primary);
       margin-bottom: 16px;
+      filter: drop-shadow(0 2px 8px rgba(var(--ion-color-primary-rgb), 0.3));
     }
 
     .preview-container {
       display: flex;
       flex-direction: column;
       gap: 16px;
+      padding: 16px;
+      border-radius: 24px;
+      background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.55);
+      backdrop-filter: blur(16px) saturate(1.8);
+      -webkit-backdrop-filter: blur(16px) saturate(1.8);
+      border: 1px solid rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.06);
+      box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.06),
+        0 1px 2px rgba(0, 0, 0, 0.03);
     }
 
     .image-loading {
@@ -144,7 +164,7 @@ import { Capacitor } from '@capacitor/core';
       width: 100%;
       max-height: 400px;
       object-fit: contain;
-      border-radius: 16px;
+      border-radius: 20px;
       opacity: 0;
       transition: opacity 0.3s ease;
 
@@ -155,6 +175,8 @@ import { Capacitor } from '@capacitor/core';
 
     .type-segment {
       margin: 8px 0;
+      --background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.4);
+      border-radius: 12px;
     }
 
     .actions {
@@ -172,9 +194,13 @@ export class TrophyCaptureComponent {
   imagePreview = signal<string | null>(null);
   imageBlob = signal<Blob | null>(null);
   imageLoaded = signal(false);
-  trophyType = signal<'medal' | 'bib'>('medal');
+  trophyType = signal<"medal" | "bib">("medal");
 
-  captured = output<{ blob: Blob; previewUrl: string; type: 'medal' | 'bib' }>();
+  captured = output<{
+    blob: Blob;
+    previewUrl: string;
+    type: "medal" | "bib";
+  }>();
 
   constructor() {
     addIcons({ camera, images, refreshOutline, arrowForward });
@@ -182,9 +208,8 @@ export class TrophyCaptureComponent {
 
   async capturePhoto(): Promise<void> {
     if (Capacitor.isNativePlatform()) {
-      const { Camera, CameraResultType, CameraSource } = await import(
-        '@capacitor/camera'
-      );
+      const { Camera, CameraResultType, CameraSource } =
+        await import("@capacitor/camera");
       const photo = await Camera.getPhoto({
         resultType: CameraResultType.Uri,
         source: CameraSource.Camera,
@@ -199,15 +224,14 @@ export class TrophyCaptureComponent {
         this.imageBlob.set(await response.blob());
       }
     } else {
-      this.pickFileInput('camera');
+      this.pickFileInput("camera");
     }
   }
 
   async pickFromGallery(): Promise<void> {
     if (Capacitor.isNativePlatform()) {
-      const { Camera, CameraResultType, CameraSource } = await import(
-        '@capacitor/camera'
-      );
+      const { Camera, CameraResultType, CameraSource } =
+        await import("@capacitor/camera");
       const photo = await Camera.getPhoto({
         resultType: CameraResultType.Uri,
         source: CameraSource.Photos,
@@ -222,7 +246,7 @@ export class TrophyCaptureComponent {
         this.imageBlob.set(await response.blob());
       }
     } else {
-      this.pickFileInput('gallery');
+      this.pickFileInput("gallery");
     }
   }
 
@@ -239,12 +263,12 @@ export class TrophyCaptureComponent {
     this.captured.emit({ blob, previewUrl, type: this.trophyType() });
   }
 
-  private pickFileInput(source: 'camera' | 'gallery'): void {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    if (source === 'camera') {
-      input.capture = 'environment';
+  private pickFileInput(source: "camera" | "gallery"): void {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    if (source === "camera") {
+      input.capture = "environment";
     }
     input.onchange = async () => {
       const file = input.files?.[0];

@@ -5,7 +5,6 @@ import {
   ActionSheetController,
   IonAvatar,
   IonButton,
-  IonButtons,
   IonChip,
   IonContent,
   IonHeader,
@@ -56,7 +55,6 @@ import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.co
     IonToolbar,
     IonTitle,
     IonButton,
-    IonButtons,
     IonText,
     IonList,
     IonItem,
@@ -71,18 +69,17 @@ import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.co
     ProBadgeComponent,
   ],
   template: `
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>{{ "profile.title" | translate }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="showSettings.set(true)">
-            <ion-icon name="settings-outline" slot="icon-only" />
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-
     <ion-content [fullscreen]="true">
+      <!-- Floating settings button -->
+      <div class="floating-toolbar">
+        <div class="toolbar-spacer"></div>
+        <button
+          class="toolbar-pill settings-pill"
+          (click)="showSettings.set(true)"
+        >
+          <ion-icon name="settings-outline" />
+        </button>
+      </div>
       <ion-refresher slot="fixed" (ionRefresh)="onRefresh($event)">
         <ion-refresher-content />
       </ion-refresher>
@@ -285,9 +282,60 @@ import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.co
     </ion-content>
   `,
   styles: `
-    /* Global Background */
-    ion-content {
-      --background: radial-gradient(circle at 50% 0%, #e0f7fa 0%, #f0f4f8 100%);
+    :host {
+      --toolbar-top: var(--ion-safe-area-top, 20px);
+    }
+
+
+
+    /* Floating toolbar */
+    .floating-toolbar {
+      position: sticky;
+      top: calc(var(--toolbar-top) + 8px);
+      left: 16px;
+      right: 16px;
+      margin: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    .toolbar-pill {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.72);
+      backdrop-filter: blur(16px) saturate(1.8);
+      -webkit-backdrop-filter: blur(16px) saturate(1.8);
+      box-shadow:
+        0 2px 12px rgba(0, 0, 0, 0.1),
+        0 0 0 1px rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.06);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      font-family: inherit;
+      transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease;
+
+      &:active {
+        transform: scale(0.92);
+      }
+
+      ion-icon {
+        font-size: 22px;
+        color: var(--ion-text-color);
+      }
+    }
+
+    .toolbar-spacer {
+      flex: 1;
     }
 
     /* Glass Card Shared Styles */
@@ -308,7 +356,14 @@ import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.co
       align-items: center;
       padding: 32px 24px 24px;
       margin: 16px;
-      @extend .glass-card;
+      background: rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(20px) saturate(1.8);
+      -webkit-backdrop-filter: blur(20px) saturate(1.8);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.08),
+        0 2px 4px rgba(0, 0, 0, 0.04);
+      border-radius: 24px;
     }
 
     .avatar-wrapper {
@@ -408,8 +463,14 @@ import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.co
       justify-content: center;
       margin: 0 16px 20px;
       padding: 16px 0;
-      @extend .glass-card;
-      background: rgba(255, 255, 255, 0.5); /* Slightly more transparent */
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(20px) saturate(1.8);
+      -webkit-backdrop-filter: blur(20px) saturate(1.8);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.08),
+        0 2px 4px rgba(0, 0, 0, 0.04);
+      border-radius: 24px;
     }
 
     .stat-item {
@@ -478,9 +539,13 @@ import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.co
       overflow: hidden;
       cursor: pointer;
       border-radius: 16px;
-      @extend .glass-card;
       background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(20px) saturate(1.8);
+      -webkit-backdrop-filter: blur(20px) saturate(1.8);
       border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.08),
+        0 2px 4px rgba(0, 0, 0, 0.04);
       transition:
         transform 0.2s ease,
         box-shadow 0.2s ease;

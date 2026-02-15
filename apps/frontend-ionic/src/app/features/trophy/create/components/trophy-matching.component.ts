@@ -1,19 +1,19 @@
-import { Component, inject, output } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { Component, inject, output } from "@angular/core";
+import { DatePipe } from "@angular/common";
 import {
   IonButton,
   IonIcon,
   IonCard,
   IonCardContent,
-} from '@ionic/angular/standalone';
-import { TranslateModule } from '@ngx-translate/core';
-import { addIcons } from 'ionicons';
-import { addCircleOutline, peopleOutline } from 'ionicons/icons';
+} from "@ionic/angular/standalone";
+import { TranslateModule } from "@ngx-translate/core";
+import { addIcons } from "ionicons";
+import { addCircleOutline, peopleOutline } from "ionicons/icons";
 
-import { ScanService } from '@app/core/services/scan.service';
+import { ScanService } from "@app/core/services/scan.service";
 
 @Component({
-  selector: 'app-trophy-matching',
+  selector: "app-trophy-matching",
   standalone: true,
   imports: [
     DatePipe,
@@ -25,15 +25,13 @@ import { ScanService } from '@app/core/services/scan.service';
   ],
   template: `
     <div class="matching-section animate-fade-in-up">
-      <h3>{{ 'review.matchingTitle' | translate }}</h3>
-      <p class="matching-subtitle">{{ 'review.matchingSubtitle' | translate }}</p>
+      <h3>{{ "review.matchingTitle" | translate }}</h3>
+      <p class="matching-subtitle">
+        {{ "review.matchingSubtitle" | translate }}
+      </p>
 
       @for (r of scan.matchedRaces(); track r.id) {
-        <ion-card
-          button
-          (click)="raceSelected.emit(r.id)"
-          class="match-card"
-        >
+        <ion-card button (click)="raceSelected.emit(r.id)" class="match-card">
           <ion-card-content>
             <div class="match-name">{{ r.name }}</div>
             <div class="match-meta">
@@ -41,7 +39,7 @@ import { ScanService } from '@app/core/services/scan.service';
                 <span>{{ r.location }}</span>
               }
               @if (r.date) {
-                <span>{{ r.date | date:'mediumDate' }}</span>
+                <span>{{ r.date | date: "mediumDate" }}</span>
               }
               @if (r.distance) {
                 <span>{{ r.distance }}</span>
@@ -49,7 +47,9 @@ import { ScanService } from '@app/core/services/scan.service';
             </div>
             <div class="match-finishers">
               <ion-icon name="people-outline" />
-              {{ 'review.finishersCount' | translate:{ count: r.finisherCount } }}
+              {{
+                "review.finishersCount" | translate: { count: r.finisherCount }
+              }}
             </div>
           </ion-card-content>
         </ion-card>
@@ -57,13 +57,21 @@ import { ScanService } from '@app/core/services/scan.service';
 
       <ion-button expand="block" fill="outline" (click)="createNew.emit()">
         <ion-icon slot="start" name="add-circle-outline" />
-        {{ 'review.createNewRace' | translate }}
+        {{ "review.createNewRace" | translate }}
       </ion-button>
     </div>
   `,
   styles: `
     .matching-section {
-      padding-bottom: 24px;
+      padding: 20px;
+      border-radius: 24px;
+      background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.55);
+      backdrop-filter: blur(16px) saturate(1.8);
+      -webkit-backdrop-filter: blur(16px) saturate(1.8);
+      border: 1px solid rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.06);
+      box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.06),
+        0 1px 2px rgba(0, 0, 0, 0.03);
 
       h3 {
         font-size: 18px;
@@ -79,7 +87,9 @@ import { ScanService } from '@app/core/services/scan.service';
 
       .match-card {
         margin: 0 0 8px;
-        --background: var(--ion-color-step-50);
+        --background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.5);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.04);
       }
 
       .match-name {

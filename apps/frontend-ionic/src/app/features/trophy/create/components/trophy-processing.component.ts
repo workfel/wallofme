@@ -1,13 +1,13 @@
-import { Component, inject, computed } from '@angular/core';
-import { IonIcon } from '@ionic/angular/standalone';
-import { TranslateModule } from '@ngx-translate/core';
-import { addIcons } from 'ionicons';
-import { checkmarkCircle } from 'ionicons/icons';
+import { Component, inject, computed } from "@angular/core";
+import { IonIcon } from "@ionic/angular/standalone";
+import { TranslateModule } from "@ngx-translate/core";
+import { addIcons } from "ionicons";
+import { checkmarkCircle } from "ionicons/icons";
 
-import { ScanService } from '@app/core/services/scan.service';
+import { ScanService } from "@app/core/services/scan.service";
 
 @Component({
-  selector: 'app-trophy-processing',
+  selector: "app-trophy-processing",
   standalone: true,
   imports: [TranslateModule, IonIcon],
   template: `
@@ -22,9 +22,9 @@ import { ScanService } from '@app/core/services/scan.service';
             [class.pending]="stepState(i) === 'pending'"
           >
             <div class="step-indicator">
-              @if (stepState(i) === 'done') {
+              @if (stepState(i) === "done") {
                 <ion-icon name="checkmark-circle" color="success" />
-              } @else if (stepState(i) === 'active') {
+              } @else if (stepState(i) === "active") {
                 <div class="step-spinner"></div>
               } @else {
                 <div class="step-number">{{ i + 1 }}</div>
@@ -59,21 +59,21 @@ import { ScanService } from '@app/core/services/scan.service';
           }
 
           <!-- Scan line overlay during bg removal -->
-          @if (scan.processingPhase() === 'removing-bg') {
+          @if (scan.processingPhase() === "removing-bg") {
             <div class="scan-line-overlay">
               <div class="scan-line"></div>
             </div>
           }
 
           <!-- Glow overlay during analysis -->
-          @if (scan.processingPhase() === 'analyzing') {
+          @if (scan.processingPhase() === "analyzing") {
             <div class="glow-overlay"></div>
           }
         </div>
       </div>
 
       <!-- Skeleton fields during analysis -->
-      @if (scan.processingPhase() === 'analyzing') {
+      @if (scan.processingPhase() === "analyzing") {
         <div class="skeleton-fields animate-fade-in-up">
           <div class="skeleton-row">
             <div class="skeleton-label"></div>
@@ -100,13 +100,22 @@ import { ScanService } from '@app/core/services/scan.service';
       padding: 16px 0;
     }
 
-    /* Progress steps */
+    /* Progress steps — glass pill bar */
     .progress-steps {
       display: flex;
       align-items: flex-start;
       gap: 24px;
       width: 100%;
       justify-content: center;
+      padding: 14px 16px;
+      border-radius: 20px;
+      background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.55);
+      backdrop-filter: blur(16px) saturate(1.8);
+      -webkit-backdrop-filter: blur(16px) saturate(1.8);
+      border: 1px solid rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.06);
+      box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.06),
+        0 1px 2px rgba(0, 0, 0, 0.03);
     }
 
     .progress-step {
@@ -163,7 +172,7 @@ import { ScanService } from '@app/core/services/scan.service';
       max-width: 80px;
     }
 
-    /* Image area */
+    /* Image area — glass card */
     .image-area {
       width: 100%;
       display: flex;
@@ -174,9 +183,15 @@ import { ScanService } from '@app/core/services/scan.service';
       position: relative;
       width: 280px;
       height: 280px;
-      border-radius: 20px;
+      border-radius: 24px;
       overflow: hidden;
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+      background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.4);
+      backdrop-filter: blur(16px) saturate(1.8);
+      -webkit-backdrop-filter: blur(16px) saturate(1.8);
+      border: 1px solid rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.06);
+      box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.1),
+        0 2px 4px rgba(0, 0, 0, 0.04);
       transform: scale(1);
       transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 
@@ -230,7 +245,9 @@ import { ScanService } from '@app/core/services/scan.service';
         var(--ion-color-primary) 80%,
         transparent 100%
       );
-      box-shadow: 0 0 12px var(--ion-color-primary), 0 0 24px var(--ion-color-primary);
+      box-shadow:
+        0 0 12px var(--ion-color-primary),
+        0 0 24px var(--ion-color-primary);
       animation: scanDown 2.5s ease-in-out infinite;
     }
 
@@ -243,18 +260,37 @@ import { ScanService } from '@app/core/services/scan.service';
       bottom: 0;
       pointer-events: none;
       background:
-        radial-gradient(ellipse at 30% 20%, rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.15) 0%, transparent 50%),
-        radial-gradient(ellipse at 70% 60%, rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.12) 0%, transparent 40%),
-        radial-gradient(ellipse at 50% 80%, rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.1) 0%, transparent 45%);
+        radial-gradient(
+          ellipse at 30% 20%,
+          rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.15) 0%,
+          transparent 50%
+        ),
+        radial-gradient(
+          ellipse at 70% 60%,
+          rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.12) 0%,
+          transparent 40%
+        ),
+        radial-gradient(
+          ellipse at 50% 80%,
+          rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.1) 0%,
+          transparent 45%
+        );
       animation: glowPulse 2s ease-in-out infinite;
     }
 
-    /* Skeleton fields */
+    /* Skeleton fields — glass card */
     .skeleton-fields {
       width: 100%;
       display: flex;
       flex-direction: column;
       gap: 12px;
+      padding: 16px;
+      border-radius: 20px;
+      background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.45);
+      backdrop-filter: blur(16px) saturate(1.8);
+      -webkit-backdrop-filter: blur(16px) saturate(1.8);
+      border: 1px solid rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.06);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
     }
 
     .skeleton-row {
@@ -344,9 +380,9 @@ export class TrophyProcessingComponent {
   scan = inject(ScanService);
 
   progressSteps = [
-    { key: 'upload', label: 'scan.uploadStep' },
-    { key: 'bg', label: 'scan.bgRemovalStep' },
-    { key: 'analysis', label: 'scan.analysisStep' },
+    { key: "upload", label: "scan.uploadStep" },
+    { key: "bg", label: "scan.bgRemovalStep" },
+    { key: "analysis", label: "scan.analysisStep" },
   ];
 
   currentPhaseIndex = computed(() => {
@@ -355,35 +391,50 @@ export class TrophyProcessingComponent {
       idle: -1,
       creating: 0,
       uploading: 0,
-      'removing-bg': 1,
-      'bg-done': 1,
+      "removing-bg": 1,
+      "bg-done": 1,
       analyzing: 2,
-      'analyze-done': 2,
+      "analyze-done": 2,
     };
     return map[phase] ?? -1;
   });
 
   showProcessed = computed(() => {
     const phase = this.scan.processingPhase();
-    return phase === 'bg-done' || phase === 'analyzing' || phase === 'analyze-done';
+    return (
+      phase === "bg-done" || phase === "analyzing" || phase === "analyze-done"
+    );
   });
 
   constructor() {
     addIcons({ checkmarkCircle });
   }
 
-  stepState(index: number): 'pending' | 'active' | 'done' {
+  stepState(index: number): "pending" | "active" | "done" {
     const phase = this.scan.processingPhase();
     const phaseIndex = this.currentPhaseIndex();
 
-    if (index < phaseIndex) return 'done';
+    if (index < phaseIndex) return "done";
     if (index === phaseIndex) {
       // Check if the current step is actually done
-      if (index === 0 && (phase === 'removing-bg' || phase === 'bg-done' || phase === 'analyzing' || phase === 'analyze-done')) return 'done';
-      if (index === 1 && (phase === 'bg-done' || phase === 'analyzing' || phase === 'analyze-done')) return 'done';
-      if (index === 2 && phase === 'analyze-done') return 'done';
-      return 'active';
+      if (
+        index === 0 &&
+        (phase === "removing-bg" ||
+          phase === "bg-done" ||
+          phase === "analyzing" ||
+          phase === "analyze-done")
+      )
+        return "done";
+      if (
+        index === 1 &&
+        (phase === "bg-done" ||
+          phase === "analyzing" ||
+          phase === "analyze-done")
+      )
+        return "done";
+      if (index === 2 && phase === "analyze-done") return "done";
+      return "active";
     }
-    return 'pending';
+    return "pending";
   }
 }

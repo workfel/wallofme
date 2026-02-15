@@ -1,5 +1,5 @@
-import { Component, inject, computed, signal, effect, output } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, inject, computed, effect, output } from "@angular/core";
+import { FormsModule } from "@angular/forms";
 import {
   IonButton,
   IonIcon,
@@ -12,12 +12,17 @@ import {
   IonItem,
   IonInput,
   IonList,
-} from '@ionic/angular/standalone';
-import { TranslateModule } from '@ngx-translate/core';
-import { addIcons } from 'ionicons';
-import { searchOutline, trophyOutline, refreshOutline, informationCircleOutline } from 'ionicons/icons';
+} from "@ionic/angular/standalone";
+import { TranslateModule } from "@ngx-translate/core";
+import { addIcons } from "ionicons";
+import {
+  searchOutline,
+  trophyOutline,
+  refreshOutline,
+  informationCircleOutline,
+} from "ionicons/icons";
 
-import { ScanService } from '@app/core/services/scan.service';
+import { ScanService } from "@app/core/services/scan.service";
 
 export interface ResultsEdit {
   time: string | null;
@@ -27,7 +32,7 @@ export interface ResultsEdit {
 }
 
 @Component({
-  selector: 'app-trophy-results-search',
+  selector: "app-trophy-results-search",
   standalone: true,
   imports: [
     FormsModule,
@@ -45,19 +50,19 @@ export interface ResultsEdit {
     IonList,
   ],
   template: `
-    @if (scan.step() === 'search') {
+    @if (scan.step() === "search") {
       <!-- Searching state -->
       <div class="searching-container animate-fade-in">
         <div class="search-ring">
           <ion-icon name="search-outline" class="search-icon" />
         </div>
         <ion-text>
-          <p class="searching-hint">{{ 'scan.searchingHint' | translate }}</p>
+          <p class="searching-hint">{{ "scan.searchingHint" | translate }}</p>
         </ion-text>
       </div>
     }
 
-    @if (scan.step() === 'done') {
+    @if (scan.step() === "done") {
       @if (scan.searchResult()?.found) {
         <!-- Results found: trophy bounce + disclaimer -->
         <div class="results-reveal animate-fade-in">
@@ -66,9 +71,12 @@ export interface ResultsEdit {
           </div>
 
           <div class="ai-disclaimer">
-            <ion-icon name="information-circle-outline" class="disclaimer-icon" />
+            <ion-icon
+              name="information-circle-outline"
+              class="disclaimer-icon"
+            />
             <ion-text color="medium">
-              <small>{{ 'review.aiDisclaimer' | translate }}</small>
+              <small>{{ "review.aiDisclaimer" | translate }}</small>
             </ion-text>
           </div>
         </div>
@@ -79,9 +87,9 @@ export interface ResultsEdit {
         <ion-card-header>
           <ion-card-title>
             @if (scan.searchResult()?.found) {
-              {{ 'review.resultsFound' | translate }}
+              {{ "review.resultsFound" | translate }}
             } @else {
-              {{ 'review.enterResults' | translate }}
+              {{ "review.enterResults" | translate }}
             }
           </ion-card-title>
         </ion-card-header>
@@ -130,17 +138,28 @@ export interface ResultsEdit {
         <div class="retry-row">
           @if (scan.resultsRetryLoading()) {
             <ion-spinner name="dots" />
-            <ion-text color="medium"><small>{{ 'review.retryingResults' | translate }}</small></ion-text>
+            <ion-text color="medium"
+              ><small>{{
+                "review.retryingResults" | translate
+              }}</small></ion-text
+            >
           } @else if (resultsRetryMaxed()) {
-            <ion-text color="medium"><small class="search-hint">{{ 'review.resultsRetryMaxAttempts' | translate }}</small></ion-text>
+            <ion-text color="medium"
+              ><small class="search-hint">{{
+                "review.resultsRetryMaxAttempts" | translate
+              }}</small></ion-text
+            >
           } @else if (scan.resultsRetryCooldownRemaining() > 0) {
             <ion-button size="small" fill="outline" disabled="true">
-              {{ 'review.retryResultsCooldown' | translate:{ seconds: scan.resultsRetryCooldownRemaining() } }}
+              {{
+                "review.retryResultsCooldown"
+                  | translate: { seconds: scan.resultsRetryCooldownRemaining() }
+              }}
             </ion-button>
           } @else {
             <ion-button size="small" fill="outline" (click)="onRetryResults()">
               <ion-icon slot="start" name="refresh-outline" />
-              {{ 'review.retryResults' | translate }}
+              {{ "review.retryResults" | translate }}
             </ion-button>
           }
         </div>
@@ -148,14 +167,22 @@ export interface ResultsEdit {
     }
   `,
   styles: `
-    /* Searching state */
+    /* Searching state — glass card */
     .searching-container {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 60px 0;
+      padding: 60px 24px;
       gap: 24px;
+      border-radius: 24px;
+      background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.55);
+      backdrop-filter: blur(16px) saturate(1.8);
+      -webkit-backdrop-filter: blur(16px) saturate(1.8);
+      border: 1px solid rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.06);
+      box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.06),
+        0 1px 2px rgba(0, 0, 0, 0.03);
     }
 
     .search-ring {
@@ -199,16 +226,20 @@ export interface ResultsEdit {
     .trophy-icon {
       font-size: 56px;
       color: var(--ion-color-warning);
+      filter: drop-shadow(0 4px 12px rgba(var(--ion-color-warning-rgb), 0.4));
     }
 
-    /* AI disclaimer */
+    /* AI disclaimer — glass pill */
     .ai-disclaimer {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 8px 16px;
-      background: var(--ion-color-step-50);
-      border-radius: 8px;
+      padding: 10px 16px;
+      background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.5);
+      backdrop-filter: blur(12px) saturate(1.6);
+      -webkit-backdrop-filter: blur(12px) saturate(1.6);
+      border: 1px solid rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.06);
+      border-radius: 16px;
       width: 100%;
 
       .disclaimer-icon {
@@ -223,9 +254,16 @@ export interface ResultsEdit {
       }
     }
 
+    /* Result card — glass */
     .result-card {
       width: 100%;
       margin-top: 8px;
+      --background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.55);
+      backdrop-filter: blur(16px) saturate(1.8);
+      border: 1px solid rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.06);
+      box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.06),
+        0 1px 2px rgba(0, 0, 0, 0.03);
 
       ion-item {
         --background: transparent;
@@ -264,7 +302,8 @@ export interface ResultsEdit {
     }
 
     @keyframes pulse {
-      0%, 100% {
+      0%,
+      100% {
         transform: scale(1);
       }
       50% {
@@ -296,10 +335,10 @@ export class TrophyResultsSearchComponent {
   resultsRetryMaxed = computed(() => this.scan.resultsRetryAttempts() >= 2);
 
   // Editable fields
-  editTime = '';
-  editRanking = '';
-  editCategoryRanking = '';
-  editTotalParticipants = '';
+  editTime = "";
+  editRanking = "";
+  editCategoryRanking = "";
+  editTotalParticipants = "";
 
   // Output for parent to read edited values
   resultsEdited = output<ResultsEdit>();
@@ -307,19 +346,25 @@ export class TrophyResultsSearchComponent {
   private initialized = false;
 
   constructor() {
-    addIcons({ searchOutline, trophyOutline, refreshOutline, informationCircleOutline });
+    addIcons({
+      searchOutline,
+      trophyOutline,
+      refreshOutline,
+      informationCircleOutline,
+    });
 
     // Pre-fill from search results when entering done step
     effect(() => {
       const step = this.scan.step();
       const result = this.scan.searchResult();
-      if (step === 'done' && !this.initialized) {
+      if (step === "done" && !this.initialized) {
         this.initialized = true;
         if (result) {
-          this.editTime = result.time ?? '';
-          this.editRanking = result.ranking?.toString() ?? '';
-          this.editCategoryRanking = result.categoryRanking?.toString() ?? '';
-          this.editTotalParticipants = result.totalParticipants?.toString() ?? '';
+          this.editTime = result.time ?? "";
+          this.editRanking = result.ranking?.toString() ?? "";
+          this.editCategoryRanking = result.categoryRanking?.toString() ?? "";
+          this.editTotalParticipants =
+            result.totalParticipants?.toString() ?? "";
         }
       }
     });
@@ -329,8 +374,12 @@ export class TrophyResultsSearchComponent {
     return {
       time: this.editTime.trim() || null,
       ranking: this.editRanking ? parseInt(this.editRanking, 10) || null : null,
-      categoryRanking: this.editCategoryRanking ? parseInt(this.editCategoryRanking, 10) || null : null,
-      totalParticipants: this.editTotalParticipants ? parseInt(this.editTotalParticipants, 10) || null : null,
+      categoryRanking: this.editCategoryRanking
+        ? parseInt(this.editCategoryRanking, 10) || null
+        : null,
+      totalParticipants: this.editTotalParticipants
+        ? parseInt(this.editTotalParticipants, 10) || null
+        : null,
     };
   }
 
@@ -339,10 +388,10 @@ export class TrophyResultsSearchComponent {
     // Update fields if retry found results
     const result = this.scan.searchResult();
     if (result?.found) {
-      this.editTime = result.time ?? '';
-      this.editRanking = result.ranking?.toString() ?? '';
-      this.editCategoryRanking = result.categoryRanking?.toString() ?? '';
-      this.editTotalParticipants = result.totalParticipants?.toString() ?? '';
+      this.editTime = result.time ?? "";
+      this.editRanking = result.ranking?.toString() ?? "";
+      this.editCategoryRanking = result.categoryRanking?.toString() ?? "";
+      this.editTotalParticipants = result.totalParticipants?.toString() ?? "";
     }
   }
 }
