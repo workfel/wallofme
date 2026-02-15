@@ -12,7 +12,7 @@ import {
   IonModal,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { checkmarkOutline, lockClosedOutline, flameOutline, colorPaletteOutline } from 'ionicons/icons';
+import { checkmarkOutline, lockClosedOutline, flameOutline, colorPaletteOutline, brushOutline } from 'ionicons/icons';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ThemeService } from '@app/core/services/theme.service';
 import { TokenService } from '@app/core/services/token.service';
@@ -103,6 +103,18 @@ import { UpgradePromptComponent } from '@app/shared/components/upgrade-prompt/up
           @if (isCustomSelected()) {
             <ion-icon name="checkmark-outline" color="primary" class="check" />
           }
+        </button>
+
+        <!-- Materials / Designer Card -->
+        <button
+          class="theme-card"
+          (click)="onOpenMaterialEditor()"
+        >
+          <div class="theme-preview materials-preview">
+            <ion-icon name="brush-outline" class="custom-icon" />
+          </div>
+          <span class="theme-name">{{ 'room.materials' | translate }}</span>
+          <ion-badge color="success">{{ 'room.free' | translate }}</ion-badge>
         </button>
       </div>
     </ion-content>
@@ -219,6 +231,13 @@ import { UpgradePromptComponent } from '@app/shared/components/upgrade-prompt/up
       justify-content: center;
     }
 
+    .materials-preview {
+      background: linear-gradient(135deg, #8b7355, #c9a87c, #a08060, #6b4c3b) !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     .custom-icon {
       font-size: 32px;
       color: white;
@@ -260,6 +279,7 @@ export class ThemeSelectorSheetComponent implements OnInit {
   preview = output<RoomTheme>();
   apply = output<RoomTheme | null>();
   openCustomEditor = output<void>();
+  openMaterialEditor = output<void>();
 
   themes = BUILT_IN_THEMES;
   selectedTheme = signal<RoomTheme | null>(null);
@@ -279,7 +299,7 @@ export class ThemeSelectorSheetComponent implements OnInit {
   ];
 
   constructor() {
-    addIcons({ checkmarkOutline, lockClosedOutline, flameOutline, colorPaletteOutline });
+    addIcons({ checkmarkOutline, lockClosedOutline, flameOutline, colorPaletteOutline, brushOutline });
   }
 
   ngOnInit() {
@@ -296,6 +316,10 @@ export class ThemeSelectorSheetComponent implements OnInit {
 
   onOpenCustomEditor(): void {
     this.openCustomEditor.emit();
+  }
+
+  onOpenMaterialEditor(): void {
+    this.openMaterialEditor.emit();
   }
 
   isOwned(theme: RoomTheme): boolean {

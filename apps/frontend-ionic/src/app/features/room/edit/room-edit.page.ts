@@ -38,6 +38,7 @@ import { DecorationService } from "@app/core/services/decoration.service";
 import {
   type RoomTheme,
   type CustomThemeColors,
+  type MaterialOverrides,
   CUSTOM_THEME_ID,
 } from "@app/types/room-theme";
 
@@ -59,6 +60,7 @@ import {
   WallPlacementPanelComponent,
   type WallPlacementValues,
 } from "../components/wall-placement-panel/wall-placement-panel.component";
+import { MaterialCustomizerSheetComponent } from "../components/material-customizer-sheet/material-customizer-sheet.component";
 
 // ─── Editor State Machine ────────────────────────────────
 type EditorState =
@@ -69,6 +71,7 @@ type EditorState =
   | { kind: "SLOT_PICKING"; itemToPlace: string; source: "catalog" | "move" }
   | { kind: "THEME_OPEN" }
   | { kind: "CUSTOM_EDITOR_OPEN" }
+  | { kind: "MATERIAL_EDITOR_OPEN" }
   | { kind: "SHARE_OPEN" }
   | { kind: "CONFIRM_DELETE"; itemId: string };
 
@@ -87,6 +90,7 @@ type EditorState =
     ObjectCatalogSheetComponent,
     ShareRoomSheetComponent,
     WallPlacementPanelComponent,
+    MaterialCustomizerSheetComponent,
     IonContent,
     IonIcon,
     IonSpinner,
@@ -124,6 +128,7 @@ type EditorState =
               [editable]="true"
               [selectedItemId]="selectedItemId()"
               [theme]="themeService.activeTheme()"
+              [zoomOut]="state().kind === 'MATERIAL_EDITOR_OPEN'"
               (itemPressed)="onItemPressed($event)"
               (itemDragged)="onItemDragged($event)"
               (itemDragEnd)="onItemDragEnd($event)"
@@ -193,6 +198,7 @@ type EditorState =
           (preview)="onThemePreview($event)"
           (apply)="onThemeApply($event)"
           (openCustomEditor)="onOpenCustomEditor()"
+          (openMaterialEditor)="onOpenMaterialEditor()"
         />
       </ng-template>
     </ion-modal>
@@ -209,6 +215,23 @@ type EditorState =
           [initialColors]="themeService.customColors()"
           (preview)="onCustomPreview($event)"
           (apply)="onCustomApply($event)"
+        />
+      </ng-template>
+    </ion-modal>
+
+    <!-- Material Customizer Bottom Sheet -->
+    <ion-modal
+      [isOpen]="state().kind === 'MATERIAL_EDITOR_OPEN'"
+      [initialBreakpoint]="0.45"
+      [breakpoints]="[0, 0.45, 0.75]"
+      (didDismiss)="closeMaterialEditor()"
+    >
+      <ng-template>
+        <app-material-customizer-sheet
+          [initialOverrides]="themeService.materialOverrides()"
+          (preview)="onMaterialPreview($event)"
+          (save)="onMaterialSave($event)"
+          (cancel)="onMaterialCancel()"
         />
       </ng-template>
     </ion-modal>
@@ -391,6 +414,7 @@ export class RoomEditPage implements OnInit {
 
   shareLink = signal<string | null>(null);
   private previousTheme: RoomTheme | null = null;
+  private previousMaterialOverrides: MaterialOverrides | null = null;
 
   deleteAlertButtons = [
     { text: this.translate.instant("common.cancel"), role: "cancel" },
@@ -414,16 +438,7 @@ export class RoomEditPage implements OnInit {
   async ngOnInit(): Promise<void> {
     const room = await this.roomService.fetchMyRoom();
     if (room) {
-      const theme = this.themeService.resolveThemeFromRoom(room);
-      if (theme.id === CUSTOM_THEME_ID && room.customTheme) {
-        try {
-          this.themeService.applyCustomColors(JSON.parse(room.customTheme));
-        } catch {
-          this.themeService.applyTheme(theme);
-        }
-      } else {
-        this.themeService.applyTheme(theme);
-      }
+      this.themeService.initThemeFromRoom(room);
     }
     this.trophyService.fetchTrophies();
     this.tokenService.fetchBalance();
@@ -616,8 +631,9 @@ export class RoomEditPage implements OnInit {
   }
 
   closeThemeSelector(): void {
-    // Don't reset to IDLE if we transitioned to the custom editor
+    // Don't reset to IDLE if we transitioned to the custom/material editor
     if (this.state().kind === "CUSTOM_EDITOR_OPEN") return;
+    if (this.state().kind === "MATERIAL_EDITOR_OPEN") return;
     if (this.state().kind === "THEME_OPEN" && this.previousTheme) {
       this.themeService.applyTheme(this.previousTheme);
     }
@@ -659,6 +675,66 @@ export class RoomEditPage implements OnInit {
     this.themeService.applyCustomColors(colors);
     this.previousTheme = null;
     this.roomService.updateRoom({ themeId: null, customTheme: colors });
+    this.state.set({ kind: "IDLE" });
+  }
+
+  // ─── Material Editor ──────────────────────────
+  onOpenMaterialEditor(): void {
+    this.previousMaterialOverrides = this.themeService.materialOverrides()
+      ? { ...this.themeService.materialOverrides()! }
+      : null;
+    this.state.set({ kind: "MATERIAL_EDITOR_OPEN" });
+  }
+
+  closeMaterialEditor(): void {
+    if (this.state().kind === "MATERIAL_EDITOR_OPEN") {
+      // Revert on dismiss (swipe-down)
+      if (this.previousMaterialOverrides) {
+        this.themeService.applyMaterialOverrides(this.previousMaterialOverrides);
+      } else {
+        this.themeService.clearMaterialOverrides();
+      }
+      this.state.set({ kind: "IDLE" });
+    }
+  }
+
+  onMaterialPreview(overrides: MaterialOverrides): void {
+    this.themeService.applyMaterialOverrides(overrides);
+  }
+
+  async onMaterialSave(overrides: MaterialOverrides): Promise<void> {
+    this.themeService.applyMaterialOverrides(overrides);
+    this.previousMaterialOverrides = null;
+
+    // Use base theme colors (before material overrides) to preserve
+    // built-in theme textures on non-overridden surfaces after reload.
+    const baseTheme = this.themeService.baseTheme();
+    const customColors = this.themeService.customColors();
+    const colors = customColors ?? {
+      leftWallColor: baseTheme.leftWall.color,
+      backWallColor: baseTheme.backWall.color,
+      floorColor: baseTheme.floor.color,
+      background: baseTheme.background,
+    };
+
+    // Preserve themeId so built-in theme textures are restored on reload
+    const currentRoom = this.roomService.room();
+    const themeId = currentRoom?.themeId ?? null;
+
+    await this.roomService.updateRoom({
+      themeId,
+      customTheme: { ...colors, materials: overrides },
+    });
+    this.state.set({ kind: "IDLE" });
+  }
+
+  onMaterialCancel(): void {
+    if (this.previousMaterialOverrides) {
+      this.themeService.applyMaterialOverrides(this.previousMaterialOverrides);
+    } else {
+      this.themeService.clearMaterialOverrides();
+    }
+    this.previousMaterialOverrides = null;
     this.state.set({ kind: "IDLE" });
   }
 

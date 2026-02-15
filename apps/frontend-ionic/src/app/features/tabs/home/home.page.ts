@@ -1,43 +1,53 @@
-import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, OnInit, signal } from '@angular/core';
-import { Router } from '@angular/router';
 import {
-    IonAvatar,
-    IonButton,
-    IonContent,
-    IonHeader,
-    IonIcon,
-    IonModal,
-    IonSpinner,
-    IonText,
-    IonTitle,
-    IonToolbar,
-} from '@ionic/angular/standalone';
-import { TranslateModule } from '@ngx-translate/core';
-import { NgtCanvas } from 'angular-three/dom';
-import { addIcons } from 'ionicons';
+  Component,
+  computed,
+  CUSTOM_ELEMENTS_SCHEMA,
+  inject,
+  OnInit,
+  signal,
+} from "@angular/core";
+import { Router } from "@angular/router";
 import {
-    cameraOutline,
-    createOutline,
-    eyeOutline,
-    heartOutline,
-    infiniteOutline,
-    lockClosedOutline,
-    personCircleOutline,
-    rocketOutline,
-    trophyOutline,
-} from 'ionicons/icons';
+  IonAvatar,
+  IonButton,
+  IonContent,
+  IonHeader,
+  IonIcon,
+  IonModal,
+  IonSpinner,
+  IonText,
+  IonTitle,
+  IonToolbar,
+} from "@ionic/angular/standalone";
+import { TranslateModule } from "@ngx-translate/core";
+import { NgtCanvas } from "angular-three/dom";
+import { addIcons } from "ionicons";
+import {
+  cameraOutline,
+  createOutline,
+  eyeOutline,
+  heartOutline,
+  infiniteOutline,
+  lockClosedOutline,
+  personCircleOutline,
+  rocketOutline,
+  trophyOutline,
+} from "ionicons/icons";
 
-import { AuthService } from '@app/core/services/auth.service';
-import { RoomService } from '@app/core/services/room.service';
-import { ThemeService } from '@app/core/services/theme.service';
-import { UserService } from '@app/core/services/user.service';
-import type { RoomTheme } from '@app/types/room-theme';
-import { DEFAULT_THEME } from '@app/types/room-theme';
-import { PainCaveSceneComponent } from '../../room/components/pain-cave-scene/pain-cave-scene.component';
-import { TrophyInfoSheetComponent, type TrophyInfoData } from '../../room/components/trophy-info-sheet/trophy-info-sheet.component';
+import { AuthService } from "@app/core/services/auth.service";
+import { RoomService } from "@app/core/services/room.service";
+import { ThemeService } from "@app/core/services/theme.service";
+import { UserService } from "@app/core/services/user.service";
+import type { RoomTheme } from "@app/types/room-theme";
+import { DEFAULT_THEME } from "@app/types/room-theme";
+import { PainCaveSceneComponent } from "../../room/components/pain-cave-scene/pain-cave-scene.component";
+import {
+  TrophyInfoSheetComponent,
+  type TrophyInfoData,
+} from "../../room/components/trophy-info-sheet/trophy-info-sheet.component";
 
 @Component({
-  selector: 'app-home',
+  selector: "app-home",
   standalone: true,
   imports: [
     TranslateModule,
@@ -63,20 +73,29 @@ import { TrophyInfoSheetComponent, type TrophyInfoData } from '../../room/compon
         <div class="dashboard-header animate-fade-in-down">
           <!-- Greeting row -->
           <div class="greeting-row">
-
             <div class="greeting-left" (click)="goToProfile()">
               <ion-avatar class="greeting-avatar">
                 @if (authService.user()?.image) {
                   <img [src]="authService.user()!.image!" alt="avatar" />
                 } @else {
-                  <ion-icon name="person-circle-outline" class="avatar-fallback" />
+                  <ion-icon
+                    name="person-circle-outline"
+                    class="avatar-fallback"
+                  />
                 }
               </ion-avatar>
-              <span class="greeting-text">{{ 'home.greeting' | translate: { name: authService.user()?.firstName || '' } }}</span>
+              <span class="greeting-text">{{
+                "home.greeting"
+                  | translate: { name: authService.user()?.firstName || "" }
+              }}</span>
             </div>
             @if (userService.scansDisplay(); as display) {
-              <div class="scan-pill" [class.pro]="display === 'unlimited'" [class.danger]="display === 0">
-                @if (display === 'unlimited') {
+              <div
+                class="scan-pill"
+                [class.pro]="display === 'unlimited'"
+                [class.danger]="display === 0"
+              >
+                @if (display === "unlimited") {
                   <ion-icon name="infinite-outline" />
                 } @else {
                   <ion-icon name="camera-outline" />
@@ -87,29 +106,35 @@ import { TrophyInfoSheetComponent, type TrophyInfoData } from '../../room/compon
           </div>
 
           <!-- Stats row -->
-          <div class="stats-strip animate-fade-in-up">
+          <div class="stats-strip glass-card animate-fade-in-up">
             <div class="stat-item">
               <div class="stat-top">
                 <ion-icon name="trophy-outline" color="primary" />
                 <span class="stat-value">{{ trophyItemCount() }}</span>
               </div>
-              <span class="stat-label">{{ 'home.statTrophies' | translate }}</span>
+              <span class="stat-label">{{
+                "home.statTrophies" | translate
+              }}</span>
             </div>
             <div class="stat-divider"></div>
             <div class="stat-item">
               <div class="stat-top">
                 <ion-icon name="heart-outline" color="danger" />
-                <span class="stat-value">{{ roomService.room()?.likeCount || 0 }}</span>
+                <span class="stat-value">{{
+                  roomService.room()?.likeCount || 0
+                }}</span>
               </div>
-              <span class="stat-label">{{ 'home.statLikes' | translate }}</span>
+              <span class="stat-label">{{ "home.statLikes" | translate }}</span>
             </div>
             <div class="stat-divider"></div>
             <div class="stat-item">
               <div class="stat-top">
                 <ion-icon name="eye-outline" color="medium" />
-                <span class="stat-value">{{ roomService.room()?.viewCount || 0 }}</span>
+                <span class="stat-value">{{
+                  roomService.room()?.viewCount || 0
+                }}</span>
               </div>
-              <span class="stat-label">{{ 'home.statViews' | translate }}</span>
+              <span class="stat-label">{{ "home.statViews" | translate }}</span>
             </div>
           </div>
         </div>
@@ -122,16 +147,18 @@ import { TrophyInfoSheetComponent, type TrophyInfoData } from '../../room/compon
             </div>
           } @else if (error()) {
             <div class="centered">
-              <ion-text>{{ 'common.error' | translate }}</ion-text>
+              <ion-text>{{ "common.error" | translate }}</ion-text>
               <ion-button fill="clear" (click)="fetchRoom()">
-                {{ 'common.retry' | translate }}
+                {{ "common.retry" | translate }}
               </ion-button>
             </div>
           } @else if (!hasItems()) {
             <div class="centered">
-              <h2 class="empty-title">{{ 'home.emptyTitle' | translate }}</h2>
+              <h2 class="empty-title">{{ "home.emptyTitle" | translate }}</h2>
               <ion-text color="medium">
-                <p class="empty-subtitle">{{ 'home.emptySubtitle' | translate }}</p>
+                <p class="empty-subtitle">
+                  {{ "home.emptySubtitle" | translate }}
+                </p>
               </ion-text>
             </div>
           } @else {
@@ -154,7 +181,7 @@ import { TrophyInfoSheetComponent, type TrophyInfoData } from '../../room/compon
           @if (!roomService.loading() && !error()) {
             <button class="edit-room-btn" (click)="goToEdit()">
               <ion-icon name="create-outline" />
-              <span>{{ 'home.editRoom' | translate }}</span>
+              <span>{{ "home.editRoom" | translate }}</span>
             </button>
           }
         </div>
@@ -184,27 +211,36 @@ import { TrophyInfoSheetComponent, type TrophyInfoData } from '../../room/compon
       </ion-modal>
 
       <!-- Upgrade modal when scan limit reached -->
-      <ion-modal [isOpen]="showUpgradeModal()" (didDismiss)="showUpgradeModal.set(false)">
+      <ion-modal
+        [isOpen]="showUpgradeModal()"
+        (didDismiss)="showUpgradeModal.set(false)"
+      >
         <ng-template>
           <ion-header>
             <ion-toolbar>
-              <ion-title>{{ 'scan.limitReached' | translate }}</ion-title>
-              <ion-button slot="end" fill="clear" (click)="showUpgradeModal.set(false)">
-                {{ 'common.cancel' | translate }}
+              <ion-title>{{ "scan.limitReached" | translate }}</ion-title>
+              <ion-button
+                slot="end"
+                fill="clear"
+                (click)="showUpgradeModal.set(false)"
+              >
+                {{ "common.cancel" | translate }}
               </ion-button>
             </ion-toolbar>
           </ion-header>
           <ion-content class="ion-padding">
             <div class="upgrade-container">
               <ion-icon name="lock-closed-outline" class="upgrade-icon" />
-              <h2>{{ 'scan.limitReachedTitle' | translate }}</h2>
+              <h2>{{ "scan.limitReachedTitle" | translate }}</h2>
               <ion-text color="medium">
-                <p>{{ 'scan.limitReachedMessage' | translate }}</p>
+                <p>{{ "scan.limitReachedMessage" | translate }}</p>
               </ion-text>
-              <p class="reset-info">{{ 'scan.resetsIn' | translate: { days: daysUntilReset() } }}</p>
+              <p class="reset-info">
+                {{ "scan.resetsIn" | translate: { days: daysUntilReset() } }}
+              </p>
               <ion-button expand="block" (click)="onUpgrade()">
                 <ion-icon slot="start" name="rocket-outline" />
-                {{ 'profile.pro' | translate }}
+                {{ "profile.pro" | translate }}
               </ion-button>
             </div>
           </ion-content>
@@ -214,63 +250,130 @@ import { TrophyInfoSheetComponent, type TrophyInfoData } from '../../room/compon
   `,
   styles: `
     .home-layout {
-      display: flex;
-      flex-direction: column;
+      position: relative;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* 3D Scene Background */
+    .room-container {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+
+    /* Gradient overlay for text readability */
+    .home-layout::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 180px;
+      background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.6) 0%,
+        transparent 100%
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    ngt-canvas {
+      display: block;
+      width: 100%;
       height: 100%;
     }
 
+    /* Header Overlay */
     .dashboard-header {
-      padding: 16px 16px 8px;
-      flex-shrink: 0;
+      position: relative;
+      z-index: 10;
+      padding: calc(env(safe-area-inset-top) + 12px) 16px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      pointer-events: none; /* Let clicks pass through around items */
     }
 
+    /* Glass Card Shared Styles */
+    .glass-card {
+      background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.65);
+      backdrop-filter: blur(16px) saturate(1.8);
+      -webkit-backdrop-filter: blur(16px) saturate(1.8);
+      border: 1px solid rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.08);
+      box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.08),
+        0 1px 2px rgba(0, 0, 0, 0.04);
+      border-radius: 24px;
+      pointer-events: auto;
+    }
+
+    /* Top Row: Greeting & Scan Pill */
     .greeting-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
     }
 
     .greeting-left {
       display: flex;
       align-items: center;
       gap: 10px;
+      padding: 6px 16px 6px 6px;
       cursor: pointer;
+      transition: transform 0.2s ease;
+
+      &:active {
+        transform: scale(0.96);
+      }
     }
 
     .greeting-avatar {
-      width: 36px;
-      height: 36px;
+      width: 40px;
+      height: 40px;
+      border: 2px solid rgba(255, 255, 255, 0.8);
     }
 
     .avatar-fallback {
-      font-size: 36px;
-      color: var(--ion-color-step-400);
+      font-size: 40px;
+      color: var(--ion-color-step-500);
     }
 
     .greeting-text {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
+      color: #fff; /* Force white text */
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      letter-spacing: -0.01em;
     }
 
     .scan-pill {
       display: flex;
       align-items: center;
-      gap: 4px;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 600;
-      background: var(--ion-color-primary);
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 100px;
+      font-size: 14px;
+      font-weight: 700;
       color: #fff;
+      background: rgba(0, 0, 0, 0.8); /* Dark pill for contrast */
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      pointer-events: auto;
 
       ion-icon {
-        font-size: 16px;
+        font-size: 18px;
       }
 
       &.pro {
-        background: linear-gradient(135deg, #43e97b, #38f9d7);
-        color: #1a1a1a;
+        background: linear-gradient(135deg, #111, #333);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+
+        ion-icon {
+          color: #ffd700;
+        }
       }
 
       &.danger {
@@ -278,12 +381,12 @@ import { TrophyInfoSheetComponent, type TrophyInfoData } from '../../room/compon
       }
     }
 
+    /* Stats Strip */
     .stats-strip {
       display: flex;
       align-items: center;
-      background: var(--ion-color-step-50);
-      border-radius: 14px;
-      padding: 10px 0;
+      padding: 12px 0;
+      margin-top: 8px;
     }
 
     .stat-item {
@@ -297,128 +400,111 @@ import { TrophyInfoSheetComponent, type TrophyInfoData } from '../../room/compon
     .stat-top {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
 
       ion-icon {
-        font-size: 15px;
-        opacity: 0.8;
+        font-size: 18px;
+        color: rgba(255, 255, 255, 0.9);
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
       }
     }
 
     .stat-value {
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 800;
-      letter-spacing: -0.02em;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     }
 
     .stat-label {
       font-size: 10px;
-      color: var(--ion-color-medium);
+      color: rgba(255, 255, 255, 0.8);
       text-transform: uppercase;
-      letter-spacing: 0.06em;
-      font-weight: 500;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
 
     .stat-divider {
       width: 1px;
-      height: 28px;
-      background: var(--ion-color-step-150);
-      flex-shrink: 0;
+      height: 24px;
+      background: rgba(255, 255, 255, 0.3);
     }
 
-    .room-container {
-      flex: 1;
-      min-height: 0;
-      position: relative;
-    }
-
-    ngt-canvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-    }
-
+    /* Empty States & Loading */
     .centered {
+      position: absolute;
+      inset: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100%;
       padding: 24px;
       text-align: center;
+      z-index: 5;
+      pointer-events: none;
+
+      * {
+        pointer-events: auto;
+      }
     }
 
     .empty-title {
-      font-size: 20px;
-      font-weight: 700;
+      font-size: 22px;
+      font-weight: 800;
       margin: 0 0 8px;
+      color: var(--ion-text-color);
     }
 
     .empty-subtitle {
-      margin: 0;
       font-size: 15px;
+      line-height: 1.5;
+      color: var(--ion-color-step-600);
+      max-width: 280px;
     }
 
+    /* Edit Button (Bottom) */
     .edit-room-btn {
       position: absolute;
-      bottom: calc(env(safe-area-inset-bottom, 0px) + 76px);
+      bottom: calc(env(safe-area-inset-bottom, 20px) + 90px);
       left: 50%;
       transform: translateX(-50%);
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 10px 20px;
-      border: none;
+      gap: 8px;
+      padding: 14px 28px;
+      border: 1px solid rgba(255, 255, 255, 0.4);
       border-radius: 100px;
-      background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.72);
+      background: rgba(255, 255, 255, 0.75);
       backdrop-filter: blur(16px) saturate(1.8);
       -webkit-backdrop-filter: blur(16px) saturate(1.8);
       box-shadow:
-        0 2px 12px rgba(0, 0, 0, 0.10),
-        0 0 0 1px rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.06);
+        0 8px 32px rgba(0, 0, 0, 0.12),
+        0 2px 4px rgba(0, 0, 0, 0.05);
       cursor: pointer;
-      z-index: 10;
-      transition: transform 0.18s ease, box-shadow 0.18s ease;
+      z-index: 20;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       -webkit-tap-highlight-color: transparent;
-      font-family: inherit;
-      white-space: nowrap;
-
-      &:hover {
-        box-shadow:
-          0 4px 20px rgba(0, 0, 0, 0.14),
-          0 0 0 1px rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.08);
-      }
+      outline: none;
 
       &:active {
         transform: translateX(-50%) scale(0.95);
       }
 
       ion-icon {
-        font-size: 18px;
-        color: var(--ion-color-primary);
+        font-size: 20px;
+        color: var(--ion-text-color);
       }
 
       span {
-        font-size: 14px;
-        font-weight: 600;
+        font-size: 15px;
+        font-weight: 700;
         color: var(--ion-text-color);
         letter-spacing: -0.01em;
       }
-
-      @media (min-width: 768px) {
-        padding: 12px 28px;
-        gap: 8px;
-
-        ion-icon {
-          font-size: 20px;
-        }
-
-        span {
-          font-size: 15px;
-        }
-      }
     }
 
+    /* Upgrade Modal */
     .upgrade-container {
       display: flex;
       flex-direction: column;
@@ -429,30 +515,41 @@ import { TrophyInfoSheetComponent, type TrophyInfoData } from '../../room/compon
       gap: 12px;
 
       h2 {
-        font-size: 22px;
-        font-weight: 700;
+        font-size: 24px;
+        font-weight: 800;
         margin: 0;
       }
 
       p {
         margin: 0;
+        font-size: 15px;
         line-height: 1.5;
+        color: var(--ion-color-step-600);
       }
 
       .reset-info {
         font-size: 13px;
-        color: var(--ion-color-medium);
+        margin-top: 8px;
+        font-weight: 500;
+        color: var(--ion-color-primary);
+        background: rgba(var(--ion-color-primary-rgb), 0.1);
+        padding: 4px 12px;
+        border-radius: 12px;
       }
 
       ion-button {
-        margin-top: 16px;
+        margin-top: 24px;
         width: 100%;
+        --border-radius: 16px;
+        font-weight: 700;
       }
     }
 
     .upgrade-icon {
-      font-size: 56px;
+      font-size: 64px;
       color: var(--ion-color-warning);
+      margin-bottom: 8px;
+      filter: drop-shadow(0 4px 12px rgba(var(--ion-color-warning-rgb), 0.3));
     }
   `,
 })
@@ -470,12 +567,13 @@ export class HomePage implements OnInit {
   hasItems = computed(() => (this.roomService.room()?.items?.length ?? 0) > 0);
 
   trophyItemCount = computed(() => {
-    return (this.roomService.room()?.items ?? []).filter((i) => i.trophyId).length;
+    return (this.roomService.room()?.items ?? []).filter((i) => i.trophyId)
+      .length;
   });
 
   trophyItems = computed(() => {
     return (this.roomService.room()?.items ?? []).filter(
-      (item) => item.trophyId && item.trophy
+      (item) => item.trophyId && item.trophy,
     );
   });
 
@@ -514,7 +612,9 @@ export class HomePage implements OnInit {
   daysUntilReset = computed(() => {
     const now = new Date();
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    return Math.ceil((endOfMonth.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.ceil(
+      (endOfMonth.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+    );
   });
 
   constructor() {
@@ -577,24 +677,24 @@ export class HomePage implements OnInit {
 
   onViewDetails(trophyId: string): void {
     this.inspectedItemId.set(null);
-    this.router.navigate(['/trophy', trophyId]);
+    this.router.navigate(["/trophy", trophyId]);
   }
 
   onSeeFinishers(raceId: string): void {
     this.inspectedItemId.set(null);
-    this.router.navigate(['/race', raceId, 'finishers']);
+    this.router.navigate(["/race", raceId, "finishers"]);
   }
 
   goToEdit(): void {
-    this.router.navigate(['/room/edit']);
+    this.router.navigate(["/room/edit"]);
   }
 
   goToProfile(): void {
-    this.router.navigate(['/tabs/profile']);
+    this.router.navigate(["/tabs/profile"]);
   }
 
   onUpgrade(): void {
     this.showUpgradeModal.set(false);
-    this.router.navigate(['/pro']);
+    this.router.navigate(["/pro"]);
   }
 }

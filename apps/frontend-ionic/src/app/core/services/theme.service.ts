@@ -7,6 +7,8 @@ import {
   CustomThemeColors,
   CUSTOM_THEME_ID,
   buildCustomRoomTheme,
+  applyMaterialOverridesToTheme,
+  type MaterialOverrides,
 } from '@app/types/room-theme';
 
 @Injectable({ providedIn: 'root' })
@@ -17,7 +19,9 @@ export class ThemeService {
   readonly activeTheme = signal<RoomTheme>(DEFAULT_THEME);
   readonly loading = signal(false);
   readonly customColors = signal<CustomThemeColors | null>(null);
+  readonly materialOverrides = signal<MaterialOverrides | null>(null);
 
+  readonly baseTheme = signal<RoomTheme>(DEFAULT_THEME);
   readonly builtInThemes = BUILT_IN_THEMES;
 
   async fetchThemes(): Promise<void> {
@@ -36,7 +40,9 @@ export class ThemeService {
   }
 
   applyTheme(theme: RoomTheme): void {
-    this.activeTheme.set(theme);
+    this.baseTheme.set(theme);
+    const overrides = this.materialOverrides();
+    this.activeTheme.set(overrides ? applyMaterialOverridesToTheme(theme, overrides) : theme);
     if (theme.id !== CUSTOM_THEME_ID) {
       this.customColors.set(null);
     }
@@ -44,7 +50,20 @@ export class ThemeService {
 
   applyCustomColors(colors: CustomThemeColors): void {
     this.customColors.set(colors);
-    this.activeTheme.set(buildCustomRoomTheme(colors));
+    const base = buildCustomRoomTheme(colors);
+    this.baseTheme.set(base);
+    const overrides = this.materialOverrides();
+    this.activeTheme.set(overrides ? applyMaterialOverridesToTheme(base, overrides) : base);
+  }
+
+  applyMaterialOverrides(overrides: MaterialOverrides): void {
+    this.materialOverrides.set(overrides);
+    this.activeTheme.set(applyMaterialOverridesToTheme(this.baseTheme(), overrides));
+  }
+
+  clearMaterialOverrides(): void {
+    this.materialOverrides.set(null);
+    this.activeTheme.set(this.baseTheme());
   }
 
   getThemeBySlug(slug: string): RoomTheme | undefined {
@@ -55,19 +74,87 @@ export class ThemeService {
     return this.builtInThemes.find((t) => t.id === id);
   }
 
+  /**
+   * Pure resolver — safe to call inside `computed()`.
+   * Returns a fully resolved theme (with material overrides baked in if present).
+   * Does NOT write to any signals.
+   *
+   * Base theme priority:
+   *   1. themeId → built-in theme (preserves original textures)
+   *   2. customTheme colors → buildCustomRoomTheme
+   *   3. DEFAULT_THEME
+   * Then material overrides from customTheme.materials are applied on top.
+   */
   resolveThemeFromRoom(room: { themeId: string | null; customTheme: string | null }): RoomTheme {
+    let materials: MaterialOverrides | null = null;
+
+    // Extract materials from customTheme JSON
     if (room.customTheme) {
       try {
-        const colors: CustomThemeColors = JSON.parse(room.customTheme);
-        return buildCustomRoomTheme(colors);
+        const parsed = JSON.parse(room.customTheme);
+        materials = parsed.materials ?? null;
       } catch {
-        // fall through to themeId or default
+        // ignore parse errors
       }
     }
+
+    // Determine base theme
+    let base: RoomTheme;
     if (room.themeId) {
-      const found = this.getThemeById(room.themeId);
-      if (found) return found;
+      base = this.getThemeById(room.themeId) ?? DEFAULT_THEME;
+    } else if (room.customTheme) {
+      try {
+        base = buildCustomRoomTheme(JSON.parse(room.customTheme));
+      } catch {
+        base = DEFAULT_THEME;
+      }
+    } else {
+      base = DEFAULT_THEME;
     }
-    return DEFAULT_THEME;
+
+    // Apply material overrides on top of the resolved base
+    return materials ? applyMaterialOverridesToTheme(base, materials) : base;
+  }
+
+  /**
+   * Imperative init — call from ngOnInit / async contexts (NOT from computed).
+   * Resolves theme AND hydrates all signals (baseTheme, materialOverrides,
+   * customColors, activeTheme) from stored room data.
+   */
+  initThemeFromRoom(room: { themeId: string | null; customTheme: string | null }): void {
+    let materials: MaterialOverrides | null = null;
+
+    // Extract materials from customTheme JSON
+    if (room.customTheme) {
+      try {
+        const parsed = JSON.parse(room.customTheme);
+        materials = parsed.materials ?? null;
+      } catch {
+        // ignore
+      }
+    }
+
+    // Determine base theme (without materials)
+    let base: RoomTheme;
+    if (room.themeId) {
+      base = this.getThemeById(room.themeId) ?? DEFAULT_THEME;
+      this.customColors.set(null);
+    } else if (room.customTheme) {
+      try {
+        const parsed = JSON.parse(room.customTheme);
+        base = buildCustomRoomTheme(parsed);
+        this.customColors.set(parsed);
+      } catch {
+        base = DEFAULT_THEME;
+        this.customColors.set(null);
+      }
+    } else {
+      base = DEFAULT_THEME;
+      this.customColors.set(null);
+    }
+
+    this.baseTheme.set(base);
+    this.materialOverrides.set(materials);
+    this.activeTheme.set(materials ? applyMaterialOverridesToTheme(base, materials) : base);
   }
 }

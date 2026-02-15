@@ -5,6 +5,11 @@ const customThemeSchema = z.object({
   backWallColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
   floorColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
   background: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  materials: z.object({
+    floorMaterialId: z.string().optional(),
+    wallMaterialId: z.string().optional(),
+    backgroundId: z.string().optional(),
+  }).optional(),
 }).nullable();
 
 export const updateRoomSchema = z.object({

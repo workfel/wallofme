@@ -1,15 +1,25 @@
+import {
+  type MaterialOverrides,
+  findFloorMaterial,
+  findWallMaterial,
+  findBackground,
+} from './material-catalog';
+
+export type { MaterialOverrides };
+
 export interface RoomTheme {
   id: string;
   name: string;
   slug: string;
-  floor: { color: string; roughness: number; texture?: string };
-  leftWall: { color: string; roughness: number; texture?: string };
-  backWall: { color: string; roughness: number; texture?: string };
+  floor: { color: string; roughness: number; texture?: string; textureRepeat?: [number, number] };
+  leftWall: { color: string; roughness: number; texture?: string; textureRepeat?: [number, number] };
+  backWall: { color: string; roughness: number; texture?: string; textureRepeat?: [number, number] };
   hemisphereLight: { skyColor: string; groundColor: string; intensity: number };
   mainLight: { intensity: number; color?: string; position: [number, number, number] };
   spotLight: { intensity: number; color: string; position: [number, number, number]; angle: number; penumbra: number };
   fillLight?: { intensity: number; color: string; position: [number, number, number] };
   background: string;
+  environmentMap?: string;
   isFree: boolean;
   priceTokens: number;
 }
@@ -34,14 +44,14 @@ export const DARK_CAVE_THEME: RoomTheme = {
   id: 'dark-cave',
   name: 'Dark Cave',
   slug: 'dark-cave',
-  floor: { color: '#2a2a2a', roughness: 0.85 },
-  leftWall: { color: '#1a1a2e', roughness: 0.9 },
-  backWall: { color: '#16213e', roughness: 0.9 },
-  hemisphereLight: { skyColor: '#1a1a3e', groundColor: '#0a0a0a', intensity: 0.3 },
-  mainLight: { intensity: 1.0, color: '#8be9fd', position: [3, 10, 1] },
-  spotLight: { intensity: 0.8, color: '#bd93f9', position: [0, 6, 0], angle: Math.PI / 4, penumbra: 0.6 },
-  fillLight: { intensity: 0.15, color: '#6272a4', position: [2, 1.5, 2] },
-  background: '#0a0a1a',
+  floor: { color: '#1e1e28', roughness: 0.85 },
+  leftWall: { color: '#14142a', roughness: 0.9 },
+  backWall: { color: '#111130', roughness: 0.9 },
+  hemisphereLight: { skyColor: '#1a1a3e', groundColor: '#050510', intensity: 0.25 },
+  mainLight: { intensity: 0.8, color: '#6ec6ff', position: [3, 10, 1] },
+  spotLight: { intensity: 1.0, color: '#a474e0', position: [0, 6, 0], angle: Math.PI / 4, penumbra: 0.7 },
+  fillLight: { intensity: 0.12, color: '#4a5680', position: [2, 1.5, 2] },
+  background: '#08081a',
   isFree: true,
   priceTokens: 0,
 };
@@ -50,14 +60,14 @@ export const ALPINE_THEME: RoomTheme = {
   id: 'alpine',
   name: 'Alpine Lodge',
   slug: 'alpine',
-  floor: { color: '#e8e8e8', roughness: 0.7 },
-  leftWall: { color: '#f0f5f9', roughness: 0.85 },
-  backWall: { color: '#dce4ec', roughness: 0.85 },
-  hemisphereLight: { skyColor: '#d4e8f7', groundColor: '#8a9bae', intensity: 0.7 },
-  mainLight: { intensity: 2.2, color: '#ffffff', position: [3, 10, 1] },
-  spotLight: { intensity: 1.2, color: '#e8f0ff', position: [0, 6, 0], angle: Math.PI / 4, penumbra: 0.4 },
-  fillLight: { intensity: 0.35, color: '#cce5ff', position: [2, 1.5, 2] },
-  background: '#e8eef4',
+  floor: { color: '#d8cfc2', roughness: 0.7 },
+  leftWall: { color: '#e8e2d8', roughness: 0.85 },
+  backWall: { color: '#ddd6ca', roughness: 0.85 },
+  hemisphereLight: { skyColor: '#c8daea', groundColor: '#7a8a9a', intensity: 0.65 },
+  mainLight: { intensity: 2.0, color: '#fff8f0', position: [3, 10, 1] },
+  spotLight: { intensity: 1.0, color: '#f0e8d8', position: [0, 6, 0], angle: Math.PI / 4, penumbra: 0.45 },
+  fillLight: { intensity: 0.3, color: '#b8d0e8', position: [2, 1.5, 2] },
+  background: '#dce4ec',
   isFree: true,
   priceTokens: 0,
 };
@@ -89,4 +99,56 @@ export function buildCustomRoomTheme(colors: CustomThemeColors): RoomTheme {
     isFree: true,
     priceTokens: 0,
   };
+}
+
+export function applyMaterialOverridesToTheme(
+  theme: RoomTheme,
+  overrides: MaterialOverrides,
+): RoomTheme {
+  let result = { ...theme };
+
+  if (overrides.floorMaterialId) {
+    const mat = findFloorMaterial(overrides.floorMaterialId);
+    if (mat) {
+      result = {
+        ...result,
+        floor: {
+          color: mat.color,
+          roughness: mat.roughness,
+          texture: mat.texture,
+          textureRepeat: mat.textureRepeat,
+        },
+      };
+    }
+  }
+
+  if (overrides.wallMaterialId) {
+    const mat = findWallMaterial(overrides.wallMaterialId);
+    if (mat) {
+      const wallSurface = {
+        color: mat.color,
+        roughness: mat.roughness,
+        texture: mat.texture,
+        textureRepeat: mat.textureRepeat,
+      };
+      result = {
+        ...result,
+        leftWall: wallSurface,
+        backWall: wallSurface,
+      };
+    }
+  }
+
+  if (overrides.backgroundId) {
+    const bg = findBackground(overrides.backgroundId);
+    if (bg) {
+      if (bg.type === 'solid' && bg.color) {
+        result = { ...result, background: bg.color, environmentMap: undefined };
+      } else if (bg.type === 'environment' && bg.environment) {
+        result = { ...result, environmentMap: bg.environment };
+      }
+    }
+  }
+
+  return result;
 }

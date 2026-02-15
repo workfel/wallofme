@@ -2,8 +2,6 @@ import { Component, inject, input, signal, OnInit } from "@angular/core";
 import { Location } from "@angular/common";
 import { Router } from "@angular/router";
 import {
-  IonAvatar,
-  IonButton,
   IonChip,
   IonContent,
   IonIcon,
@@ -43,9 +41,7 @@ interface PublicProfile {
   imports: [
     TranslateModule,
     IonContent,
-    IonButton,
     IonText,
-    IonAvatar,
     IonChip,
     IonSpinner,
     IonIcon,
@@ -190,30 +186,58 @@ interface PublicProfile {
   styles: `
     :host {
       --toolbar-top: var(--ion-safe-area-top, 20px);
-      --banner-height: 180px;
+      --banner-height: 220px;
       --avatar-size: 110px;
       --avatar-overlap: 55px;
+    }
+
+    /* Global Background */
+    ion-content {
+      --background: radial-gradient(circle at 50% 0%, #e0f7fa 0%, #f0f4f8 100%);
+    }
+
+    /* Glass Card Shared Styles */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(20px) saturate(1.8);
+      -webkit-backdrop-filter: blur(20px) saturate(1.8);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.08),
+        0 2px 4px rgba(0, 0, 0, 0.04);
+      border-radius: 32px;
     }
 
     /* ── Banner ─────────────────────────────── */
     .banner {
       position: relative;
       height: var(--banner-height);
-      background:
-        linear-gradient(135deg,
-          var(--ion-color-primary) 0%,
-          color-mix(in srgb, var(--ion-color-primary) 70%, #6dd5fa) 50%,
-          color-mix(in srgb, var(--ion-color-primary) 40%, #e0f7fa) 100%
-        );
+      background: linear-gradient(
+        135deg,
+        #1a1a1a 0%,
+        #2c3e50 100%
+      ); /* Darker rich banner */
       overflow: hidden;
+      border-bottom-left-radius: 40px;
+      border-bottom-right-radius: 40px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      margin-bottom: 20px;
 
       &::after {
-        content: '';
+        content: "";
         position: absolute;
         inset: 0;
         background:
-          radial-gradient(circle at 20% 80%, rgba(255,255,255,0.15) 0%, transparent 50%),
-          radial-gradient(circle at 80% 20%, rgba(255,255,255,0.10) 0%, transparent 40%);
+          radial-gradient(
+            circle at 20% 80%,
+            rgba(255, 255, 255, 0.1) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 80% 20%,
+            rgba(255, 255, 255, 0.05) 0%,
+            transparent 40%
+          );
       }
     }
 
@@ -229,14 +253,14 @@ interface PublicProfile {
     }
 
     .toolbar-pill {
-      width: 40px;
-      height: 40px;
+      width: 44px; /* Larger touch target */
+      height: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border: none;
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.25);
+      background: rgba(0, 0, 0, 0.4);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       color: #fff;
@@ -246,25 +270,25 @@ interface PublicProfile {
 
       &:active {
         transform: scale(0.9);
+        background: rgba(0, 0, 0, 0.6);
       }
 
       ion-icon {
-        font-size: 20px;
+        font-size: 22px;
       }
     }
 
     .toolbar-spacer {
-      width: 40px;
+      width: 44px;
     }
 
     /* ── Card body ───────────────────────────── */
     .card-body {
       position: relative;
-      margin-top: -48px;
-      border-radius: 48px 48px 0 0;
-      background: var(--ion-background-color, #fff);
-      padding-top: calc(var(--avatar-overlap) + 12px);
+      margin: -80px 16px 20px; /* Pull up over banner */
+      padding-top: calc(var(--avatar-overlap) + 8px);
       min-height: 200px;
+      @extend .glass-card;
     }
 
     /* ── Avatar ──────────────────────────────── */
@@ -282,8 +306,8 @@ interface PublicProfile {
       width: var(--avatar-size);
       height: var(--avatar-size);
       border-radius: 50%;
-      border: 4px solid var(--ion-background-color, #fff);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+      border: 4px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
       overflow: hidden;
       background: var(--ion-color-step-100);
     }
@@ -318,33 +342,39 @@ interface PublicProfile {
     }
 
     .display-name {
-      font-size: 22px;
+      font-size: 24px;
       font-weight: 800;
-      margin: 0;
+      margin: 0 0 4px;
       text-align: center;
       letter-spacing: -0.02em;
+      color: var(--ion-text-color);
     }
 
     .subtitle-label {
-      font-size: 14px;
-      color: var(--ion-color-medium);
+      font-size: 15px;
+      color: var(--ion-color-step-600);
       margin: 2px 0 0;
+      font-weight: 500;
     }
 
     .sport-chips {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 4px;
-      margin-top: 8px;
+      gap: 6px;
+      margin-top: 12px;
     }
 
     .sport-chip {
-      height: 26px;
+      height: 28px;
       font-size: 12px;
       margin: 0;
-      --padding-start: 10px;
-      --padding-end: 10px;
+      background: rgba(var(--ion-color-primary-rgb), 0.1);
+      color: var(--ion-color-primary);
+      border: 1px solid rgba(var(--ion-color-primary-rgb), 0.2);
+      font-weight: 600;
+      --padding-start: 12px;
+      --padding-end: 12px;
     }
 
     /* ── Stats row ──────────────────────────── */
@@ -352,8 +382,10 @@ interface PublicProfile {
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 20px 24px 0;
+      margin: 24px 16px 0;
       padding: 16px 0;
+      border-top: 1px solid rgba(0, 0, 0, 0.05);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     }
 
     .stat-item {
@@ -361,54 +393,58 @@ interface PublicProfile {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 2px;
+      gap: 4px;
     }
 
     .stat-value {
       font-size: 20px;
       font-weight: 800;
       letter-spacing: -0.02em;
+      color: var(--ion-text-color);
     }
 
     .stat-label {
       font-size: 11px;
-      color: var(--ion-color-medium);
+      color: var(--ion-color-step-500);
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.05em;
+      font-weight: 700;
     }
 
     .stat-divider {
       width: 1px;
       height: 28px;
-      background: var(--ion-color-step-150);
+      background: rgba(0, 0, 0, 0.1);
     }
 
     /* ── Action button ──────────────────────── */
     .action-row {
       display: flex;
       justify-content: center;
-      padding: 16px 24px 20px;
+      padding: 24px 24px 28px;
     }
 
     .action-btn {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 10px 28px;
+      padding: 12px 32px;
       border-radius: 100px;
       font-size: 15px;
-      font-weight: 600;
+      font-weight: 700;
       font-family: inherit;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease;
 
       &:active {
         transform: scale(0.96);
       }
 
       ion-icon {
-        font-size: 18px;
+        font-size: 20px;
       }
     }
 
@@ -416,22 +452,32 @@ interface PublicProfile {
       background: var(--ion-color-primary);
       color: var(--ion-color-primary-contrast);
       border: none;
-      box-shadow: 0 2px 12px rgba(var(--ion-color-primary-rgb), 0.3);
+      box-shadow: 0 4px 16px rgba(var(--ion-color-primary-rgb), 0.4);
     }
 
     /* ── Trophy grid ────────────────────────── */
     .trophy-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 2px;
-      padding: 0 2px;
+      gap: 8px;
+      padding: 0 16px 40px; /* outside the glass card now? No, inside */
+    }
+
+    /* Modify trophy grid to be INSIDE or OUTSIDE card? 
+       The HTML structure has it inside .card-body. 
+       Let's keep it there but style appropriately. 
+    */
+    .card-body .trophy-grid {
+      padding: 0 16px 32px;
     }
 
     .trophy-cell {
       position: relative;
       aspect-ratio: 1;
       overflow: hidden;
-      background: var(--ion-color-step-50);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.6);
     }
 
     .trophy-img {
@@ -446,11 +492,11 @@ interface PublicProfile {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: var(--ion-color-step-100);
+      background: rgba(255, 255, 255, 0.2);
 
       ion-icon {
         font-size: 32px;
-        color: var(--ion-color-step-400);
+        color: rgba(var(--ion-color-primary-rgb), 0.5);
       }
     }
 
@@ -458,18 +504,20 @@ interface PublicProfile {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 48px 24px;
+      padding: 40px 24px;
       text-align: center;
 
       .empty-icon {
         font-size: 48px;
-        color: var(--ion-color-step-300);
+        color: rgba(var(--ion-color-medium-rgb), 0.5);
         margin-bottom: 12px;
       }
 
       p {
         margin: 0;
         font-size: 15px;
+        color: var(--ion-color-medium);
+        font-weight: 500;
       }
     }
 

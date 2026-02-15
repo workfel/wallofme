@@ -2,40 +2,40 @@ import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { Router } from "@angular/router";
 import {
-    ActionSheetController,
-    IonAvatar,
-    IonButton,
-    IonButtons,
-    IonChip,
-    IonContent,
-    IonHeader,
-    IonIcon,
-    IonItem,
-    IonLabel,
-    IonList,
-    IonModal,
-    IonRefresher,
-    IonRefresherContent,
-    IonSpinner,
-    IonText,
-    IonTitle,
-    IonToolbar,
+  ActionSheetController,
+  IonAvatar,
+  IonButton,
+  IonButtons,
+  IonChip,
+  IonContent,
+  IonHeader,
+  IonIcon,
+  IonItem,
+  IonLabel,
+  IonList,
+  IonModal,
+  IonRefresher,
+  IonRefresherContent,
+  IonSpinner,
+  IonText,
+  IonTitle,
+  IonToolbar,
 } from "@ionic/angular/standalone";
 import { TranslateModule, TranslateService } from "@ngx-translate/core";
 import { addIcons } from "ionicons";
 import {
-    arrowForwardOutline,
-    checkmarkOutline,
-    createOutline,
-    documentTextOutline,
-    flameOutline,
-    languageOutline,
-    logOutOutline,
-    moonOutline,
-    personCircleOutline,
-    ribbonOutline,
-    settingsOutline,
-    starOutline,
+  arrowForwardOutline,
+  checkmarkOutline,
+  createOutline,
+  documentTextOutline,
+  flameOutline,
+  languageOutline,
+  logOutOutline,
+  moonOutline,
+  personCircleOutline,
+  ribbonOutline,
+  settingsOutline,
+  starOutline,
 } from "ionicons/icons";
 
 import { AppThemeService } from "@app/core/services/app-theme.service";
@@ -184,7 +184,11 @@ import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.co
       } @else {
         <div class="trophy-grid animate-fade-in-up">
           @for (trophy of trophyService.trophies(); track trophy.id) {
-            <div class="trophy-cell" (click)="goToTrophy(trophy.id)" aria-hidden>
+            <div
+              class="trophy-cell"
+              (click)="goToTrophy(trophy.id)"
+              aria-hidden
+            >
               @if (trophy.thumbnailUrl) {
                 <img
                   [src]="trophy.thumbnailUrl"
@@ -281,22 +285,58 @@ import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.co
     </ion-content>
   `,
   styles: `
+    /* Global Background */
+    ion-content {
+      --background: radial-gradient(circle at 50% 0%, #e0f7fa 0%, #f0f4f8 100%);
+    }
+
+    /* Glass Card Shared Styles */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(20px) saturate(1.8);
+      -webkit-backdrop-filter: blur(20px) saturate(1.8);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.08),
+        0 2px 4px rgba(0, 0, 0, 0.04);
+      border-radius: 24px;
+    }
+
     .hero-header {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 24px 24px 16px;
+      padding: 32px 24px 24px;
+      margin: 16px;
+      @extend .glass-card;
     }
 
     .avatar-wrapper {
       position: relative;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
+
+      &::before {
+        content: "";
+        position: absolute;
+        inset: -4px;
+        border-radius: 50%;
+        background: linear-gradient(
+          135deg,
+          rgba(255, 255, 255, 0.8),
+          rgba(255, 255, 255, 0.2)
+        );
+        z-index: 0;
+      }
     }
 
     .avatar-large {
       width: 100px;
       height: 100px;
       cursor: pointer;
+      position: relative;
+      z-index: 1;
+      border: 4px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
     .avatar-placeholder {
@@ -308,8 +348,8 @@ import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.co
       position: absolute;
       bottom: 2px;
       right: 2px;
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       background: var(--ion-color-primary);
       color: #fff;
@@ -317,49 +357,59 @@ import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.co
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 12px rgba(var(--ion-color-primary-rgb), 0.4);
+      z-index: 2;
+      border: 2px solid #fff;
 
       ion-icon {
-        font-size: 14px;
+        font-size: 16px;
       }
     }
 
     .display-name {
-      font-size: 24px;
+      font-size: 26px;
       font-weight: 800;
-      margin: 0 0 2px;
+      margin: 0 0 4px;
       text-align: center;
+      color: var(--ion-text-color);
+      letter-spacing: -0.02em;
     }
 
     .country-label {
-      font-size: 14px;
-      margin: 0 0 8px;
+      font-size: 15px;
+      margin: 0 0 12px;
+      color: var(--ion-color-step-600);
+      font-weight: 500;
     }
 
     .sport-chips {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 4px;
-      margin-top: 4px;
+      gap: 6px;
+      margin-top: 8px;
     }
 
     .sport-chip {
-      height: 26px;
+      height: 28px;
       font-size: 12px;
       margin: 0;
-      --padding-start: 10px;
-      --padding-end: 10px;
+      background: rgba(var(--ion-color-primary-rgb), 0.1);
+      color: var(--ion-color-primary);
+      border: 1px solid rgba(var(--ion-color-primary-rgb), 0.2);
+      font-weight: 600;
+      --padding-start: 12px;
+      --padding-end: 12px;
     }
 
     .stats-bar {
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 8px 16px 16px;
-      padding: 14px 0;
-      background: var(--ion-color-step-50);
-      border-radius: 16px;
+      margin: 0 16px 20px;
+      padding: 16px 0;
+      @extend .glass-card;
+      background: rgba(255, 255, 255, 0.5); /* Slightly more transparent */
     }
 
     .stat-item {
@@ -367,59 +417,59 @@ import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.co
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 2px;
+      gap: 4px;
     }
 
     .stat-value {
-      font-size: 20px;
+      font-size: 22px;
       font-weight: 800;
+      color: var(--ion-text-color);
     }
 
     .stat-label {
-      font-size: 12px;
-      color: var(--ion-color-medium);
+      font-size: 11px;
+      color: var(--ion-color-step-500);
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.05em;
+      font-weight: 700;
     }
 
     .stat-divider {
       width: 1px;
-      height: 28px;
-      background: var(--ion-color-step-200);
+      height: 32px;
+      background: rgba(0, 0, 0, 0.08);
     }
 
     .pro-banner {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin: 0 16px 16px;
-      padding: 12px 16px;
-      background: linear-gradient(
-        135deg,
-        rgba(245, 166, 35, 0.08) 0%,
-        rgba(255, 215, 0, 0.08) 100%
-      );
-      border-left: 3px solid var(--ion-color-warning);
-      border-radius: 12px;
+      margin: 0 16px 24px;
+      padding: 14px 20px;
+      background: linear-gradient(135deg, #fff8e1 0%, #fff3ca 100%);
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      border-radius: 20px;
+      box-shadow: 0 4px 16px rgba(255, 200, 0, 0.15);
     }
 
     .pro-banner-content {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 14px;
-      font-weight: 600;
+      gap: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #8b6b00;
 
       ion-icon {
-        font-size: 20px;
+        font-size: 22px;
       }
     }
 
     .trophy-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 2px;
-      padding: 0 2px;
+      gap: 8px;
+      padding: 0 16px 40px;
     }
 
     .trophy-cell {
@@ -427,10 +477,17 @@ import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.co
       aspect-ratio: 1;
       overflow: hidden;
       cursor: pointer;
-      background: var(--ion-color-step-50);
+      border-radius: 16px;
+      @extend .glass-card;
+      background: rgba(255, 255, 255, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
 
       &:active {
-        opacity: 0.85;
+        transform: scale(0.96);
+        background: rgba(255, 255, 255, 0.5);
       }
     }
 
@@ -438,6 +495,11 @@ import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.co
       width: 100%;
       height: 100%;
       object-fit: cover;
+      transition: transform 0.3s ease;
+
+      .trophy-cell:hover & {
+        transform: scale(1.05);
+      }
     }
 
     .trophy-fallback {
@@ -446,18 +508,19 @@ import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.co
       display: flex;
       align-items: center;
       justify-content: center;
-      background: var(--ion-color-step-100);
+      background: rgba(255, 255, 255, 0.2);
 
       ion-icon {
         font-size: 32px;
-        color: var(--ion-color-step-400);
+        color: rgba(var(--ion-color-primary-rgb), 0.5);
       }
     }
 
     .trophy-processing-overlay {
       position: absolute;
       inset: 0;
-      background: rgba(0, 0, 0, 0.4);
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(4px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -473,18 +536,24 @@ import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.co
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 48px 24px;
+      padding: 64px 24px;
       text-align: center;
 
+      @extend .glass-card;
+      margin: 0 16px;
+      background: rgba(255, 255, 255, 0.3);
+
       .empty-icon {
-        font-size: 48px;
-        color: var(--ion-color-step-300);
-        margin-bottom: 12px;
+        font-size: 56px;
+        color: rgba(var(--ion-color-medium-rgb), 0.5);
+        margin-bottom: 16px;
       }
 
       p {
         margin: 0;
-        font-size: 15px;
+        font-size: 16px;
+        font-weight: 500;
+        color: var(--ion-color-medium);
       }
     }
 

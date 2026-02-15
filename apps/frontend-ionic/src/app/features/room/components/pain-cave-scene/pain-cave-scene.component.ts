@@ -25,7 +25,9 @@ import {
   Color,
   RepeatWrapping,
   SRGBColorSpace,
+  EquirectangularReflectionMapping,
 } from 'three';
+import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js';
 import { RoundedBoxGeometry } from 'three-stdlib';
 
 import { TrophyFrameComponent } from '../trophy-frame/trophy-frame.component';
@@ -121,6 +123,7 @@ export interface ItemDragEvent {
       [inspectedItemId]="inspectedItemId()"
       [items]="items()"
       [enabled]="!isDragging()"
+      [zoomOut]="zoomOut()"
     />
 
     <!-- Hemisphere fill — sky/ground gradient for natural ambient -->
@@ -299,6 +302,7 @@ export class PainCaveSceneComponent implements OnDestroy {
   dimOthers = input(false);
   theme = input<RoomTheme>(DEFAULT_THEME);
   shadowMapSize = input(1024);
+  zoomOut = input(false);
 
   itemPressed = output<string>();
   itemDragged = output<ItemDragEvent>();
@@ -331,7 +335,8 @@ export class PainCaveSceneComponent implements OnDestroy {
       onLoad: (tex) => {
         tex.colorSpace = SRGBColorSpace;
         tex.wrapS = tex.wrapT = RepeatWrapping;
-        tex.repeat.set(2, 2);
+        const repeat = this.theme().floor.textureRepeat ?? [2, 2];
+        tex.repeat.set(repeat[0], repeat[1]);
       },
     },
   );
@@ -341,7 +346,8 @@ export class PainCaveSceneComponent implements OnDestroy {
       onLoad: (tex) => {
         tex.colorSpace = SRGBColorSpace;
         tex.wrapS = tex.wrapT = RepeatWrapping;
-        tex.repeat.set(2, 1);
+        const repeat = this.theme().leftWall.textureRepeat ?? [2, 1];
+        tex.repeat.set(repeat[0], repeat[1]);
       },
     },
   );
@@ -351,7 +357,8 @@ export class PainCaveSceneComponent implements OnDestroy {
       onLoad: (tex) => {
         tex.colorSpace = SRGBColorSpace;
         tex.wrapS = tex.wrapT = RepeatWrapping;
-        tex.repeat.set(2, 1);
+        const repeat = this.theme().backWall.textureRepeat ?? [2, 1];
+        tex.repeat.set(repeat[0], repeat[1]);
       },
     },
   );
@@ -382,10 +389,18 @@ export class PainCaveSceneComponent implements OnDestroy {
     });
 
     effect(() => {
-      const bg = this.theme().background;
+      const theme = this.theme();
       const scene = this.store.snapshot.scene;
-      if (scene) {
-        scene.background = new Color(bg);
+      if (!scene) return;
+
+      if (theme.environmentMap) {
+        const loader = new EXRLoader();
+        loader.load(theme.environmentMap, (tex) => {
+          tex.mapping = EquirectangularReflectionMapping;
+          scene.background = tex;
+        });
+      } else {
+        scene.background = new Color(theme.background);
       }
     });
   }

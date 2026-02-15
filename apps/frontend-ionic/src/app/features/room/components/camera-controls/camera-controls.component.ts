@@ -14,6 +14,10 @@ import type { RoomItem3D } from '../pain-cave-scene/pain-cave-scene.component';
 const DEFAULT_POSITION = new Vector3(5, 5, 5);
 const DEFAULT_TARGET = new Vector3(0, 1, 0);
 
+// Wide pulled-back view showing entire room + background
+const WIDE_POSITION = new Vector3(7, 6, 7);
+const WIDE_TARGET = new Vector3(0, 0.5, 0);
+
 // Offset from item position for inspection framing
 const INSPECT_DISTANCE = 2.0;
 const INSPECT_Y_OFFSET = 0.3;
@@ -51,6 +55,7 @@ export class CameraControlsComponent {
   inspectedItemId = input<string | null>(null);
   items = input<RoomItem3D[]>([]);
   enabled = input(true);
+  zoomOut = input(false);
 
   private store = injectStore();
 
@@ -60,10 +65,31 @@ export class CameraControlsComponent {
   private isAnimating = signal(false);
   private wasInspecting = false;
 
+  private wasZoomedOut = false;
+
   constructor() {
     // Only animate when inspection state actually changes
     effect(() => {
       const itemId = this.inspectedItemId();
+      const wantZoomOut = this.zoomOut();
+
+      if (wantZoomOut) {
+        // Wide view for material editor
+        this.targetCamPos.copy(WIDE_POSITION);
+        this.targetLookAt.copy(WIDE_TARGET);
+        this.wasZoomedOut = true;
+        this.isAnimating.set(true);
+        return;
+      }
+
+      if (this.wasZoomedOut) {
+        // Return from wide view
+        this.targetCamPos.copy(DEFAULT_POSITION);
+        this.targetLookAt.copy(DEFAULT_TARGET);
+        this.wasZoomedOut = false;
+        this.isAnimating.set(true);
+        return;
+      }
 
       if (itemId) {
         // Zoom into item

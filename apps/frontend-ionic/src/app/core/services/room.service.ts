@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { ApiService } from './api.service';
 import { getNextSlotPosition } from '@app/shared/lib/room-placement';
 import type { SlotPosition } from '@app/shared/lib/room-placement';
+import type { MaterialOverrides } from '@app/types/room-theme';
 
 export interface RoomItem {
   id: string;
@@ -77,7 +78,7 @@ export class RoomService {
     return null;
   }
 
-  async updateRoom(data: { themeId?: string | null; customTheme?: { leftWallColor: string; backWallColor: string; floorColor: string; background: string } | null; thumbnailKey?: string }): Promise<boolean> {
+  async updateRoom(data: { themeId?: string | null; customTheme?: { leftWallColor: string; backWallColor: string; floorColor: string; background: string; materials?: MaterialOverrides } | null; thumbnailKey?: string }): Promise<boolean> {
     try {
       const res = await this.api.client.api.rooms.me.$patch({
         json: data,
