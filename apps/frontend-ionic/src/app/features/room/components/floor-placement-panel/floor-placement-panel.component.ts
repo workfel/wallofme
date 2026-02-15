@@ -174,7 +174,7 @@ export interface FloorPlacementValues {
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 16px;
     }
 
     .free-move-toggle {
