@@ -11,6 +11,13 @@ import {
   type MaterialOverrides,
 } from '@app/types/room-theme';
 
+export interface ThemeSnapshot {
+  baseTheme: RoomTheme;
+  activeTheme: RoomTheme;
+  materialOverrides: MaterialOverrides | null;
+  customColors: CustomThemeColors | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
   private api = inject(ApiService);
@@ -41,8 +48,8 @@ export class ThemeService {
 
   applyTheme(theme: RoomTheme): void {
     this.baseTheme.set(theme);
-    const overrides = this.materialOverrides();
-    this.activeTheme.set(overrides ? applyMaterialOverridesToTheme(theme, overrides) : theme);
+    this.materialOverrides.set(null);
+    this.activeTheme.set(theme);
     if (theme.id !== CUSTOM_THEME_ID) {
       this.customColors.set(null);
     }
@@ -52,8 +59,8 @@ export class ThemeService {
     this.customColors.set(colors);
     const base = buildCustomRoomTheme(colors);
     this.baseTheme.set(base);
-    const overrides = this.materialOverrides();
-    this.activeTheme.set(overrides ? applyMaterialOverridesToTheme(base, overrides) : base);
+    this.materialOverrides.set(null);
+    this.activeTheme.set(base);
   }
 
   applyMaterialOverrides(overrides: MaterialOverrides): void {
@@ -64,6 +71,22 @@ export class ThemeService {
   clearMaterialOverrides(): void {
     this.materialOverrides.set(null);
     this.activeTheme.set(this.baseTheme());
+  }
+
+  saveSnapshot(): ThemeSnapshot {
+    return {
+      baseTheme: this.baseTheme(),
+      activeTheme: this.activeTheme(),
+      materialOverrides: this.materialOverrides(),
+      customColors: this.customColors(),
+    };
+  }
+
+  restoreSnapshot(snapshot: ThemeSnapshot): void {
+    this.baseTheme.set(snapshot.baseTheme);
+    this.activeTheme.set(snapshot.activeTheme);
+    this.materialOverrides.set(snapshot.materialOverrides);
+    this.customColors.set(snapshot.customColors);
   }
 
   getThemeBySlug(slug: string): RoomTheme | undefined {

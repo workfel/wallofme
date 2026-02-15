@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { auth } from "./lib/auth";
 import { sessionMiddleware } from "./middleware/auth";
 import { errorHandler } from "./middleware/error-handler";
+import { encryptionMiddleware } from "./middleware/encryption";
 import { trophies } from "./routes/trophies.routes";
 import { races } from "./routes/races.routes";
 import { rooms } from "./routes/rooms.routes";
@@ -39,9 +40,12 @@ app.use(
       "capacitor-origin",
     ],
     allowMethods: ["POST", "GET", "PATCH", "DELETE", "OPTIONS"],
-    exposeHeaders: ["set-auth-token"],
+    exposeHeaders: ["set-auth-token", "X-Encrypted"],
   }),
 );
+
+// Payload encryption middleware (toggle via ENCRYPT_PAYLOADS env var)
+app.use("*", encryptionMiddleware);
 
 // Session middleware — populates user/session on every request (non-blocking)
 app.use("*", sessionMiddleware);

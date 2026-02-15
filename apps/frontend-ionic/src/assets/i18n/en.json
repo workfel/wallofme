@@ -17,7 +17,7 @@
     "register": "Sign Up",
     "email": "Email",
     "password": "Password",
-    "name": "Name",
+    "firstname": "First Name",
     "forgotPassword": "Forgot password?",
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?",
@@ -178,7 +178,8 @@
     "frameTryAnother": "Try another image",
     "frameImageHint": "Pick a photo to display in your frame",
     "changeFrameImage": "Change Image",
-    "changeFrameStyle": "Change Style"
+    "changeFrameStyle": "Change Style",
+    "customHex": "Custom"
   },
   "materials": {
     "none": "None",

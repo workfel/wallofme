@@ -11,4 +11,4 @@
 - [ ] Systeme de parainage
 - [ ] Déploiment sur le Google play Store
 - [ ] Déploiment sur le Apple Store
-- [ ] Option déplacement mode libre des modeles 3d ( sans collision)
+- [x] Option déplacement mode libre des modeles 3d ( sans collision)

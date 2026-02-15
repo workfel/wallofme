@@ -40,7 +40,9 @@ export const users = new Hono<{ Variables: Variables }>()
     // Calculate streak days from daily_login bonus transactions
     const loginDays = await db
       .select({
-        day: sql<string>`DATE(${tokenTransaction.createdAt} AT TIME ZONE 'UTC')`.as("day"),
+        day: sql<string>`DATE(${tokenTransaction.createdAt} AT TIME ZONE 'UTC')`.as(
+          "day"
+        ),
       })
       .from(tokenTransaction)
       .where(
@@ -51,7 +53,9 @@ export const users = new Hono<{ Variables: Variables }>()
         )
       )
       .groupBy(sql`DATE(${tokenTransaction.createdAt} AT TIME ZONE 'UTC')`)
-      .orderBy(desc(sql`DATE(${tokenTransaction.createdAt} AT TIME ZONE 'UTC')`));
+      .orderBy(
+        desc(sql`DATE(${tokenTransaction.createdAt} AT TIME ZONE 'UTC')`)
+      );
 
     let streakDays = 0;
     if (loginDays.length > 0) {
@@ -157,12 +161,13 @@ export const users = new Hono<{ Variables: Variables }>()
           latitude: body.latitude ?? null,
           longitude: body.longitude ?? null,
           updatedAt: new Date(),
+          tokenBalance: 5500,
         })
         .where(eq(user.id, currentUser.id))
         .returning();
 
       return c.json({ data: updated });
-    },
+    }
   )
 
   // Update profile settings
@@ -196,7 +201,7 @@ export const users = new Hono<{ Variables: Variables }>()
         .returning();
 
       return c.json({ data: updated });
-    },
+    }
   )
 
   // Get current user's subscription info

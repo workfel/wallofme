@@ -31,7 +31,10 @@ import {
 
 import { RoomService } from "@app/core/services/room.service";
 import { TrophyService } from "@app/core/services/trophy.service";
-import { ThemeService } from "@app/core/services/theme.service";
+import {
+  ThemeService,
+  type ThemeSnapshot,
+} from "@app/core/services/theme.service";
 import { TokenService } from "@app/core/services/token.service";
 import { ShareService } from "@app/core/services/share.service";
 import { ScreenshotService } from "@app/core/services/screenshot.service";
@@ -113,15 +116,13 @@ type EditorState =
     <ion-content [fullscreen]="true">
       <div class="editor-layout">
         <!-- Floating toolbar overlay -->
-        <app-editor-toolbar
-          (openThemes)="openThemeSelector()"
-        />
+        <app-editor-toolbar (openThemes)="openThemeSelector()" />
 
         <!-- Loading overlay (non-destructive — canvas stays alive) -->
         @if (roomService.loading()) {
-          <div class="loading-overlay">
-            <ion-spinner name="crescent" />
-          </div>
+        <div class="loading-overlay">
+          <ion-spinner name="crescent" />
+        </div>
         }
 
         <!-- 3D Canvas -->
@@ -148,72 +149,80 @@ type EditorState =
 
         <!-- Floating share pill -->
         @if (state().kind === "IDLE") {
-          <button class="share-pill" data-tutorial="share-pill" (click)="onShare()">
-            <ion-icon name="share-outline" />
-          </button>
+        <button
+          class="share-pill"
+          data-tutorial="share-pill"
+          (click)="onShare()"
+        >
+          <ion-icon name="share-outline" />
+        </button>
         }
 
         <!-- Context Action Bar (shown when item selected) -->
         @if (isDecorationSelected()) {
-          <app-floor-placement-panel
-            [positionX]="selectedItem()?.positionX ?? 0"
-            [positionY]="selectedItem()?.positionY ?? 0"
-            [positionZ]="selectedItem()?.positionZ ?? 0"
-            [rotationDegrees]="selectedItemRotationDeg()"
-            [scale]="selectedItem()?.scaleX ?? 0.5"
-            [name]="selectedItem()?.decoration?.name ?? null"
-            [freeMovement]="freeMovement()"
-            (changed)="onFloorPlacementChange($event)"
-            (freeMovementChange)="onFreeMovementToggle($event)"
-            (delete)="confirmDelete()"
-          />
+        <app-floor-placement-panel
+          [positionX]="selectedItem()?.positionX ?? 0"
+          [positionY]="selectedItem()?.positionY ?? 0"
+          [positionZ]="selectedItem()?.positionZ ?? 0"
+          [rotationDegrees]="selectedItemRotationDeg()"
+          [scale]="selectedItem()?.scaleX ?? 0.5"
+          [name]="selectedItem()?.decoration?.name ?? null"
+          [freeMovement]="freeMovement()"
+          (changed)="onFloorPlacementChange($event)"
+          (freeMovementChange)="onFreeMovementToggle($event)"
+          (delete)="confirmDelete()"
+        />
         } @else if (isFrameSelected()) {
-          <app-wall-placement-panel
-            [wall]="selectedItem()?.wall ?? 'right'"
-            [positionX]="selectedItem()?.positionX ?? 0"
-            [positionY]="selectedItem()?.positionY ?? 1.5"
-            [positionZ]="selectedItem()?.positionZ ?? 0"
-            [scale]="selectedItem()?.scaleX ?? 0.5"
-            [name]="'room.frames' | translate"
-            [freeMovement]="freeMovement()"
-            (changed)="onWallPlacementChange($event)"
-            (freeMovementChange)="onFreeMovementToggle($event)"
-            (delete)="confirmDelete()"
-          >
-            <button class="change-image-btn" (click)="onChangeFrameImage()">
-              <ion-icon name="image-outline" />
-              {{ 'room.changeFrameImage' | translate }}
-            </button>
-          </app-wall-placement-panel>
+        <app-wall-placement-panel
+          [wall]="selectedItem()?.wall ?? 'right'"
+          [positionX]="selectedItem()?.positionX ?? 0"
+          [positionY]="selectedItem()?.positionY ?? 1.5"
+          [positionZ]="selectedItem()?.positionZ ?? 0"
+          [scale]="selectedItem()?.scaleX ?? 0.5"
+          [name]="'room.frames' | translate"
+          [freeMovement]="freeMovement()"
+          (changed)="onWallPlacementChange($event)"
+          (freeMovementChange)="onFreeMovementToggle($event)"
+          (delete)="confirmDelete()"
+        >
+          <button class="change-image-btn" (click)="onChangeFrameImage()">
+            <ion-icon name="image-outline" />
+            {{ "room.changeFrameImage" | translate }}
+          </button>
+        </app-wall-placement-panel>
         } @else if (isTrophySelected()) {
-          <app-wall-placement-panel
-            [wall]="selectedItem()?.wall ?? 'left'"
-            [positionX]="selectedItem()?.positionX ?? 0"
-            [positionY]="selectedItem()?.positionY ?? 1.5"
-            [positionZ]="selectedItem()?.positionZ ?? 0"
-            [scale]="selectedItem()?.scaleX ?? 0.5"
-            [name]="selectedItem()?.trophy?.raceResult?.race?.name ?? null"
-            [freeMovement]="freeMovement()"
-            (changed)="onWallPlacementChange($event)"
-            (freeMovementChange)="onFreeMovementToggle($event)"
-            (delete)="confirmDelete()"
-          />
+        <app-wall-placement-panel
+          [wall]="selectedItem()?.wall ?? 'left'"
+          [positionX]="selectedItem()?.positionX ?? 0"
+          [positionY]="selectedItem()?.positionY ?? 1.5"
+          [positionZ]="selectedItem()?.positionZ ?? 0"
+          [scale]="selectedItem()?.scaleX ?? 0.5"
+          [name]="selectedItem()?.trophy?.raceResult?.race?.name ?? null"
+          [freeMovement]="freeMovement()"
+          (changed)="onWallPlacementChange($event)"
+          (freeMovementChange)="onFreeMovementToggle($event)"
+          (delete)="confirmDelete()"
+        />
         } @else if (isItemSelected()) {
-          <app-context-action-bar
-            (delete)="confirmDelete()"
-            (rotate)="rotateItem()"
-            (move)="startMove()"
-          />
+        <app-context-action-bar
+          (delete)="confirmDelete()"
+          (rotate)="rotateItem()"
+          (move)="startMove()"
+        />
         }
       </div>
 
       <!-- FAB: Add items -->
       @if (state().kind === "IDLE") {
-        <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-          <ion-fab-button data-tutorial="fab-add" (click)="openCatalog()">
-            <ion-icon name="add-outline" />
-          </ion-fab-button>
-        </ion-fab>
+      <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+        <ion-fab-button
+          data-tutorial="fab-add"
+          (click)="openCatalog()"
+          color="primary"
+        >
+          <ion-icon name="add-outline" />
+        </ion-fab-button>
+      </ion-fab>
       }
     </ion-content>
 
@@ -319,10 +328,10 @@ type EditorState =
     >
       <ng-template>
         @if (framePickerItemId(); as itemId) {
-          <app-frame-image-picker-sheet
-            [roomItemId]="itemId"
-            (imagePicked)="onFrameImagePicked()"
-          />
+        <app-frame-image-picker-sheet
+          [roomItemId]="itemId"
+          (imagePicked)="onFrameImagePicked()"
+        />
         }
       </ng-template>
     </ion-modal>
@@ -479,12 +488,16 @@ export class RoomEditPage implements OnInit {
 
   isDecorationSelected = computed(() => {
     const item = this.selectedItem();
-    return !!item?.decorationId && !item.wall && item?.decoration?.category !== 'frame';
+    return (
+      !!item?.decorationId &&
+      !item.wall &&
+      item?.decoration?.category !== "frame"
+    );
   });
 
   isFrameSelected = computed(() => {
     const item = this.selectedItem();
-    return !!item?.decorationId && item?.decoration?.category === 'frame';
+    return !!item?.decorationId && item?.decoration?.category === "frame";
   });
 
   isTrophySelected = computed(() => {
@@ -503,7 +516,7 @@ export class RoomEditPage implements OnInit {
   });
 
   shareLink = signal<string | null>(null);
-  private previousTheme: RoomTheme | null = null;
+  private previousThemeSnapshot: ThemeSnapshot | null = null;
   private previousMaterialOverrides: MaterialOverrides | null = null;
 
   deleteAlertButtons = [
@@ -781,10 +794,13 @@ export class RoomEditPage implements OnInit {
       // Find the newly placed frame item
       const room = this.roomService.room();
       const frameItem = room?.items.find(
-        (i) => i.decoration?.category === "frame",
+        (i) => i.decoration?.category === "frame"
       );
       if (frameItem) {
-        this.state.set({ kind: "FRAME_IMAGE_PICKER", roomItemId: frameItem.id });
+        this.state.set({
+          kind: "FRAME_IMAGE_PICKER",
+          roomItemId: frameItem.id,
+        });
       } else {
         this.state.set({ kind: "IDLE" });
       }
@@ -802,7 +818,7 @@ export class RoomEditPage implements OnInit {
   onChangeFrameImageFromCatalog(): void {
     const room = this.roomService.room();
     const frameItem = room?.items.find(
-      (i) => i.decoration?.category === "frame",
+      (i) => i.decoration?.category === "frame"
     );
     if (frameItem) {
       this.state.set({ kind: "FRAME_IMAGE_PICKER", roomItemId: frameItem.id });
@@ -822,7 +838,7 @@ export class RoomEditPage implements OnInit {
 
   // ─── Theme Selector ──────────────────────────────
   openThemeSelector(): void {
-    this.previousTheme = this.themeService.activeTheme();
+    this.previousThemeSnapshot = this.themeService.saveSnapshot();
     this.state.set({ kind: "THEME_OPEN" });
   }
 
@@ -830,8 +846,8 @@ export class RoomEditPage implements OnInit {
     // Don't reset to IDLE if we transitioned to the custom/material editor
     if (this.state().kind === "CUSTOM_EDITOR_OPEN") return;
     if (this.state().kind === "MATERIAL_EDITOR_OPEN") return;
-    if (this.state().kind === "THEME_OPEN" && this.previousTheme) {
-      this.themeService.applyTheme(this.previousTheme);
+    if (this.state().kind === "THEME_OPEN" && this.previousThemeSnapshot) {
+      this.themeService.restoreSnapshot(this.previousThemeSnapshot);
     }
     this.state.set({ kind: "IDLE" });
   }
@@ -843,7 +859,7 @@ export class RoomEditPage implements OnInit {
   onThemeApply(theme: RoomTheme | null): void {
     if (theme) {
       this.themeService.applyTheme(theme);
-      this.previousTheme = null;
+      this.previousThemeSnapshot = null;
       this.roomService.updateRoom({ themeId: theme.id, customTheme: null });
     }
     this.state.set({ kind: "IDLE" });
@@ -855,8 +871,11 @@ export class RoomEditPage implements OnInit {
   }
 
   closeCustomEditor(): void {
-    if (this.state().kind === "CUSTOM_EDITOR_OPEN" && this.previousTheme) {
-      this.themeService.applyTheme(this.previousTheme);
+    if (
+      this.state().kind === "CUSTOM_EDITOR_OPEN" &&
+      this.previousThemeSnapshot
+    ) {
+      this.themeService.restoreSnapshot(this.previousThemeSnapshot);
     }
     if (this.state().kind === "CUSTOM_EDITOR_OPEN") {
       this.state.set({ kind: "IDLE" });
@@ -869,7 +888,7 @@ export class RoomEditPage implements OnInit {
 
   onCustomApply(colors: CustomThemeColors): void {
     this.themeService.applyCustomColors(colors);
-    this.previousTheme = null;
+    this.previousThemeSnapshot = null;
     this.roomService.updateRoom({ themeId: null, customTheme: colors });
     this.state.set({ kind: "IDLE" });
   }
@@ -886,7 +905,9 @@ export class RoomEditPage implements OnInit {
     if (this.state().kind === "MATERIAL_EDITOR_OPEN") {
       // Revert on dismiss (swipe-down)
       if (this.previousMaterialOverrides) {
-        this.themeService.applyMaterialOverrides(this.previousMaterialOverrides);
+        this.themeService.applyMaterialOverrides(
+          this.previousMaterialOverrides
+        );
       } else {
         this.themeService.clearMaterialOverrides();
       }
@@ -1041,7 +1062,7 @@ export class RoomEditPage implements OnInit {
         const result = await this.uploadService.uploadFile(
           blob,
           "room-thumbnail",
-          "image/png",
+          "image/png"
         );
         if (result?.key) {
           await this.roomService.updateRoom({ thumbnailKey: result.key });

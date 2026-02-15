@@ -16,11 +16,16 @@ PODS:
   - CapacitorFilesystem (8.1.1):
     - Capacitor
     - IONFilesystemLib (~> 1.1.0)
+  - CapacitorGeolocation (8.1.0):
+    - Capacitor
+    - IONGeolocationLib (= 2.0.0)
   - CapacitorHaptics (6.0.3):
     - Capacitor
   - CapacitorNetwork (6.0.4):
     - Capacitor
   - CapacitorPreferences (6.0.4):
+    - Capacitor
+  - CapacitorPushNotifications (8.0.1):
     - Capacitor
   - CapacitorShare (8.0.0):
     - Capacitor
@@ -32,6 +37,7 @@ PODS:
     - GoogleUserMessagingPlatform (>= 1.1)
   - GoogleUserMessagingPlatform (2.7.0)
   - IONFilesystemLib (1.1.0)
+  - IONGeolocationLib (2.0.0)
   - PurchasesHybridCommon (17.33.1):
     - RevenueCat (= 5.57.2)
   - PurchasesHybridCommonUI (17.33.1):
@@ -56,9 +62,11 @@ DEPENDENCIES:
   - "CapacitorCommunityAdmob (from `../../../../node_modules/@capacitor-community/admob`)"
   - "CapacitorCordova (from `../../../../node_modules/@capacitor/ios`)"
   - "CapacitorFilesystem (from `../../../../node_modules/@capacitor/filesystem`)"
+  - "CapacitorGeolocation (from `../../../../node_modules/@capacitor/geolocation`)"
   - "CapacitorHaptics (from `../../../../node_modules/@capacitor/haptics`)"
   - "CapacitorNetwork (from `../../node_modules/@capacitor/network`)"
   - "CapacitorPreferences (from `../../../../node_modules/@capacitor/preferences`)"
+  - "CapacitorPushNotifications (from `../../../../node_modules/@capacitor/push-notifications`)"
   - "CapacitorShare (from `../../../../node_modules/@capacitor/share`)"
   - "CapacitorSplashScreen (from `../../../../node_modules/@capacitor/splash-screen`)"
   - "CapacitorStatusBar (from `../../../../node_modules/@capacitor/status-bar`)"
@@ -71,6 +79,7 @@ SPEC REPOS:
     - Google-Mobile-Ads-SDK
     - GoogleUserMessagingPlatform
     - IONFilesystemLib
+    - IONGeolocationLib
     - PurchasesHybridCommon
     - PurchasesHybridCommonUI
     - RevenueCat
@@ -93,12 +102,16 @@ EXTERNAL SOURCES:
     :path: "../../../../node_modules/@capacitor/ios"
   CapacitorFilesystem:
     :path: "../../../../node_modules/@capacitor/filesystem"
+  CapacitorGeolocation:
+    :path: "../../../../node_modules/@capacitor/geolocation"
   CapacitorHaptics:
     :path: "../../../../node_modules/@capacitor/haptics"
   CapacitorNetwork:
     :path: "../../node_modules/@capacitor/network"
   CapacitorPreferences:
     :path: "../../../../node_modules/@capacitor/preferences"
+  CapacitorPushNotifications:
+    :path: "../../../../node_modules/@capacitor/push-notifications"
   CapacitorShare:
     :path: "../../../../node_modules/@capacitor/share"
   CapacitorSplashScreen:
@@ -119,15 +132,18 @@ SPEC CHECKSUMS:
   CapacitorCommunityAdmob: 52a6ebbec5e4c277d2694657becd42bcadbe369a
   CapacitorCordova: 8d93e14982f440181be7304aa9559ca631d77fff
   CapacitorFilesystem: f2b2caa158383b3f568383b33e47296f7c48c470
+  CapacitorGeolocation: 7132de914f9d853ec4642dc1d36e4e2018a4e8a8
   CapacitorHaptics: 40f83026feeee9cfe36e89e9c98a3baaaf20c450
   CapacitorNetwork: 093efa3664b692a971bdd01be70523291cd6a87f
   CapacitorPreferences: 5848e0691b36b4bb4acc98e481ab56d451578d30
+  CapacitorPushNotifications: 99644101c6a82036e459929b6d897ee1cb27d97f
   CapacitorShare: 12f1d192170cbcf9f108fd675ac8e343761a4638
   CapacitorSplashScreen: ef140a8b1ea7244e0c245ce2dd4ce5251e7ab86a
   CapacitorStatusBar: 149cde8f1328ec3aa6cbdd872a55137ae3f98b16
   Google-Mobile-Ads-SDK: 301a16c461c331ba34ff4dab40a22ab7c147af61
   GoogleUserMessagingPlatform: a8b56893477f67212fbc8411c139e61d463349f5
   IONFilesystemLib: 50b9a0f3052a9b40b9bedb43f328a8fe222f9f87
+  IONGeolocationLib: a5e40b54edc2ee9902036eda5aaa41ddf07bb68d
   PurchasesHybridCommon: 9031a433025f7a835f7002e132e3320f41c63b21
   PurchasesHybridCommonUI: 7145d23243a3cc88b21529e39c362d4aadf067c1
   RevenueCat: 85df7fb6409e6823e24768e8cabf55d03a497355
@@ -135,6 +151,6 @@ SPEC CHECKSUMS:
   RevenuecatPurchasesCapacitorUi: 0fde1d619d3dc37f8028d864d4d3236fa7469eb0
   RevenueCatUI: 14f85d0b998ceeaa405c6d785455fa9d1f11ee0f
 
-PODFILE CHECKSUM: 9e39e8a5ede17eb1efa509e3f1b4902f8ed4daf1
+PODFILE CHECKSUM: 7fb5a17af2b573290c0b6c1a24d229062bbffc24
 
 COCOAPODS: 1.16.2

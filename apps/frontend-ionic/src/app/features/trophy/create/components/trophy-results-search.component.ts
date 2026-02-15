@@ -82,6 +82,17 @@ export interface ResultsEdit {
         </div>
       }
 
+      @if (!scan.searchResult()?.found) {
+        <div class="no-results-reveal animate-fade-in">
+          <div class="no-results-icon-wrap">
+            <ion-icon name="search-outline" class="no-results-icon" />
+          </div>
+          <ion-text color="medium">
+            <p class="no-results-hint">{{ "review.noResultsMessage" | translate }}</p>
+          </ion-text>
+        </div>
+      }
+
       <!-- Editable results card -->
       <ion-card class="result-card">
         <ion-card-header>
@@ -254,6 +265,38 @@ export interface ResultsEdit {
         font-size: 12px;
         line-height: 1.4;
       }
+    }
+
+    /* No results reveal */
+    .no-results-reveal {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 24px 0 8px;
+    }
+
+    .no-results-icon-wrap {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: rgba(var(--ion-color-medium-rgb), 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .no-results-icon {
+      font-size: 32px;
+      color: var(--ion-color-medium);
+    }
+
+    .no-results-hint {
+      font-size: 14px;
+      text-align: center;
+      color: var(--ion-color-medium);
+      margin: 0;
+      padding: 0 16px;
     }
 
     /* Result card — glass */

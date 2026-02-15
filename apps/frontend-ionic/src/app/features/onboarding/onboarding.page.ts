@@ -1,6 +1,6 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { Component, inject, signal, computed, OnInit } from "@angular/core";
+import { Router } from "@angular/router";
+import { FormsModule } from "@angular/forms";
 import {
   IonContent,
   IonButton,
@@ -18,41 +18,55 @@ import {
   IonButtons,
   IonSearchbar,
   IonIcon,
-} from '@ionic/angular/standalone';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { addIcons } from 'ionicons';
-import { chevronDown, closeOutline } from 'ionicons/icons';
+} from "@ionic/angular/standalone";
+import { TranslateModule, TranslateService } from "@ngx-translate/core";
+import { addIcons } from "ionicons";
+import { chevronDown, closeOutline } from "ionicons/icons";
 
-import { AuthService } from '@app/core/services/auth.service';
-import { ApiService } from '@app/core/services/api.service';
-import { GeolocationService } from '@app/core/services/geolocation.service';
-import { I18nService } from '@app/core/services/i18n.service';
-import { COUNTRIES, countryFlag, type Country } from '@app/shared/data/countries';
+import { AuthService } from "@app/core/services/auth.service";
+import { ApiService } from "@app/core/services/api.service";
+import { GeolocationService } from "@app/core/services/geolocation.service";
+import { I18nService } from "@app/core/services/i18n.service";
+import {
+  COUNTRIES,
+  countryFlag,
+  type Country,
+} from "@app/shared/data/countries";
 
 const SPORTS = [
-  'running', 'trail', 'triathlon', 'cycling', 'crossfit',
-  'swimming', 'ocr', 'duathlon', 'hyrox', 'ironman',
-  'marathon', 'ultra', 'other',
+  "running",
+  "trail",
+  "triathlon",
+  "cycling",
+  "crossfit",
+  "swimming",
+  "ocr",
+  "duathlon",
+  "hyrox",
+  "ironman",
+  "marathon",
+  "ultra",
+  "other",
 ] as const;
 
 const SPORT_EMOJIS: Record<string, string> = {
-  running: '\u{1F3C3}',
-  trail: '\u{26F0}\u{FE0F}',
-  triathlon: '\u{1F3CA}',
-  cycling: '\u{1F6B4}',
-  crossfit: '\u{1F3CB}\u{FE0F}',
-  swimming: '\u{1F3CA}',
-  ocr: '\u{1F9D7}',
-  duathlon: '\u{1F3C3}',
-  hyrox: '\u{1F4AA}',
-  ironman: '\u{1F94C}',
-  marathon: '\u{1F3C5}',
-  ultra: '\u{1F30D}',
-  other: '\u{2B50}',
+  running: "\u{1F3C3}",
+  trail: "\u{26F0}\u{FE0F}",
+  triathlon: "\u{1F3CA}",
+  cycling: "\u{1F6B4}",
+  crossfit: "\u{1F3CB}\u{FE0F}",
+  swimming: "\u{1F3CA}",
+  ocr: "\u{1F9D7}",
+  duathlon: "\u{1F3C3}",
+  hyrox: "\u{1F4AA}",
+  ironman: "\u{1F94C}",
+  marathon: "\u{1F3C5}",
+  ultra: "\u{1F30D}",
+  other: "\u{2B50}",
 };
 
 @Component({
-  selector: 'app-onboarding',
+  selector: "app-onboarding",
   standalone: true,
   imports: [
     FormsModule,
@@ -79,124 +93,146 @@ const SPORT_EMOJIS: Record<string, string> = {
       <div class="onboarding-container animate-fade-in-up">
         <!-- Step indicator -->
         <div class="step-indicator">
-          <div class="step" [class.active]="step() === 1" [class.done]="step() > 1">1</div>
+          <div
+            class="step"
+            [class.active]="step() === 1"
+            [class.done]="step() > 1"
+          >
+            1
+          </div>
           <div class="step-line" [class.done]="step() > 1"></div>
           <div class="step" [class.active]="step() === 2">2</div>
         </div>
 
         @if (step() === 1) {
-          <!-- Step 1: Name & Country -->
-          <div class="header-section">
-            <h1>{{ 'onboarding.title' | translate }}</h1>
-            <p>{{ 'onboarding.subtitle' | translate }}</p>
-          </div>
+        <!-- Step 1: Name & Country -->
+        <div class="header-section">
+          <h1>{{ "onboarding.title" | translate }}</h1>
+          <p>
+            <ion-text color="danger">{{
+              "onboarding.subtitle" | translate
+            }}</ion-text>
+          </p>
+        </div>
 
-          <div class="form-section">
-            <ion-list lines="none">
-              <ion-item>
-                <ion-input
-                  type="text"
-                  [label]="'onboarding.firstName' | translate"
-                  labelPlacement="floating"
-                  [(ngModel)]="firstName"
-                  [clearInput]="true"
-                />
-              </ion-item>
-              <ion-item>
-                <ion-input
-                  type="text"
-                  [label]="'onboarding.lastName' | translate"
-                  labelPlacement="floating"
-                  [(ngModel)]="lastName"
-                  [clearInput]="true"
-                />
-              </ion-item>
-            </ion-list>
+        <div class="form-section">
+          <ion-list lines="none">
+            <ion-item>
+              <ion-input
+                type="text"
+                [label]="'onboarding.firstName' | translate"
+                labelPlacement="floating"
+                [(ngModel)]="firstName"
+                [clearInput]="true"
+              />
+            </ion-item>
+            <ion-item>
+              <ion-input
+                type="text"
+                [label]="'onboarding.lastName' | translate"
+                labelPlacement="floating"
+                [(ngModel)]="lastName"
+                [clearInput]="true"
+              />
+            </ion-item>
+          </ion-list>
 
-            <!-- Country picker -->
-            <button class="country-picker" (click)="showCountryModal.set(true)">
-              @if (selectedCountry()) {
-                <span class="country-flag">{{ getFlag(selectedCountry()!.code) }}</span>
-                <span class="country-name">{{ getCountryName(selectedCountry()!) }}</span>
-              } @else {
-                <span class="country-placeholder">{{ 'onboarding.countryPlaceholder' | translate }}</span>
-              }
-              <ion-icon name="chevron-down" class="country-chevron" />
-            </button>
-
-            @if (errorMessage()) {
-              <ion-text color="danger">
-                <p class="error-text">{{ errorMessage() }}</p>
-              </ion-text>
+          <!-- Country picker -->
+          <button class="country-picker" (click)="showCountryModal.set(true)">
+            @if (selectedCountry()) {
+            <span class="country-flag">{{
+              getFlag(selectedCountry()!.code)
+            }}</span>
+            <span class="country-name">{{
+              getCountryName(selectedCountry()!)
+            }}</span>
+            } @else {
+            <span class="country-placeholder">{{
+              "onboarding.countryPlaceholder" | translate
+            }}</span>
             }
+            <ion-icon name="chevron-down" class="country-chevron" />
+          </button>
 
-            <ion-button
-              expand="block"
-              (click)="onNextStep()"
-              [disabled]="!canProceedStep1"
-              class="continue-btn"
-            >
-              {{ 'onboarding.continue' | translate }}
-            </ion-button>
-          </div>
+          @if (errorMessage()) {
+          <ion-text color="danger">
+            <p class="error-text">{{ errorMessage() }}</p>
+          </ion-text>
+          }
+
+          <ion-button
+            expand="block"
+            (click)="onNextStep()"
+            [disabled]="!canProceedStep1"
+            class="continue-btn"
+          >
+            {{ "onboarding.continue" | translate }}
+          </ion-button>
+        </div>
         } @else {
-          <!-- Step 2: Sport Selection -->
-          <div class="header-section">
-            <h1>{{ 'onboarding.sportsTitle' | translate }}</h1>
-            <p>{{ 'onboarding.sportsSubtitle' | translate }}</p>
-          </div>
+        <!-- Step 2: Sport Selection -->
+        <div class="header-section">
+          <h1>{{ "onboarding.sportsTitle" | translate }}</h1>
+          <p>{{ "onboarding.sportsSubtitle" | translate }}</p>
+        </div>
 
-          <div class="sports-section">
-            <div class="sport-chips">
-              @for (sport of sports; track sport) {
-                <ion-chip
-                  [color]="isSelected(sport) ? 'primary' : 'medium'"
-                  [outline]="!isSelected(sport)"
-                  (click)="toggleSport(sport)"
-                >
-                  <ion-label>{{ getSportEmoji(sport) }} {{ 'sports.' + sport | translate }}</ion-label>
-                </ion-chip>
-              }
-            </div>
-
-            @if (errorMessage()) {
-              <ion-text color="danger">
-                <p class="error-text">{{ errorMessage() }}</p>
-              </ion-text>
+        <div class="sports-section">
+          <div class="sport-chips">
+            @for (sport of sports; track sport) {
+            <ion-chip
+              [color]="isSelected(sport) ? 'primary' : 'medium'"
+              [outline]="!isSelected(sport)"
+              (click)="toggleSport(sport)"
+            >
+              <ion-label
+                >{{ getSportEmoji(sport) }}
+                {{ "sports." + sport | translate }}</ion-label
+              >
+            </ion-chip>
             }
-
-            <ion-button
-              expand="block"
-              (click)="onContinue()"
-              [disabled]="isLoading() || selectedSports().length === 0"
-              class="continue-btn"
-            >
-              @if (isLoading()) {
-                <ion-spinner name="crescent" />
-              } @else {
-                {{ 'onboarding.continue' | translate }}
-              }
-            </ion-button>
-
-            <ion-button
-              expand="block"
-              fill="clear"
-              (click)="step.set(1)"
-              class="back-btn"
-            >
-              {{ 'onboarding.back' | translate }}
-            </ion-button>
           </div>
+
+          @if (errorMessage()) {
+          <ion-text color="danger">
+            <p class="error-text">{{ errorMessage() }}</p>
+          </ion-text>
+          }
+
+          <ion-button
+            expand="block"
+            (click)="onContinue()"
+            [disabled]="isLoading() || selectedSports().length === 0"
+            class="continue-btn"
+          >
+            @if (isLoading()) {
+            <ion-spinner name="crescent" />
+            } @else {
+            {{ "onboarding.continue" | translate }}
+            }
+          </ion-button>
+
+          <ion-button
+            expand="block"
+            fill="clear"
+            (click)="step.set(1)"
+            class="back-btn"
+          >
+            {{ "onboarding.back" | translate }}
+          </ion-button>
+        </div>
         }
       </div>
     </ion-content>
 
     <!-- Country selection modal -->
-    <ion-modal [isOpen]="showCountryModal()" (didDismiss)="showCountryModal.set(false)">
+    <ion-modal
+      [isOpen]="showCountryModal()"
+      (didDismiss)="showCountryModal.set(false)"
+    >
       <ng-template>
         <ion-header>
           <ion-toolbar>
-            <ion-title>{{ 'onboarding.country' | translate }}</ion-title>
+            <ion-title>{{ "onboarding.country" | translate }}</ion-title>
             <ion-buttons slot="end">
               <ion-button (click)="showCountryModal.set(false)">
                 <ion-icon name="close-outline" />
@@ -214,15 +250,15 @@ const SPORT_EMOJIS: Record<string, string> = {
         <ion-content>
           <ion-list lines="full">
             @for (c of filteredCountries(); track c.code) {
-              <ion-item
-                button
-                [detail]="false"
-                (click)="selectCountry(c)"
-                [class.selected]="selectedCountry()?.code === c.code"
-              >
-                <span class="modal-flag" slot="start">{{ getFlag(c.code) }}</span>
-                <ion-label>{{ getCountryName(c) }}</ion-label>
-              </ion-item>
+            <ion-item
+              button
+              [detail]="false"
+              (click)="selectCountry(c)"
+              [class.selected]="selectedCountry()?.code === c.code"
+            >
+              <span class="modal-flag" slot="start">{{ getFlag(c.code) }}</span>
+              <ion-label>{{ getCountryName(c) }}</ion-label>
+            </ion-item>
             }
           </ion-list>
         </ion-content>
@@ -388,25 +424,26 @@ export class OnboardingPage implements OnInit {
   private geoService = inject(GeolocationService);
   private i18n = inject(I18nService);
 
-  firstName = '';
-  lastName = '';
+  firstName = "";
+  lastName = "";
   step = signal(1);
   selectedCountry = signal<Country | null>(null);
   selectedSports = signal<string[]>([]);
   isLoading = signal(false);
-  errorMessage = signal('');
+  errorMessage = signal("");
   showCountryModal = signal(false);
-  countrySearch = signal('');
+  countrySearch = signal("");
 
   readonly sports = SPORTS;
 
   filteredCountries = computed(() => {
     const query = this.countrySearch().toLowerCase();
     if (!query) return COUNTRIES;
-    return COUNTRIES.filter(c =>
-      c.name.toLowerCase().includes(query) ||
-      c.nameFr.toLowerCase().includes(query) ||
-      c.code.toLowerCase().includes(query)
+    return COUNTRIES.filter(
+      (c) =>
+        c.name.toLowerCase().includes(query) ||
+        c.nameFr.toLowerCase().includes(query) ||
+        c.code.toLowerCase().includes(query)
     );
   });
 
@@ -425,15 +462,17 @@ export class OnboardingPage implements OnInit {
     if (user.firstName) this.firstName = user.firstName;
     if (user.lastName) this.lastName = user.lastName;
     if (user.country) {
-      const found = COUNTRIES.find(c => c.code === user.country?.toUpperCase());
+      const found = COUNTRIES.find(
+        (c) => c.code === user.country?.toUpperCase()
+      );
       if (found) this.selectedCountry.set(found);
     }
 
     // Fallback: parse from name (e.g. Google OAuth sets "Johan Pujol")
     if (!this.firstName && !this.lastName && user.name) {
       const parts = user.name.trim().split(/\s+/);
-      this.firstName = parts[0] ?? '';
-      this.lastName = parts.slice(1).join(' ');
+      this.firstName = parts[0] ?? "";
+      this.lastName = parts.slice(1).join(" ");
     }
   }
 
@@ -442,25 +481,27 @@ export class OnboardingPage implements OnInit {
   }
 
   getCountryName(c: Country): string {
-    return this.i18n.currentLang === 'fr' ? c.nameFr : c.name;
+    return this.i18n.currentLang === "fr" ? c.nameFr : c.name;
   }
 
   onCountrySearch(event: CustomEvent): void {
-    this.countrySearch.set((event.detail.value ?? '') as string);
+    this.countrySearch.set((event.detail.value ?? "") as string);
   }
 
   selectCountry(c: Country): void {
     this.selectedCountry.set(c);
     this.showCountryModal.set(false);
-    this.countrySearch.set('');
+    this.countrySearch.set("");
   }
 
   onNextStep(): void {
     if (!this.firstName.trim() || !this.lastName.trim()) {
-      this.errorMessage.set(this.translate.instant('onboarding.fieldsRequired'));
+      this.errorMessage.set(
+        this.translate.instant("onboarding.fieldsRequired")
+      );
       return;
     }
-    this.errorMessage.set('');
+    this.errorMessage.set("");
     this.step.set(2);
   }
 
@@ -471,24 +512,26 @@ export class OnboardingPage implements OnInit {
   toggleSport(sport: string): void {
     const current = this.selectedSports();
     if (current.includes(sport)) {
-      this.selectedSports.set(current.filter(s => s !== sport));
+      this.selectedSports.set(current.filter((s) => s !== sport));
     } else {
       this.selectedSports.set([...current, sport]);
     }
   }
 
   getSportEmoji(sport: string): string {
-    return SPORT_EMOJIS[sport] ?? '';
+    return SPORT_EMOJIS[sport] ?? "";
   }
 
   async onContinue(): Promise<void> {
     if (this.selectedSports().length === 0) {
-      this.errorMessage.set(this.translate.instant('onboarding.sportsRequired'));
+      this.errorMessage.set(
+        this.translate.instant("onboarding.sportsRequired")
+      );
       return;
     }
 
     this.isLoading.set(true);
-    this.errorMessage.set('');
+    this.errorMessage.set("");
 
     try {
       // Request geolocation (non-blocking — null on failure)
@@ -506,14 +549,16 @@ export class OnboardingPage implements OnInit {
         } as any,
       });
 
-      if (!res.ok) throw new Error('Onboarding failed');
+      if (!res.ok) throw new Error("Onboarding failed");
 
       // Refresh auth session to get updated user data
       await this.authService.refreshSession();
-      this.router.navigate(['/trophy/first']);
+      this.router.navigate(["/trophy/first"]);
     } catch (e: unknown) {
       this.errorMessage.set(
-        e instanceof Error ? e.message : this.translate.instant('common.updateFailed')
+        e instanceof Error
+          ? e.message
+          : this.translate.instant("common.updateFailed")
       );
     } finally {
       this.isLoading.set(false);

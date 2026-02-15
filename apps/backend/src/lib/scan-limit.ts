@@ -2,7 +2,8 @@ import { and, eq, gte, ne, sql } from "drizzle-orm";
 import { db } from "../db";
 import { trophy } from "../db/schema";
 
-export const FREE_SCAN_LIMIT = 2;
+// 50 pour la BETA
+export const FREE_SCAN_LIMIT = 50;
 
 export function getStartOfMonthUTC(): Date {
   const now = new Date();
@@ -17,8 +18,8 @@ export async function getMonthlyScansUsed(userId: string): Promise<number> {
       and(
         eq(trophy.userId, userId),
         gte(trophy.createdAt, getStartOfMonthUTC()),
-        ne(trophy.status, "error"),
-      ),
+        ne(trophy.status, "error")
+      )
     );
   return count;
 }

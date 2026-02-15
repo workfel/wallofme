@@ -28,15 +28,21 @@ import { UserService } from "@app/core/services/user.service";
       <nav class="desktop-sidebar">
         <div class="sidebar-nav-items">
           <a class="sidebar-nav-item" [class.active]="activeTab() === 'home'" (click)="navigateToTab('home')">
-            <ion-icon [name]="activeTab() === 'home' ? 'home' : 'home-outline'" />
+            <span class="sidebar-icon-wrap" [class.icon-pop]="animatingTab() === 'home'" (animationend)="onAnimationEnd()">
+              <ion-icon [name]="activeTab() === 'home' ? 'home' : 'home-outline'" />
+            </span>
             <span>{{ 'tabs.home' | translate }}</span>
           </a>
           <a class="sidebar-nav-item" [class.active]="activeTab() === 'explore'" (click)="navigateToTab('explore')">
-            <ion-icon [name]="activeTab() === 'explore' ? 'compass' : 'compass-outline'" />
+            <span class="sidebar-icon-wrap" [class.icon-pop]="animatingTab() === 'explore'" (animationend)="onAnimationEnd()">
+              <ion-icon [name]="activeTab() === 'explore' ? 'compass' : 'compass-outline'" />
+            </span>
             <span>{{ 'tabs.explore' | translate }}</span>
           </a>
           <a class="sidebar-nav-item" [class.active]="activeTab() === 'profile'" (click)="navigateToTab('profile')">
-            <ion-icon [name]="activeTab() === 'profile' ? 'person' : 'person-outline'" />
+            <span class="sidebar-icon-wrap" [class.icon-pop]="animatingTab() === 'profile'" (animationend)="onAnimationEnd()">
+              <ion-icon [name]="activeTab() === 'profile' ? 'person' : 'person-outline'" />
+            </span>
             <span>{{ 'tabs.profile' | translate }}</span>
           </a>
         </div>
@@ -50,28 +56,35 @@ import { UserService } from "@app/core/services/user.service";
       <ion-tab-bar slot="bottom">
 
         <ion-tab-button tab="home">
-          <ion-icon
-            [name]="activeTab() === 'home' ? 'home' : 'home-outline'"
-          />
+          <span class="tab-icon-wrap" [class.icon-pop]="animatingTab() === 'home'" (animationend)="onAnimationEnd()">
+            <ion-icon
+              [name]="activeTab() === 'home' ? 'home' : 'home-outline'"
+            />
+            <span class="tab-dot" [class.tab-dot--active]="activeTab() === 'home'"></span>
+          </span>
         </ion-tab-button>
 
-
         <ion-tab-button tab="explore">
-          <ion-icon
-            [name]="
-              activeTab() === 'explore' ? 'compass' : 'compass-outline'
-            "
-          />
+          <span class="tab-icon-wrap" [class.icon-pop]="animatingTab() === 'explore'" (animationend)="onAnimationEnd()">
+            <ion-icon
+              [name]="
+                activeTab() === 'explore' ? 'compass' : 'compass-outline'
+              "
+            />
+            <span class="tab-dot" [class.tab-dot--active]="activeTab() === 'explore'"></span>
+          </span>
         </ion-tab-button>
 
         <ion-tab-button tab="profile">
-          <ion-icon
-            [name]="
-              activeTab() === 'profile' ? 'person' : 'person-outline'
-            "
-          />
+          <span class="tab-icon-wrap" [class.icon-pop]="animatingTab() === 'profile'" (animationend)="onAnimationEnd()">
+            <ion-icon
+              [name]="
+                activeTab() === 'profile' ? 'person' : 'person-outline'
+              "
+            />
+            <span class="tab-dot" [class.tab-dot--active]="activeTab() === 'profile'"></span>
+          </span>
         </ion-tab-button>
-
 
         <div class="fab-in-bar" (click)="onFabTap()" aria-hidden>
           <ion-icon name="add" />
@@ -157,6 +170,48 @@ import { UserService } from "@app/core/services/user.service";
     }
 
 
+    /* Tab icon micro-interaction */
+    .tab-icon-wrap,
+    .sidebar-icon-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .icon-pop {
+      animation: tabPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    .tab-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--ion-color-primary);
+      margin-top: 4px;
+      transform: scale(0);
+      opacity: 0;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
+    }
+
+    .tab-dot--active {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    @keyframes tabPop {
+      0% {
+        transform: scale(0.75);
+      }
+      60% {
+        transform: scale(1.12);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
     .tab-avatar {
       width: 30px;
       height: 30px;
@@ -213,7 +268,9 @@ export class TabsPage implements OnInit {
   private destroyRef = inject(DestroyRef);
 
   private _activeTab = signal("home");
+  private _animatingTab = signal<string | null>(null);
   readonly activeTab = this._activeTab.asReadonly();
+  readonly animatingTab = this._animatingTab.asReadonly();
   readonly isDesktop = signal(false);
 
   readonly userImage = computed(
@@ -242,11 +299,17 @@ export class TabsPage implements OnInit {
 
   onTabChange(event: { tab: string }): void {
     this._activeTab.set(event.tab);
+    this._animatingTab.set(event.tab);
   }
 
   navigateToTab(tab: string): void {
     this._activeTab.set(tab);
+    this._animatingTab.set(tab);
     this.router.navigate(["/tabs", tab]);
+  }
+
+  onAnimationEnd(): void {
+    this._animatingTab.set(null);
   }
 
   onFabTap(): void {

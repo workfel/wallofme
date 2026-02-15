@@ -119,6 +119,9 @@ export class AuthService {
     password: string,
     name: string,
   ): Promise<void> {
+    // Capture the language chosen on the register page before signup
+    const chosenLocale = this.i18nService.currentLang;
+
     const result = await this.authClient.signUp.email({
       email,
       password,
@@ -127,6 +130,13 @@ export class AuthService {
     if (result.data) {
       this._user.set(result.data.user as unknown as User);
       await this.refreshSession();
+
+      // refreshSession may override locale with the DB default ('en').
+      // Restore the user's explicit choice and sync it to the server.
+      this.i18nService.setLanguage(chosenLocale);
+      await this.authClient.updateUser(
+        { locale: chosenLocale } as Record<string, unknown>,
+      );
     }
     if (result.error) {
       throw new Error(result.error.message);
