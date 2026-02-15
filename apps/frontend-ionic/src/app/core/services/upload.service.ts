@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from './api.service';
 
-export type UploadType = 'trophy-photo' | 'avatar' | 'room-thumbnail';
+export type UploadType = 'trophy-photo' | 'avatar' | 'room-thumbnail' | 'frame-image';
 
 @Injectable({ providedIn: 'root' })
 export class UploadService {

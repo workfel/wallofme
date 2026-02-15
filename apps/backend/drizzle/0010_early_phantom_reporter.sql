@@ -1,0 +1,1 @@
+ALTER TABLE "room_item" ADD COLUMN "custom_image_url" text;

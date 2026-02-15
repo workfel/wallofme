@@ -227,6 +227,7 @@ export const roomItem = pgTable("room_item", {
   scaleY: real("scale_y").default(1).notNull(),
   scaleZ: real("scale_z").default(1).notNull(),
   wall: wallEnum("wall"),
+  customImageUrl: text("custom_image_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

@@ -11,7 +11,7 @@ type AIProvider = "mistral" | "openai" | "google";
 
 const provider = (process.env.AI_PROVIDER as AIProvider) || "mistral";
 
-function getVisionModel(): LanguageModel {
+export function getVisionModel(): LanguageModel {
   switch (provider) {
     case "openai": {
       const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });

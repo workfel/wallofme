@@ -71,6 +71,13 @@
       "when": 1771060171041,
       "tag": "0009_steep_forge",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1771166506809,
+      "tag": "0010_early_phantom_reporter",
+      "breakpoints": true
     }
   ]
 }

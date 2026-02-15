@@ -38,7 +38,9 @@ export interface RoomItem {
     id: string;
     name: string;
     modelUrl: string | null;
+    category?: string | null;
   } | null;
+  customImageUrl?: string | null;
 }
 
 export interface Room {
@@ -120,6 +122,55 @@ export class RoomService {
       // silently fail
     }
     return false;
+  }
+
+  async addFrameToRoom(decorationId: string): Promise<boolean> {
+    try {
+      const res = await this.api.client.api.rooms.items.$post({
+        json: {
+          decorationId,
+          positionX: 0,
+          positionY: 1.5,
+          positionZ: 0,
+          rotationY: 0,
+          wall: 'right',
+          scaleX: 1,
+          scaleY: 1,
+          scaleZ: 1,
+        },
+      });
+      if (res.ok) {
+        await this.fetchMyRoom();
+        return true;
+      }
+      // Check for frame limit
+      if (res.status === 409) {
+        return false;
+      }
+    } catch {
+      // silently fail
+    }
+    return false;
+  }
+
+  async updateFrameImage(itemId: string, imageKey: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const res = await this.api.client.api.rooms.items[':id'].image.$patch({
+        param: { id: itemId },
+        json: { imageKey },
+      });
+      if (res.ok) {
+        await this.fetchMyRoom();
+        return { success: true };
+      }
+      if (res.status === 422) {
+        const body = await res.json() as { error?: string };
+        return { success: false, error: body.error ?? 'image_rejected' };
+      }
+      return { success: false, error: 'update_failed' };
+    } catch {
+      return { success: false, error: 'network_error' };
+    }
   }
 
   async addItemToRoom(trophyId: string): Promise<boolean> {

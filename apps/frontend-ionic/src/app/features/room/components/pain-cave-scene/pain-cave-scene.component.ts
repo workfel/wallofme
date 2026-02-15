@@ -32,6 +32,7 @@ import { RoundedBoxGeometry } from "three-stdlib";
 
 import { TrophyFrameComponent } from "../trophy-frame/trophy-frame.component";
 import { DecorationModelComponent } from "../decoration-model/decoration-model.component";
+import { CustomFrameComponent } from "../custom-frame/custom-frame.component";
 import { CameraControlsComponent } from "../camera-controls/camera-controls.component";
 import { RoomTheme, DEFAULT_THEME } from "@app/types/room-theme";
 
@@ -101,7 +102,9 @@ export interface RoomItem3D {
     id: string;
     name: string;
     modelUrl: string | null;
+    category?: string | null;
   } | null;
+  customImageUrl?: string | null;
 }
 
 export interface ItemDragEvent {
@@ -120,6 +123,7 @@ export interface ItemDragEvent {
     NgtArgs,
     TrophyFrameComponent,
     DecorationModelComponent,
+    CustomFrameComponent,
     CameraControlsComponent,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -312,6 +316,21 @@ export interface ItemDragEvent {
       />
     }
 
+    <!-- Custom frame items on walls -->
+    @for (item of frameItems(); track item.id) {
+      <app-custom-frame
+        [imageUrl]="item.customImageUrl ?? null"
+        [frameStyle]="getFrameStyle(item)"
+        [position]="getWallPosition(item).position"
+        [rotation]="getWallPosition(item).rotation"
+        [scale]="item.scaleX ?? 1"
+        [editable]="editable()"
+        [selected]="item.id === selectedItemId()"
+        (pressed)="onTrophyTapped(item.id)"
+        (dragStart)="onTrophyDragStart(item.id, $event)"
+      />
+    }
+
     <!-- Decoration items on floor -->
     @for (item of decorationItems(); track item.id) {
       <app-decoration-model
@@ -486,10 +505,27 @@ export class PainCaveSceneComponent implements OnDestroy {
     );
   }
 
+  frameItems(): RoomItem3D[] {
+    return this.items().filter(
+      (item) => item.decorationId && item.decoration?.category === "frame",
+    );
+  }
+
   decorationItems(): RoomItem3D[] {
     return this.items().filter(
-      (item) => item.decorationId && item.decoration?.modelUrl,
+      (item) =>
+        item.decorationId &&
+        item.decoration?.modelUrl &&
+        item.decoration?.category !== "frame",
     );
+  }
+
+  getFrameStyle(item: RoomItem3D): string {
+    const modelUrl = item.decoration?.modelUrl ?? "";
+    if (modelUrl.includes("gold")) return "gold";
+    if (modelUrl.includes("neon")) return "neon";
+    if (modelUrl.includes("wood")) return "wood";
+    return "classic";
   }
 
   getWallPosition(item: RoomItem3D): {

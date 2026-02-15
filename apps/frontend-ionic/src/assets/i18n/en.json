@@ -168,7 +168,17 @@
     "designer": "Designer",
     "walls": "Walls",
     "materials": "Materials",
-    "freeMovement": "Free movement"
+    "freeMovement": "Free movement",
+    "frames": "Frames",
+    "framePickImage": "Choose an Image",
+    "frameFromGallery": "From Gallery",
+    "frameFromCamera": "Take a Photo",
+    "frameUploading": "Uploading image...",
+    "frameNsfwRejected": "This image was rejected. Please choose another image.",
+    "frameTryAnother": "Try another image",
+    "frameImageHint": "Pick a photo to display in your frame",
+    "changeFrameImage": "Change Image",
+    "changeFrameStyle": "Change Style"
   },
   "materials": {
     "none": "None",

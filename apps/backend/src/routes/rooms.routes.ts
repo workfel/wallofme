@@ -3,14 +3,16 @@ import { zValidator } from "@hono/zod-validator";
 import { eq, sql, desc, ilike, or, and, gt, isNotNull } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { db } from "../db";
-import { room, roomItem, user, trophy, roomView } from "../db/schema";
+import { room, roomItem, decoration, user, trophy, roomView } from "../db/schema";
 import { requireAuth } from "../middleware/auth";
 import { idParamSchema } from "../validators/common.validator";
 import {
   updateRoomSchema,
   placeItemSchema,
   moveItemSchema,
+  updateFrameImageSchema,
 } from "../validators/room.validator";
+import { moderateImage } from "../lib/image-moderator";
 import {
   exploreQuerySchema,
   globeExploreQuerySchema,
@@ -409,6 +411,25 @@ export const rooms = new Hono<{ Variables: Variables }>()
         return c.json({ error: "Room not found" }, 404);
       }
 
+      // Check 1-frame-per-room limit
+      if (body.decorationId) {
+        const deco = await db.query.decoration.findFirst({
+          where: eq(decoration.id, body.decorationId),
+        });
+        if (deco?.category === "frame") {
+          const existingFrames = await db.query.roomItem.findMany({
+            where: eq(roomItem.roomId, userRoom.id),
+            with: { decoration: true },
+          });
+          const hasFrame = existingFrames.some(
+            (item) => item.decoration?.category === "frame",
+          );
+          if (hasFrame) {
+            return c.json({ error: "frame_limit_reached" }, 409);
+          }
+        }
+      }
+
       const [item] = await db
         .insert(roomItem)
         .values({ ...body, roomId: userRoom.id })
@@ -448,6 +469,56 @@ export const rooms = new Hono<{ Variables: Variables }>()
       const [updated] = await db
         .update(roomItem)
         .set({ ...body, updatedAt: new Date() })
+        .where(eq(roomItem.id, id))
+        .returning();
+
+      return c.json({ data: updated });
+    }
+  )
+
+  // Update frame image
+  .patch(
+    "/items/:id/image",
+    requireAuth,
+    zValidator("param", idParamSchema),
+    zValidator("json", updateFrameImageSchema),
+    async (c) => {
+      const user = c.get("user")!;
+      const { id } = c.req.valid("param");
+      const { imageKey } = c.req.valid("json");
+
+      const userRoom = await db.query.room.findFirst({
+        where: eq(room.userId, user.id),
+      });
+
+      if (!userRoom) {
+        return c.json({ error: "Room not found" }, 404);
+      }
+
+      const existing = await db.query.roomItem.findFirst({
+        where: eq(roomItem.id, id),
+        with: { decoration: true },
+      });
+
+      if (!existing || existing.roomId !== userRoom.id) {
+        return c.json({ error: "Item not found" }, 404);
+      }
+
+      if (existing.decoration?.category !== "frame") {
+        return c.json({ error: "Item is not a frame" }, 400);
+      }
+
+      const imageUrl = getPublicUrl(imageKey);
+
+      // Moderate the image
+      const moderation = await moderateImage(imageUrl);
+      if (!moderation.safe) {
+        return c.json({ error: "image_rejected", reason: moderation.reason }, 422);
+      }
+
+      const [updated] = await db
+        .update(roomItem)
+        .set({ customImageUrl: imageUrl, updatedAt: new Date() })
         .where(eq(roomItem.id, id))
         .returning();
 

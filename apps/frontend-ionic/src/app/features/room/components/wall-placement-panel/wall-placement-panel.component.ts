@@ -1,6 +1,6 @@
 import { Component, computed, input, output, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
-import { IonButton, IonIcon, IonToggle } from '@ionic/angular/standalone';
+import { IonButton, IonIcon, IonRange, IonToggle } from '@ionic/angular/standalone';
 import { TranslateModule } from '@ngx-translate/core';
 import { addIcons } from 'ionicons';
 import { trashOutline, chevronUpOutline, chevronDownOutline, swapHorizontalOutline } from 'ionicons/icons';
@@ -10,12 +10,13 @@ export interface WallPlacementValues {
   positionY: number;
   positionZ: number;
   wall?: 'left' | 'right';
+  scale?: number;
 }
 
 @Component({
   selector: 'app-wall-placement-panel',
   standalone: true,
-  imports: [DecimalPipe, IonButton, IonIcon, IonToggle, TranslateModule],
+  imports: [DecimalPipe, IonButton, IonIcon, IonRange, IonToggle, TranslateModule],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="wall-panel">
@@ -66,6 +67,24 @@ export interface WallPlacementValues {
           </div>
         </div>
       </div>
+
+      <!-- Scale row -->
+      <div class="control-row scale-row">
+        <span class="row-label">{{ 'room.scale' | translate }}</span>
+        <div class="scale-value">{{ scale() | number:'1.1-1' }}</div>
+        <ion-range
+          class="scale-slider"
+          [min]="0.1"
+          [max]="4"
+          [step]="0.1"
+          [value]="scale()"
+          [pin]="true"
+          [pinFormatter]="formatScale"
+          (ionInput)="onScaleChange($event)"
+        />
+      </div>
+
+      <ng-content />
 
       <p class="drag-hint">{{ 'room.wallDragHint' | translate }}</p>
     </div>
@@ -193,6 +212,26 @@ export interface WallPlacementValues {
       }
     }
 
+    .scale-row {
+      align-items: center;
+    }
+
+    .scale-value {
+      font-size: 14px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      min-width: 32px;
+      text-align: center;
+      color: var(--ion-text-color);
+    }
+
+    .scale-slider {
+      flex: 1;
+      --bar-height: 4px;
+      --knob-size: 20px;
+      padding: 0;
+    }
+
     .drag-hint {
       margin: 4px 0 0;
       font-size: 12px;
@@ -206,6 +245,7 @@ export class WallPlacementPanelComponent {
   positionX = input(0);
   positionY = input(1.5);
   positionZ = input(0);
+  scale = input(0.5);
   name = input<string | null>(null);
   freeMovement = input(false);
 
@@ -219,6 +259,12 @@ export class WallPlacementPanelComponent {
 
   constructor() {
     addIcons({ trashOutline, chevronUpOutline, chevronDownOutline, swapHorizontalOutline });
+  }
+
+  formatScale = (value: number) => value.toFixed(1);
+
+  onScaleChange(event: CustomEvent): void {
+    this.emitChange({ scale: event.detail.value });
   }
 
   onFreeMovementToggle(event: CustomEvent): void {
@@ -267,6 +313,7 @@ export class WallPlacementPanelComponent {
       positionX: partial.positionX ?? this.positionX(),
       positionY: partial.positionY ?? this.positionY(),
       positionZ: partial.positionZ ?? this.positionZ(),
+      scale: partial.scale ?? this.scale(),
     });
   }
 }

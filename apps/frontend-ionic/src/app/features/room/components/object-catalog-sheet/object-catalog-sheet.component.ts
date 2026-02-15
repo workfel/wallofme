@@ -12,11 +12,12 @@ import {
   IonSpinner,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { addCircleOutline, cartOutline, cubeOutline, bicycleOutline, barbellOutline, fitnessOutline, homeOutline, gridOutline } from 'ionicons/icons';
+import { addCircleOutline, cartOutline, cubeOutline, bicycleOutline, barbellOutline, fitnessOutline, homeOutline, gridOutline, imageOutline } from 'ionicons/icons';
 import { TranslateModule } from '@ngx-translate/core';
 import { RoomService, type RoomItem } from '@app/core/services/room.service';
 import { TrophyService, type Trophy } from '@app/core/services/trophy.service';
 import { DecorationService, type Decoration } from '@app/core/services/decoration.service';
+import { FrameService } from '@app/core/services/frame.service';
 import { TokenBalanceComponent } from '@app/shared/components/token-balance/token-balance.component';
 import { TokenService } from '@app/core/services/token.service';
 import { ThumbnailGeneratorService } from '@app/core/services/thumbnail-generator.service';
@@ -60,10 +61,55 @@ import { ThumbnailGeneratorService } from '@app/core/services/thumbnail-generato
         <ion-segment-button value="trophies">
           <ion-label>{{ 'room.myTrophies' | translate }}</ion-label>
         </ion-segment-button>
+        <ion-segment-button value="frames">
+          <ion-label>{{ 'room.frames' | translate }}</ion-label>
+        </ion-segment-button>
       </ion-segment>
 
       <div class="catalog-content ion-padding">
-        @if (activeSegment() === 'trophies') {
+        @if (activeSegment() === 'frames') {
+          @if (frameService.loading()) {
+            <div class="loading-container">
+              <ion-spinner name="crescent" />
+            </div>
+          } @else if (hasExistingFrame()) {
+            <div class="frame-existing">
+              <button class="catalog-card frame-action-card" (click)="changeFrameImage.emit()">
+                <div class="card-icon">
+                  <ion-icon name="image-outline" />
+                </div>
+                <div class="card-info">
+                  <span class="card-name">{{ 'room.changeFrameImage' | translate }}</span>
+                </div>
+              </button>
+            </div>
+          } @else if (frameService.frameStyles().length === 0) {
+            <p class="empty-text">{{ 'room.noDecorations' | translate }}</p>
+          } @else {
+            <div class="catalog-grid">
+              @for (frame of frameService.frameStyles(); track frame.id) {
+                <button
+                  class="catalog-card"
+                  [class.catalog-card--locked]="!canAffordDecoration(frame)"
+                  [disabled]="!canAffordDecoration(frame)"
+                  (click)="acquireFrame.emit(frame.id)"
+                >
+                  <div class="card-thumb-wrapper">
+                    <div class="frame-preview" [style.background]="getFramePreviewColor(frame)"></div>
+                  </div>
+                  <div class="card-info">
+                    <span class="card-name">{{ frame.name }}</span>
+                    @if (frame.priceTokens > 0) {
+                      <ion-badge [color]="canAffordDecoration(frame) ? 'warning' : 'medium'">{{ frame.priceTokens }} {{ 'tokens.flames' | translate }}</ion-badge>
+                    } @else {
+                      <ion-badge color="success">{{ 'room.free' | translate }}</ion-badge>
+                    }
+                  </div>
+                </button>
+              }
+            </div>
+          }
+        } @else if (activeSegment() === 'trophies') {
           @if (availableTrophies().length === 0) {
             <p class="empty-text">{{ 'room.noTrophies' | translate }}</p>
           }
@@ -90,7 +136,12 @@ import { ThumbnailGeneratorService } from '@app/core/services/thumbnail-generato
           } @else {
             <div class="catalog-grid">
               @for (deco of decorationService.decorations(); track deco.id) {
-                <button class="catalog-card" (click)="placeDecoration.emit(deco.id)">
+                <button
+                  class="catalog-card"
+                  [class.catalog-card--locked]="!canAffordDecoration(deco)"
+                  [disabled]="!canAffordDecoration(deco)"
+                  (click)="placeDecoration.emit(deco.id)"
+                >
                   <div class="card-thumb-wrapper">
                     @if (thumbnails().get(deco.id); as thumb) {
                       <img [src]="thumb" [alt]="deco.name" class="card-image" />
@@ -106,7 +157,7 @@ import { ThumbnailGeneratorService } from '@app/core/services/thumbnail-generato
                       <span class="card-description">{{ deco.description }}</span>
                     }
                     @if (deco.priceTokens > 0) {
-                      <ion-badge color="warning">{{ deco.priceTokens }} {{ 'tokens.flames' | translate }}</ion-badge>
+                      <ion-badge [color]="canAffordDecoration(deco) ? 'warning' : 'medium'">{{ deco.priceTokens }} {{ 'tokens.flames' | translate }}</ion-badge>
                     } @else {
                       <ion-badge color="success">{{ 'room.free' | translate }}</ion-badge>
                     }
@@ -150,11 +201,16 @@ import { ThumbnailGeneratorService } from '@app/core/services/thumbnail-generato
       flex-direction: column;
       align-items: stretch;
       overflow: hidden;
-      transition: transform 0.15s, box-shadow 0.15s;
+      transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
 
-      &:active {
+      &:active:not(:disabled) {
         transform: scale(0.96);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      &.catalog-card--locked {
+        opacity: 0.45;
+        cursor: not-allowed;
       }
     }
 
@@ -223,6 +279,23 @@ import { ThumbnailGeneratorService } from '@app/core/services/thumbnail-generato
       justify-content: center;
       margin: 32px 0;
     }
+
+    .frame-preview {
+      width: 80px;
+      height: 60px;
+      border-radius: 8px;
+      border: 3px solid currentColor;
+    }
+
+    .frame-existing {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .frame-action-card {
+      width: 100%;
+    }
   `,
 })
 export class ObjectCatalogSheetComponent implements OnInit, OnDestroy {
@@ -230,18 +303,22 @@ export class ObjectCatalogSheetComponent implements OnInit, OnDestroy {
   private trophyService = inject(TrophyService);
   private thumbnailGeneratorService = inject(ThumbnailGeneratorService);
   decorationService = inject(DecorationService);
+  frameService = inject(FrameService);
   tokenService = inject(TokenService);
 
-  activeSegment = signal<'trophies' | 'objects'>('objects');
+  activeSegment = signal<'trophies' | 'objects' | 'frames'>('objects');
   thumbnails = signal<Map<string, string>>(new Map());
 
   placeTrophy = output<string>();
   placeDecoration = output<string>();
+  acquireFrame = output<string>();
+  changeFrameImage = output<void>();
   getTokens = output<void>();
 
   ngOnInit() {
     this.trophyService.fetchTrophies();
     this.decorationService.fetchDecorations();
+    this.frameService.fetchFrameStyles();
   }
 
   availableTrophies(): Trophy[] {
@@ -265,7 +342,7 @@ export class ObjectCatalogSheetComponent implements OnInit, OnDestroy {
   }
 
   constructor() {
-    addIcons({ addCircleOutline, cartOutline, cubeOutline, bicycleOutline, barbellOutline, fitnessOutline, homeOutline, gridOutline });
+    addIcons({ addCircleOutline, cartOutline, cubeOutline, bicycleOutline, barbellOutline, fitnessOutline, homeOutline, gridOutline, imageOutline });
 
     effect(() => {
       const decorations = this.decorationService.decorations();
@@ -306,5 +383,23 @@ export class ObjectCatalogSheetComponent implements OnInit, OnDestroy {
 
   getDecorationIcon(name: string): string {
     return this.iconMap[name.toLowerCase()] ?? 'cube-outline';
+  }
+
+  hasExistingFrame(): boolean {
+    return this.frameService.hasFrame(this.roomService.room()?.items ?? []);
+  }
+
+  getFramePreviewColor(frame: Decoration): string {
+    const url = frame.modelUrl?.toLowerCase() ?? '';
+    if (url.includes('gold')) return '#d4a537';
+    if (url.includes('neon')) return '#00ff88';
+    if (url.includes('wood')) return '#8B6914';
+    return '#1a1a1a';
+  }
+
+  canAffordDecoration(deco: Decoration): boolean {
+    if (deco.priceTokens === 0) return true;
+    if (this.decorationService.isOwned(deco.id)) return true;
+    return this.tokenService.balance() >= deco.priceTokens;
   }
 }

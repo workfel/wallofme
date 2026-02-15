@@ -26,6 +26,7 @@ import {
   refreshOutline,
   moveOutline,
   shareOutline,
+  imageOutline,
 } from "ionicons/icons";
 
 import { RoomService } from "@app/core/services/room.service";
@@ -36,6 +37,7 @@ import { ShareService } from "@app/core/services/share.service";
 import { ScreenshotService } from "@app/core/services/screenshot.service";
 import { UploadService } from "@app/core/services/upload.service";
 import { DecorationService } from "@app/core/services/decoration.service";
+import { FrameService } from "@app/core/services/frame.service";
 import {
   type RoomTheme,
   type CustomThemeColors,
@@ -62,6 +64,7 @@ import {
   type WallPlacementValues,
 } from "../components/wall-placement-panel/wall-placement-panel.component";
 import { MaterialCustomizerSheetComponent } from "../components/material-customizer-sheet/material-customizer-sheet.component";
+import { FrameImagePickerSheetComponent } from "../components/frame-image-picker-sheet/frame-image-picker-sheet.component";
 import { TutorialOverlayComponent } from "@app/shared/components/tutorial-overlay/tutorial-overlay.component";
 import { TutorialService } from "@app/core/services/tutorial.service";
 
@@ -76,7 +79,8 @@ type EditorState =
   | { kind: "CUSTOM_EDITOR_OPEN" }
   | { kind: "MATERIAL_EDITOR_OPEN" }
   | { kind: "SHARE_OPEN" }
-  | { kind: "CONFIRM_DELETE"; itemId: string };
+  | { kind: "CONFIRM_DELETE"; itemId: string }
+  | { kind: "FRAME_IMAGE_PICKER"; roomItemId: string };
 
 @Component({
   selector: "app-room-edit",
@@ -94,6 +98,7 @@ type EditorState =
     ShareRoomSheetComponent,
     WallPlacementPanelComponent,
     MaterialCustomizerSheetComponent,
+    FrameImagePickerSheetComponent,
     TutorialOverlayComponent,
     IonContent,
     IonIcon,
@@ -162,12 +167,31 @@ type EditorState =
             (freeMovementChange)="onFreeMovementToggle($event)"
             (delete)="confirmDelete()"
           />
+        } @else if (isFrameSelected()) {
+          <app-wall-placement-panel
+            [wall]="selectedItem()?.wall ?? 'right'"
+            [positionX]="selectedItem()?.positionX ?? 0"
+            [positionY]="selectedItem()?.positionY ?? 1.5"
+            [positionZ]="selectedItem()?.positionZ ?? 0"
+            [scale]="selectedItem()?.scaleX ?? 0.5"
+            [name]="'room.frames' | translate"
+            [freeMovement]="freeMovement()"
+            (changed)="onWallPlacementChange($event)"
+            (freeMovementChange)="onFreeMovementToggle($event)"
+            (delete)="confirmDelete()"
+          >
+            <button class="change-image-btn" (click)="onChangeFrameImage()">
+              <ion-icon name="image-outline" />
+              {{ 'room.changeFrameImage' | translate }}
+            </button>
+          </app-wall-placement-panel>
         } @else if (isTrophySelected()) {
           <app-wall-placement-panel
             [wall]="selectedItem()?.wall ?? 'left'"
             [positionX]="selectedItem()?.positionX ?? 0"
             [positionY]="selectedItem()?.positionY ?? 1.5"
             [positionZ]="selectedItem()?.positionZ ?? 0"
+            [scale]="selectedItem()?.scaleX ?? 0.5"
             [name]="selectedItem()?.trophy?.raceResult?.race?.name ?? null"
             [freeMovement]="freeMovement()"
             (changed)="onWallPlacementChange($event)"
@@ -260,6 +284,8 @@ type EditorState =
         <app-object-catalog-sheet
           (placeTrophy)="onPlaceTrophy($event)"
           (placeDecoration)="onPlaceDecoration($event)"
+          (acquireFrame)="onAcquireFrame($event)"
+          (changeFrameImage)="onChangeFrameImageFromCatalog()"
           (getTokens)="onGetTokens()"
         />
       </ng-template>
@@ -281,6 +307,23 @@ type EditorState =
           (shareNative)="onShareNative()"
           (shareScreenshot)="onShareScreenshot()"
         />
+      </ng-template>
+    </ion-modal>
+
+    <!-- Frame Image Picker Bottom Sheet -->
+    <ion-modal
+      [isOpen]="state().kind === 'FRAME_IMAGE_PICKER'"
+      [initialBreakpoint]="0.45"
+      [breakpoints]="[0, 0.45, 0.65]"
+      (didDismiss)="closeFrameImagePicker()"
+    >
+      <ng-template>
+        @if (framePickerItemId(); as itemId) {
+          <app-frame-image-picker-sheet
+            [roomItemId]="itemId"
+            (imagePicked)="onFrameImagePicked()"
+          />
+        }
       </ng-template>
     </ion-modal>
 
@@ -353,6 +396,29 @@ type EditorState =
       }
     }
 
+    .change-image-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border: 1px solid var(--ion-color-primary);
+      border-radius: 100px;
+      background: transparent;
+      color: var(--ion-color-primary);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+
+      ion-icon {
+        font-size: 16px;
+      }
+
+      &:active {
+        opacity: 0.7;
+      }
+    }
+
     ion-fab-button {
       --background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.72);
       --background-activated: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.85);
@@ -382,6 +448,7 @@ export class RoomEditPage implements OnInit {
   private uploadService = inject(UploadService);
   private trophyService = inject(TrophyService);
   private decorationService = inject(DecorationService);
+  private frameService = inject(FrameService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private translate = inject(TranslateService);
@@ -412,7 +479,12 @@ export class RoomEditPage implements OnInit {
 
   isDecorationSelected = computed(() => {
     const item = this.selectedItem();
-    return !!item?.decorationId && !item.wall;
+    return !!item?.decorationId && !item.wall && item?.decoration?.category !== 'frame';
+  });
+
+  isFrameSelected = computed(() => {
+    const item = this.selectedItem();
+    return !!item?.decorationId && item?.decoration?.category === 'frame';
   });
 
   isTrophySelected = computed(() => {
@@ -423,6 +495,11 @@ export class RoomEditPage implements OnInit {
   selectedItemRotationDeg = computed(() => {
     const item = this.selectedItem();
     return item ? Math.round(((item.rotationY || 0) * 180) / Math.PI) : 0;
+  });
+
+  framePickerItemId = computed(() => {
+    const s = this.state();
+    return s.kind === "FRAME_IMAGE_PICKER" ? s.roomItemId : null;
   });
 
   shareLink = signal<string | null>(null);
@@ -445,6 +522,7 @@ export class RoomEditPage implements OnInit {
       refreshOutline,
       moveOutline,
       shareOutline,
+      imageOutline,
     });
 
     // Tutorial state watcher — advance steps based on editor state transitions
@@ -594,10 +672,14 @@ export class RoomEditPage implements OnInit {
   async onWallPlacementChange(values: WallPlacementValues): Promise<void> {
     const id = this.selectedItemId();
     if (!id) return;
+    const uniformScale = values.scale ?? this.selectedItem()?.scaleX ?? 0.5;
     await this.roomService.updateItem(id, {
       positionX: values.positionX,
       positionY: values.positionY,
       positionZ: values.positionZ,
+      scaleX: uniformScale,
+      scaleY: uniformScale,
+      scaleZ: uniformScale,
       ...(values.wall !== undefined && { wall: values.wall }),
     });
   }
@@ -685,6 +767,57 @@ export class RoomEditPage implements OnInit {
   onGetTokens(): void {
     this.state.set({ kind: "IDLE" });
     this.router.navigate(["/tokens"]);
+  }
+
+  // ─── Frame ──────────────────────────────────────────
+  async onAcquireFrame(decorationId: string): Promise<void> {
+    // Acquire if not already owned
+    if (!this.decorationService.isOwned(decorationId)) {
+      const acquired = await this.decorationService.acquire(decorationId);
+      if (!acquired) return;
+    }
+    const placed = await this.roomService.addFrameToRoom(decorationId);
+    if (placed) {
+      // Find the newly placed frame item
+      const room = this.roomService.room();
+      const frameItem = room?.items.find(
+        (i) => i.decoration?.category === "frame",
+      );
+      if (frameItem) {
+        this.state.set({ kind: "FRAME_IMAGE_PICKER", roomItemId: frameItem.id });
+      } else {
+        this.state.set({ kind: "IDLE" });
+      }
+      this.hapticSuccess();
+    }
+  }
+
+  onChangeFrameImage(): void {
+    const item = this.selectedItem();
+    if (item) {
+      this.state.set({ kind: "FRAME_IMAGE_PICKER", roomItemId: item.id });
+    }
+  }
+
+  onChangeFrameImageFromCatalog(): void {
+    const room = this.roomService.room();
+    const frameItem = room?.items.find(
+      (i) => i.decoration?.category === "frame",
+    );
+    if (frameItem) {
+      this.state.set({ kind: "FRAME_IMAGE_PICKER", roomItemId: frameItem.id });
+    }
+  }
+
+  closeFrameImagePicker(): void {
+    if (this.state().kind === "FRAME_IMAGE_PICKER") {
+      this.state.set({ kind: "IDLE" });
+    }
+  }
+
+  onFrameImagePicked(): void {
+    this.state.set({ kind: "IDLE" });
+    this.hapticSuccess();
   }
 
   // ─── Theme Selector ──────────────────────────────

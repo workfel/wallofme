@@ -168,7 +168,17 @@
     "designer": "Designer",
     "walls": "Murs",
     "materials": "Matériaux",
-    "freeMovement": "Déplacement libre"
+    "freeMovement": "Déplacement libre",
+    "frames": "Cadres",
+    "framePickImage": "Choisir une image",
+    "frameFromGallery": "Depuis la galerie",
+    "frameFromCamera": "Prendre une photo",
+    "frameUploading": "Upload de l'image...",
+    "frameNsfwRejected": "Cette image a été rejetée. Veuillez en choisir une autre.",
+    "frameTryAnother": "Essayer une autre image",
+    "frameImageHint": "Choisissez une photo à afficher dans votre cadre",
+    "changeFrameImage": "Changer l'image",
+    "changeFrameStyle": "Changer le style"
   },
   "materials": {
     "none": "Aucun",

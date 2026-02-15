@@ -30,6 +30,7 @@ export const placeItemSchema = z.object({
   scaleX: z.number().default(1),
   scaleY: z.number().default(1),
   scaleZ: z.number().default(1),
+  customImageUrl: z.string().url().nullable().optional(),
 });
 
 export const moveItemSchema = z.object({
@@ -41,4 +42,9 @@ export const moveItemSchema = z.object({
   scaleX: z.number().optional(),
   scaleY: z.number().optional(),
   scaleZ: z.number().optional(),
+  customImageUrl: z.string().url().nullable().optional(),
+});
+
+export const updateFrameImageSchema = z.object({
+  imageKey: z.string().min(1),
 });
