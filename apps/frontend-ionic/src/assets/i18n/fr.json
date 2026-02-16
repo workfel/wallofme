@@ -65,7 +65,8 @@
     "listView": "Liste",
     "globeView": "Globe",
     "globeTeaser": "Explorer le globe",
-    "globeTeaserSub": "Découvrez les athlètes du monde entier"
+    "globeTeaserSub": "Découvrez les athlètes du monde entier",
+    "simulation": "Simulation"
   },
   "trophies": {
     "title": "Mes Trophées",

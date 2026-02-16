@@ -42,7 +42,9 @@ function formatTime(totalSeconds: number): string {
   const h = Math.floor(totalSeconds / 3600);
   const m = Math.floor((totalSeconds % 3600) / 60);
   const s = totalSeconds % 60;
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(
+    s,
+  ).padStart(2, "0")}`;
 }
 
 // ─── Static Data ────────────────────────────────────────
@@ -459,7 +461,7 @@ async function seedUsers() {
     longitude: number;
   }> = [];
 
-  for (let i = 1; i <= 30; i++) {
+  for (let i = 1; i <= 14; i++) {
     const firstName = FIRST_NAMES[i - 1];
     const lastName = LAST_NAMES[i - 1];
     const country = COUNTRIES[i - 1];
