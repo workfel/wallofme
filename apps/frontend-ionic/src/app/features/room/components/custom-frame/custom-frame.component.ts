@@ -21,6 +21,7 @@ import {
   DoubleSide,
   Color,
   SRGBColorSpace,
+  MathUtils,
 } from "three";
 
 extend({
@@ -106,9 +107,30 @@ const FRAME_STYLES: Record<FrameStyle, FrameStyleConfig> = {
           />
         </ngt-mesh>
 
-        <!-- CUSTOM IMAGE or PLACEHOLDER -->
+        <!-- Placeholder (fades out when texture loads) -->
+        <ngt-mesh
+          #placeholderMesh
+          [position]="[0, 0, 0.001]"
+          (click)="onClick($event)"
+          (pointerdown)="onPointerDown($event)"
+          (pointerup)="onPointerUp($event)"
+          (pointerleave)="onPointerCancel()"
+          (pointerover)="onHover(true)"
+          (pointerout)="onHover(false)"
+        >
+          <ngt-plane-geometry *args="[FRAME_WIDTH, FRAME_HEIGHT]" />
+          <ngt-mesh-basic-material
+            [color]="'#e0e0e0'"
+            [transparent]="true"
+            [opacity]="0.4"
+            [side]="DoubleSide"
+          />
+        </ngt-mesh>
+
+        <!-- Custom image (fades in when texture loads) -->
         @if (loadedTexture(); as tex) {
           <ngt-mesh
+            #textureMesh
             [position]="[0, 0, 0.002]"
             (click)="onClick($event)"
             (pointerdown)="onPointerDown($event)"
@@ -120,25 +142,8 @@ const FRAME_STYLES: Record<FrameStyle, FrameStyleConfig> = {
             <ngt-plane-geometry *args="[FRAME_WIDTH, FRAME_HEIGHT]" />
             <ngt-mesh-basic-material
               [map]="tex"
-              [side]="DoubleSide"
-            />
-          </ngt-mesh>
-        } @else {
-          <!-- Placeholder when no image -->
-          <ngt-mesh
-            [position]="[0, 0, 0.002]"
-            (click)="onClick($event)"
-            (pointerdown)="onPointerDown($event)"
-            (pointerup)="onPointerUp($event)"
-            (pointerleave)="onPointerCancel()"
-            (pointerover)="onHover(true)"
-            (pointerout)="onHover(false)"
-          >
-            <ngt-plane-geometry *args="[FRAME_WIDTH, FRAME_HEIGHT]" />
-            <ngt-mesh-basic-material
-              [color]="'#e0e0e0'"
               [transparent]="true"
-              [opacity]="0.4"
+              [opacity]="0"
               [side]="DoubleSide"
             />
           </ngt-mesh>
@@ -215,6 +220,8 @@ export class CustomFrameComponent implements OnDestroy {
   private didLongPress = false;
 
   animGroup = viewChild<ElementRef<Group>>("animGroup");
+  placeholderMeshRef = viewChild<ElementRef<Mesh>>("placeholderMesh");
+  textureMeshRef = viewChild<ElementRef<Mesh>>("textureMesh");
 
   styleConfig = computed((): FrameStyleConfig => {
     const style = this.frameStyle() as FrameStyle;
@@ -240,10 +247,26 @@ export class CustomFrameComponent implements OnDestroy {
   });
 
   constructor() {
-    injectBeforeRender(({ clock }) => {
+    injectBeforeRender(({ clock, delta }) => {
       const group = this.animGroup()?.nativeElement;
       if (group) {
         group.rotation.z = Math.sin(clock.elapsedTime * 0.5) * 0.01;
+      }
+
+      // Fade-in texture, fade-out placeholder
+      const texMesh = this.textureMeshRef()?.nativeElement;
+      if (texMesh) {
+        const mat = texMesh.material as MeshBasicMaterial;
+        if (mat.opacity < 0.999) {
+          mat.opacity = MathUtils.lerp(mat.opacity, 1, Math.min(delta * 8, 1));
+        }
+      }
+
+      const phMesh = this.placeholderMeshRef()?.nativeElement;
+      if (phMesh) {
+        const mat = phMesh.material as MeshBasicMaterial;
+        const target = this.loadedTexture() ? 0 : 0.4;
+        mat.opacity = MathUtils.lerp(mat.opacity, target, Math.min(delta * 8, 1));
       }
     });
   }

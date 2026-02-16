@@ -21,6 +21,7 @@ import {
   DoubleSide,
   Color,
   SRGBColorSpace,
+  MathUtils,
 } from "three";
 
 extend({
@@ -76,8 +77,30 @@ const LONG_PRESS_MS = 400;
         </ngt-mesh>
 
         <!-- TROPHY IMAGE / TEXTURE -->
+        <!-- Placeholder (fades out when texture loads) -->
+        <ngt-mesh
+          #placeholderMesh
+          [position]="[0, 0, 0.001]"
+          (click)="onClick($event)"
+          (pointerdown)="onPointerDown($event)"
+          (pointerup)="onPointerUp($event)"
+          (pointerleave)="onPointerCancel()"
+          (pointerover)="onHover(true)"
+          (pointerout)="onHover(false)"
+        >
+          <ngt-plane-geometry *args="[width(), FRAME_HEIGHT]" />
+          <ngt-mesh-basic-material
+            [color]="'#cccccc'"
+            [transparent]="true"
+            [opacity]="0.5"
+            [side]="DoubleSide"
+          />
+        </ngt-mesh>
+
+        <!-- Trophy image (fades in when texture loads) -->
         @if (loadedTexture(); as tex) {
           <ngt-mesh
+            #textureMesh
             [position]="[0, 0, 0.002]"
             (click)="onClick($event)"
             (pointerdown)="onPointerDown($event)"
@@ -86,30 +109,11 @@ const LONG_PRESS_MS = 400;
             (pointerover)="onHover(true)"
             (pointerout)="onHover(false)"
           >
-            <!-- Image is slightly smaller than frame/box context, effectively 'inset' or mounted -->
             <ngt-plane-geometry *args="[width(), FRAME_HEIGHT]" />
             <ngt-mesh-basic-material
               [map]="tex"
               [transparent]="true"
-              [side]="DoubleSide"
-            />
-          </ngt-mesh>
-        } @else {
-          <!-- Placeholder if no texture -->
-          <ngt-mesh
-            [position]="[0, 0, 0.002]"
-            (click)="onClick($event)"
-            (pointerdown)="onPointerDown($event)"
-            (pointerup)="onPointerUp($event)"
-            (pointerleave)="onPointerCancel()"
-            (pointerover)="onHover(true)"
-            (pointerout)="onHover(false)"
-          >
-            <ngt-plane-geometry *args="[width(), FRAME_HEIGHT]" />
-            <ngt-mesh-basic-material
-              [color]="'#cccccc'"
-              [transparent]="true"
-              [opacity]="0.5"
+              [opacity]="0"
               [side]="DoubleSide"
             />
           </ngt-mesh>
@@ -182,6 +186,8 @@ export class TrophyFrameComponent implements OnDestroy {
 
   // We rotate the inner group now
   animGroup = viewChild<ElementRef<Group>>("animGroup");
+  placeholderMeshRef = viewChild<ElementRef<Mesh>>("placeholderMesh");
+  textureMeshRef = viewChild<ElementRef<Mesh>>("textureMesh");
 
   // Load texture via angular-three-soba resource
   texture = textureResource(() => this.textureUrl(), {
@@ -206,11 +212,26 @@ export class TrophyFrameComponent implements OnDestroy {
   }
 
   constructor() {
-    // Subtle idle sway animation applied to the group
-    injectBeforeRender(({ clock }) => {
+    injectBeforeRender(({ clock, delta }) => {
       const group = this.animGroup()?.nativeElement;
       if (group) {
         group.rotation.z = Math.sin(clock.elapsedTime * 0.5) * 0.01;
+      }
+
+      // Fade-in texture, fade-out placeholder
+      const texMesh = this.textureMeshRef()?.nativeElement;
+      if (texMesh) {
+        const mat = texMesh.material as MeshBasicMaterial;
+        if (mat.opacity < 0.999) {
+          mat.opacity = MathUtils.lerp(mat.opacity, 1, Math.min(delta * 8, 1));
+        }
+      }
+
+      const phMesh = this.placeholderMeshRef()?.nativeElement;
+      if (phMesh) {
+        const mat = phMesh.material as MeshBasicMaterial;
+        const target = this.loadedTexture() ? 0 : 0.5;
+        mat.opacity = MathUtils.lerp(mat.opacity, target, Math.min(delta * 8, 1));
       }
     });
   }

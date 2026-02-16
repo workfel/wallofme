@@ -1,5 +1,5 @@
-import { Component, CUSTOM_ELEMENTS_SCHEMA, input, computed, output, signal, OnDestroy } from '@angular/core';
-import { extend, NgtArgs } from 'angular-three';
+import { Component, CUSTOM_ELEMENTS_SCHEMA, input, computed, output, signal, viewChild, ElementRef, OnDestroy } from '@angular/core';
+import { extend, NgtArgs, injectBeforeRender } from 'angular-three';
 import { gltfResource } from 'angular-three-soba/loaders';
 import {
   Mesh,
@@ -17,6 +17,7 @@ import {
   Box3,
   Vector3,
   DoubleSide,
+  MathUtils,
 } from 'three';
 
 extend({
@@ -49,7 +50,20 @@ const LONG_PRESS_MS = 400;
       [scale]="scale()"
     >
       @if (scene(); as scene) {
-        <ngt-primitive *args="[scene]" [position]="[0, yOffset(), 0]" />
+        <ngt-group #modelGroup>
+          <ngt-primitive *args="[scene]" [position]="[0, yOffset(), 0]" />
+        </ngt-group>
+      } @else {
+        <!-- Wireframe placeholder while loading -->
+        <ngt-mesh [position]="[0, 0.5, 0]">
+          <ngt-box-geometry *args="[0.8, 1, 0.8]" />
+          <ngt-mesh-basic-material
+            [color]="highlightColor"
+            [wireframe]="true"
+            [transparent]="true"
+            [opacity]="0.25"
+          />
+        </ngt-mesh>
       }
 
       <!-- Hitbox for tap / long-press detection -->
@@ -186,6 +200,9 @@ export class DecorationModelComponent implements OnDestroy {
   private longPressTimer: ReturnType<typeof setTimeout> | null = null;
   private didLongPress = false;
 
+  modelGroupRef = viewChild<ElementRef<Group>>('modelGroup');
+  private modelScaleReady = false;
+
   gltf = gltfResource(() => this.modelUrl());
 
   scene = computed(() => {
@@ -246,6 +263,24 @@ export class DecorationModelComponent implements OnDestroy {
     if (!b) return 1.2;
     return Math.max(b.width, b.depth) / 2 + 0.6;
   });
+
+  constructor() {
+    injectBeforeRender(({ delta }) => {
+      const modelGrp = this.modelGroupRef()?.nativeElement;
+      if (modelGrp) {
+        if (!this.modelScaleReady) {
+          modelGrp.scale.setScalar(0.01);
+          this.modelScaleReady = true;
+        }
+        if (modelGrp.scale.x < 0.999) {
+          const next = MathUtils.lerp(modelGrp.scale.x, 1, Math.min(delta * 6, 1));
+          modelGrp.scale.setScalar(next);
+        }
+      } else {
+        this.modelScaleReady = false;
+      }
+    });
+  }
 
   /** Stop click from propagating (used on gizmo hitboxes) */
   onClickStop(event: any): void {

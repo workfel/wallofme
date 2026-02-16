@@ -17,6 +17,7 @@ import {
 } from '@ionic/angular/standalone';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgtCanvas } from 'angular-three/dom';
+import { progress, textureResource, gltfResource } from 'angular-three-soba/loaders';
 import { addIcons } from 'ionicons';
 import { heart, heartOutline } from 'ionicons/icons';
 
@@ -106,6 +107,14 @@ interface RoomData {
           </ngt-canvas>
         </div>
 
+        <!-- Loading pill -->
+        <div class="loading-pill" [class.visible]="loadingProgress.active()">
+          <div class="loading-dots">
+            <span></span><span></span><span></span>
+          </div>
+          <span>{{ 'common.loading' | translate }}</span>
+        </div>
+
         <!-- Floating Hearts Container -->
         <div class="hearts-container" #heartsContainer>
           @for (heart of floatingHearts(); track heart.id) {
@@ -193,6 +202,69 @@ interface RoomData {
       display: block;
       width: 100%;
       height: 100%;
+    }
+
+    /* Loading pill */
+    .loading-pill {
+      position: absolute;
+      bottom: calc(var(--ion-safe-area-bottom, 20px) + 24px);
+      left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 100px;
+      background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.65);
+      backdrop-filter: blur(16px) saturate(1.8);
+      -webkit-backdrop-filter: blur(16px) saturate(1.8);
+      border: 1px solid rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.08);
+      box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.08),
+        0 1px 2px rgba(0, 0, 0, 0.04);
+      z-index: 50;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+
+      span {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--ion-text-color);
+        letter-spacing: -0.01em;
+      }
+    }
+
+    .loading-pill.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .loading-dots {
+      display: flex;
+      gap: 4px;
+
+      span {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--ion-color-primary);
+        animation: dotPulse 1.4s ease-in-out infinite;
+      }
+
+      span:nth-child(2) { animation-delay: 0.2s; }
+      span:nth-child(3) { animation-delay: 0.4s; }
+    }
+
+    @keyframes dotPulse {
+      0%, 80%, 100% {
+        opacity: 0.3;
+        transform: scale(0.8);
+      }
+      40% {
+        opacity: 1;
+        transform: scale(1);
+      }
     }
 
     .like-badge {
@@ -314,6 +386,7 @@ export class RoomSharePage implements OnInit {
 
   room = signal<RoomData | null>(null);
   loading = signal(true);
+  loadingProgress = progress();
   inspectedItemId = signal<string | null>(null);
 
   likeCount = computed(() => {
@@ -384,6 +457,13 @@ export class RoomSharePage implements OnInit {
       if (res.ok) {
         const json = (await res.json()) as { data: RoomData };
         this.room.set(json.data);
+
+        // Preload 3D assets in parallel before canvas mounts
+        for (const item of json.data.items ?? []) {
+          if (item.trophy?.textureUrl) textureResource.preload(item.trophy.textureUrl);
+          if (item.customImageUrl) textureResource.preload(item.customImageUrl);
+          if (item.decoration?.modelUrl?.startsWith('http')) gltfResource.preload(item.decoration.modelUrl);
+        }
 
         // Track view and fetch initial like count
         this.likeBatchingService.fetchLikeCount(json.data.id);
