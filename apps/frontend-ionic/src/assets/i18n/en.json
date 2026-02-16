@@ -468,6 +468,10 @@
     "featureRequiresPro": "{{feature}} requires WallOfMe Pro. Upgrade to unlock all premium features.",
     "viewPlans": "View Pro Plans"
   },
+  "claimWall": {
+    "cta": "Create My Room",
+    "subtitle": "It's free and takes 1 minute"
+  },
   "tutorial": {
     "welcome": "Welcome to your Pain Cave! Let's discover how to customize your room.",
     "welcomeBtn": "Let's go!",

@@ -468,6 +468,10 @@
     "ultra": "Ultra",
     "other": "Autre"
   },
+  "claimWall": {
+    "cta": "Créer ma Room",
+    "subtitle": "C'est gratuit et ça prend 1 minute"
+  },
   "tutorial": {
     "welcome": "Bienvenue dans ta Pain Cave ! Découvrons comment personnaliser ta chambre.",
     "welcomeBtn": "C'est parti !",

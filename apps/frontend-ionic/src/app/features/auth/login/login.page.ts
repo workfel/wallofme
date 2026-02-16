@@ -378,7 +378,12 @@ export class LoginPage {
 
   private navigateAfterAuth(): void {
     if (this.authService.hasCompletedOnboarding()) {
-      this.router.navigate(["/tabs"]);
+      if (localStorage.getItem('claim_wall_referral')) {
+        localStorage.removeItem('claim_wall_referral');
+        this.router.navigate(['/trophy/create']);
+      } else {
+        this.router.navigate(["/tabs"]);
+      }
     } else {
       this.router.navigate(["/onboarding"]);
     }

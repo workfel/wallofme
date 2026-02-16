@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, input, CUSTOM_ELEMENTS_SCHEMA, ViewChild, ElementRef } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy, input, CUSTOM_ELEMENTS_SCHEMA, ViewChild, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   IonContent,
@@ -14,12 +14,13 @@ import {
   IonFabButton,
   IonIcon,
   IonBadge,
+  IonButton,
 } from '@ionic/angular/standalone';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgtCanvas } from 'angular-three/dom';
 import { progress, textureResource, gltfResource } from 'angular-three-soba/loaders';
 import { addIcons } from 'ionicons';
-import { heart, heartOutline } from 'ionicons/icons';
+import { heart, heartOutline, closeOutline } from 'ionicons/icons';
 
 import { ApiService } from '@app/core/services/api.service';
 import { AuthService } from '@app/core/services/auth.service';
@@ -71,6 +72,7 @@ interface RoomData {
     IonFabButton,
     IonIcon,
     IonBadge,
+    IonButton,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
@@ -152,6 +154,19 @@ interface RoomData {
             </ion-badge>
           }
         </ion-fab>
+
+        <!-- Claim Your Wall CTA Banner (guests only) -->
+        @if (showClaimBanner()) {
+          <div class="claim-banner" [class.claim-banner-visible]="bannerVisible()">
+            <button class="claim-dismiss" (click)="dismissClaimBanner()">
+              <ion-icon name="close-outline" />
+            </button>
+            <p class="claim-subtitle">{{ 'claimWall.subtitle' | translate }}</p>
+            <ion-button size="small" (click)="onClaimWall()">
+              {{ 'claimWall.cta' | translate }}
+            </ion-button>
+          </div>
+        }
       } @else {
         <div class="centered">
           <ion-text color="medium">
@@ -372,9 +387,73 @@ interface RoomData {
         transform: scale(1);
       }
     }
+
+    /* Claim Your Wall CTA Banner */
+    .claim-banner {
+      position: fixed;
+      bottom: calc(var(--ion-safe-area-bottom, 20px) + 24px);
+      left: 16px;
+      right: 80px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.7);
+      backdrop-filter: blur(16px) saturate(1.8);
+      -webkit-backdrop-filter: blur(16px) saturate(1.8);
+      border: 1px solid rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.08);
+      box-shadow:
+        0 4px 24px rgba(0, 0, 0, 0.1),
+        0 1px 2px rgba(0, 0, 0, 0.04);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      pointer-events: none;
+    }
+
+    .claim-banner-visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .claim-subtitle {
+      flex: 1;
+      margin: 0;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ion-text-color);
+      line-height: 1.3;
+    }
+
+    .claim-dismiss {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.08);
+      color: var(--ion-text-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 0;
+    }
+
+    .claim-banner ion-button {
+      --border-radius: 12px;
+      flex-shrink: 0;
+      font-weight: 600;
+    }
   `,
 })
-export class RoomSharePage implements OnInit {
+export class RoomSharePage implements OnInit, OnDestroy {
   slug = input.required<string>();
   @ViewChild('likeFab', { read: ElementRef }) likeFab?: ElementRef<HTMLElement>;
 
@@ -388,6 +467,15 @@ export class RoomSharePage implements OnInit {
   loading = signal(true);
   loadingProgress = progress();
   inspectedItemId = signal<string | null>(null);
+
+  // Claim Your Wall banner
+  private bannerDismissed = signal(sessionStorage.getItem('claim_banner_dismissed') === 'true');
+  bannerVisible = signal(false);
+  private bannerTimer: ReturnType<typeof setTimeout> | null = null;
+
+  showClaimBanner = computed(() =>
+    !this.authService.user() && !this.bannerDismissed() && !!this.room()
+  );
 
   likeCount = computed(() => {
     const r = this.room();
@@ -441,7 +529,7 @@ export class RoomSharePage implements OnInit {
   });
 
   constructor() {
-    addIcons({ heart, heartOutline });
+    addIcons({ heart, heartOutline, closeOutline });
   }
 
   ngOnInit(): void {
@@ -468,12 +556,21 @@ export class RoomSharePage implements OnInit {
         // Track view and fetch initial like count
         this.likeBatchingService.fetchLikeCount(json.data.id);
         this.recordRoomView(json.data.id);
+
+        // Show claim banner after delay (guests only)
+        if (!this.bannerDismissed() && !this.authService.user()) {
+          this.bannerTimer = setTimeout(() => this.bannerVisible.set(true), 2500);
+        }
       }
     } catch {
       // silently fail
     } finally {
       this.loading.set(false);
     }
+  }
+
+  ngOnDestroy(): void {
+    if (this.bannerTimer) clearTimeout(this.bannerTimer);
   }
 
   private async recordRoomView(roomId: string): Promise<void> {
@@ -484,6 +581,17 @@ export class RoomSharePage implements OnInit {
     } catch {
       // fire and forget
     }
+  }
+
+  onClaimWall(): void {
+    localStorage.setItem('claim_wall_referral', 'true');
+    this.router.navigate(['/auth/register']);
+  }
+
+  dismissClaimBanner(): void {
+    this.bannerVisible.set(false);
+    sessionStorage.setItem('claim_banner_dismissed', 'true');
+    this.bannerDismissed.set(true);
   }
 
   async onTapLike(event: Event): Promise<void> {

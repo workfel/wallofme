@@ -35,7 +35,12 @@ export class AuthCallbackPage implements OnInit {
     if (!this.authService.isAuthenticated()) {
       this.router.navigate(['/auth/login'], { replaceUrl: true });
     } else if (this.authService.hasCompletedOnboarding()) {
-      this.router.navigate(['/tabs'], { replaceUrl: true });
+      if (localStorage.getItem('claim_wall_referral')) {
+        localStorage.removeItem('claim_wall_referral');
+        this.router.navigate(['/trophy/create'], { replaceUrl: true });
+      } else {
+        this.router.navigate(['/tabs'], { replaceUrl: true });
+      }
     } else {
       this.router.navigate(['/onboarding'], { replaceUrl: true });
     }

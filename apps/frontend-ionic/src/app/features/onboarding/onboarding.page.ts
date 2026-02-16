@@ -553,6 +553,7 @@ export class OnboardingPage implements OnInit {
 
       // Refresh auth session to get updated user data
       await this.authService.refreshSession();
+      localStorage.removeItem('claim_wall_referral');
       this.router.navigate(["/trophy/first"]);
     } catch (e: unknown) {
       this.errorMessage.set(
