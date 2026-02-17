@@ -999,12 +999,17 @@ export class RoomEditPage implements OnInit {
     try {
       const blob = await this.screenshotService.captureRoom();
       const file = new File([blob], "pain-cave.png", { type: "image/png" });
+      const slug = await this.shareService.generateShareLink();
+      const shareUrl = slug ? this.shareService.getShareUrl(slug) : "https://wallofme.app";
+      const shareText = `${this.translate.instant("room.shareText")} ${shareUrl}`;
+      const shareTitle = this.translate.instant("room.shareTitle");
 
-      // Try native Capacitor share first
-      try {
+      // Native: write to cache file then share URI
+      const { Capacitor } = await import("@capacitor/core");
+      if (Capacitor.isNativePlatform()) {
         const { Share } = await import("@capacitor/share");
+        const { Filesystem, Directory } = await import("@capacitor/filesystem");
 
-        // Convert blob to data URI for native sharing
         const reader = new FileReader();
         const dataUri = await new Promise<string>((resolve, reject) => {
           reader.onload = () => resolve(reader.result as string);
@@ -1012,8 +1017,6 @@ export class RoomEditPage implements OnInit {
           reader.readAsDataURL(blob);
         });
 
-        // Write to a temp file and share
-        const { Filesystem, Directory } = await import("@capacitor/filesystem");
         const base64Data = dataUri.split(",")[1];
         const tempFile = await Filesystem.writeFile({
           path: "pain-cave.png",
@@ -1021,21 +1024,13 @@ export class RoomEditPage implements OnInit {
           directory: Directory.Cache,
         });
 
-        await Share.share({
-          title: this.translate.instant("room.shareTitle"),
-          files: [tempFile.uri],
-        });
+        await Share.share({ title: shareTitle, text: shareText, files: [tempFile.uri] });
         return;
-      } catch {
-        // Fall through to web fallback
       }
 
-      // Web fallback: navigator.share with file or download
+      // Web: share with File object
       if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({
-          title: this.translate.instant("room.shareTitle"),
-          files: [file],
-        });
+        await navigator.share({ title: shareTitle, text: shareText, files: [file] });
       } else {
         // Download fallback
         const url = URL.createObjectURL(blob);

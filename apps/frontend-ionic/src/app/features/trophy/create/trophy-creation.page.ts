@@ -18,10 +18,15 @@ import { addIcons } from "ionicons";
 import { arrowBackOutline, checkmarkCircle } from "ionicons/icons";
 import { TranslateModule, TranslateService } from "@ngx-translate/core";
 
+import { AuthService } from "@app/core/services/auth.service";
 import { ScanService } from "@app/core/services/scan.service";
 import { UserService } from "@app/core/services/user.service";
 import { RoomService } from "@app/core/services/room.service";
 import { TutorialService } from "@app/core/services/tutorial.service";
+import { ShareService } from "@app/core/services/share.service";
+import { TokenService } from "@app/core/services/token.service";
+import { ThemeService } from "@app/core/services/theme.service";
+import { hasValidStats, calculatePercentile } from "@app/shared/lib/stats-utils";
 import { UpgradePromptComponent } from "@app/shared/components/upgrade-prompt/upgrade-prompt.component";
 import { TrophyCaptureComponent } from "./components/trophy-capture.component";
 import { TrophyProcessingComponent } from "./components/trophy-processing.component";
@@ -31,6 +36,7 @@ import { TrophyResultsSearchComponent } from "./components/trophy-results-search
 import { TrophyDoneComponent } from "./components/trophy-done.component";
 import { TrophyRefinementComponent } from "./components/trophy-refinement.component";
 import { TrophyCelebrationComponent } from "./components/trophy-celebration.component";
+import { TrophySuccessComponent } from "./components/trophy-success.component";
 
 type CreationPhase =
   | "capture"
@@ -40,7 +46,8 @@ type CreationPhase =
   | "matching"
   | "search"
   | "done"
-  | "celebrate";
+  | "celebrate"
+  | "success";
 
 @Component({
   selector: "app-trophy-creation",
@@ -59,11 +66,12 @@ type CreationPhase =
     TrophyResultsSearchComponent,
     TrophyDoneComponent,
     TrophyCelebrationComponent,
+    TrophySuccessComponent,
   ],
   template: `
     <ion-content class="ion-padding" [fullscreen]="true">
-      <!-- Floating glass header — hidden during celebration -->
-      @if (phase() !== 'celebrate') {
+      <!-- Floating glass header — hidden during celebration & success -->
+      @if (phase() !== 'celebrate' && phase() !== 'success') {
         <div class="floating-header">
           <button class="back-pill" (click)="goBack()">
             <ion-icon name="arrow-back-outline" />
@@ -105,6 +113,12 @@ type CreationPhase =
           <app-trophy-celebration
             (done)="onCelebrationDone()"
             (share)="onCelebrationShare()"
+          />
+        }
+        @case ("success") {
+          <app-trophy-success
+            (share)="onSuccessShare()"
+            (done)="onSuccessDone()"
           />
         }
       }
@@ -207,6 +221,10 @@ export class TrophyCreationPage {
   private tutorialService = inject(TutorialService);
   private toastController = inject(ToastController);
   private translate = inject(TranslateService);
+  private shareService = inject(ShareService);
+  private tokenService = inject(TokenService);
+  private authService = inject(AuthService);
+  private themeService = inject(ThemeService);
 
   private resultsSearchComponent = viewChild(TrophyResultsSearchComponent);
 
@@ -249,6 +267,7 @@ export class TrophyCreationPage {
       case "done":
         return "review.step5";
       case "celebrate":
+      case "success":
         return "";
     }
   });
@@ -381,8 +400,6 @@ export class TrophyCreationPage {
     const trophyItemCount = (room?.items ?? []).filter(i => i.trophyId).length;
     const isFirstTrophy = trophyItemCount <= 1;
 
-    this.scanService.reset();
-
     if (isFirstTrophy) {
       localStorage.setItem('firstTrophyCompleted', 'true');
       localStorage.setItem('firstTrophyTutorialPending', 'true');
@@ -390,29 +407,83 @@ export class TrophyCreationPage {
       return;
     }
 
-    // Show success toast for subsequent trophies
-    const message = this.translate.instant('review.trophyAdded');
-    const toast = await this.toastController.create({
-      message,
-      duration: 3000,
-      position: 'bottom',
-      color: 'success',
-      icon: 'checkmark-circle',
-    });
-    await toast.present();
-
-    this.router.navigate(["/tabs/home"]);
+    // Non-first trophy: show success screen with share CTA
+    this.phase.set('success');
   }
 
   onCelebrationDone(): void {
+    this.scanService.reset();
     this.navCtrl.navigateRoot("/tabs/home", {
       animated: true,
       animationDirection: "forward",
     });
   }
 
-  onCelebrationShare(): void {
-    // No-op — will be implemented in gamified_sharing spec
+  async onCelebrationShare(): Promise<void> {
+    await this.doShareTrophy();
+  }
+
+  async onSuccessShare(): Promise<void> {
+    await this.doShareTrophy();
+  }
+
+  onSuccessDone(): void {
+    this.scanService.reset();
+    this.router.navigate(["/tabs/home"]);
+  }
+
+  private async doShareTrophy(): Promise<void> {
+    const trophyId = this.scanService.trophyId();
+    if (!trophyId) return;
+
+    // Get trophy image
+    const urls = this.scanService.processedUrls();
+    const trophyImageUrl = urls?.thumbnailUrl ?? urls?.textureUrl ?? '';
+    if (!trophyImageUrl) return;
+
+    // Get race name from analysis
+    const analysis = this.scanService.analysis();
+    const raceName = analysis?.raceName ?? 'My Trophy';
+
+    // Get time from search results
+    const searchResult = this.scanService.searchResult();
+    const time = searchResult?.time ?? null;
+
+    // Compute percentile if Pro + valid stats
+    let percentile: number | null = null;
+    const user = this.authService.user();
+    if (user?.isPro && searchResult) {
+      if (hasValidStats(searchResult.ranking, searchResult.totalParticipants)) {
+        percentile = calculatePercentile(searchResult.ranking!, searchResult.totalParticipants!);
+      }
+    }
+
+    // Get theme color
+    const themeColor = this.themeService.activeTheme().background ?? '#1a1a2e';
+
+    try {
+      const result = await this.shareService.shareTrophy({
+        trophyId,
+        trophyImageUrl,
+        raceName,
+        time,
+        percentile,
+        themeColor,
+      });
+
+      if (result.rewarded) {
+        this.tokenService.fetchBalance();
+        const toast = await this.toastController.create({
+          message: this.translate.instant('share.shareReward'),
+          duration: 3000,
+          position: 'bottom',
+          color: 'success',
+        });
+        await toast.present();
+      }
+    } catch {
+      // Share failed — don't crash
+    }
   }
 
   private async doValidateAndSearch(raceId?: string): Promise<void> {

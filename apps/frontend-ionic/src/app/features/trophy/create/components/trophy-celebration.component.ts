@@ -53,7 +53,7 @@ interface ConfettiPiece {
           </ion-button>
           <ion-button expand="block" fill="clear" (click)="share.emit()">
             <ion-icon slot="start" name="share-outline" />
-            {{ 'celebration.share' | translate }}
+            {{ 'share.shareTrophy' | translate }} — +50 🔥
           </ion-button>
         </div>
       </div>

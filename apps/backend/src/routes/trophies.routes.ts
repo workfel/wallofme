@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, and } from "drizzle-orm";
 import { db } from "../db";
-import { trophy, raceResult } from "../db/schema";
+import { trophy, raceResult, tokenTransaction, user } from "../db/schema";
 import { requireAuth } from "../middleware/auth";
 import { idParamSchema, paginationSchema } from "../validators/common.validator";
 import {
@@ -10,6 +10,7 @@ import {
   updateTrophySchema,
 } from "../validators/trophy.validator";
 import { FREE_SCAN_LIMIT, getMonthlyScansUsed } from "../lib/scan-limit";
+import { creditTokens, getBalance } from "../lib/token-service";
 import type { auth } from "../lib/auth";
 
 type Variables = {
@@ -142,5 +143,41 @@ export const trophies = new Hono<{ Variables: Variables }>()
 
       await db.delete(trophy).where(eq(trophy.id, id));
       return c.json({ success: true });
+    }
+  )
+
+  // Share trophy — idempotent 50 token reward
+  .post(
+    "/:id/share",
+    requireAuth,
+    zValidator("param", idParamSchema),
+    async (c) => {
+      const user = c.get("user")!;
+      const { id } = c.req.valid("param");
+
+      const existing = await db.query.trophy.findFirst({
+        where: eq(trophy.id, id),
+      });
+
+      if (!existing || existing.userId !== user.id) {
+        return c.json({ error: "Not found" }, 404);
+      }
+
+      // Check idempotency: already rewarded for this trophy share?
+      const alreadyRewarded = await db.query.tokenTransaction.findFirst({
+        where: and(
+          eq(tokenTransaction.userId, user.id),
+          eq(tokenTransaction.referenceType, "share_trophy"),
+          eq(tokenTransaction.referenceId, id),
+        ),
+      });
+
+      if (alreadyRewarded) {
+        const balance = await getBalance(user.id);
+        return c.json({ data: { rewarded: false, balance } });
+      }
+
+      const newBalance = await creditTokens(user.id, 50, "bonus", id, "share_trophy");
+      return c.json({ data: { rewarded: true, balance: newBalance } });
     }
   );

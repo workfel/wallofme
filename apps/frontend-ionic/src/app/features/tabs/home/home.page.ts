@@ -23,7 +23,11 @@ import {
 } from "@ionic/angular/standalone";
 import { TranslateModule, TranslateService } from "@ngx-translate/core";
 import { NgtCanvas } from "angular-three/dom";
-import { progress, textureResource, gltfResource } from "angular-three-soba/loaders";
+import {
+  progress,
+  textureResource,
+  gltfResource,
+} from "angular-three-soba/loaders";
 import { addIcons } from "ionicons";
 import {
   cameraOutline,
@@ -36,12 +40,15 @@ import {
   peopleOutline,
   personCircleOutline,
   rocketOutline,
+  shareOutline,
   trophyOutline,
 } from "ionicons/icons";
 
 import { AuthService } from "@app/core/services/auth.service";
 import { ReferralService } from "@app/core/services/referral.service";
 import { RoomService } from "@app/core/services/room.service";
+import { ShareService } from "@app/core/services/share.service";
+import { ScreenshotService } from "@app/core/services/screenshot.service";
 import { ThemeService } from "@app/core/services/theme.service";
 import { TokenService } from "@app/core/services/token.service";
 import { TutorialService } from "@app/core/services/tutorial.service";
@@ -84,7 +91,11 @@ import type { DailyStatus } from "@app/core/services/token.service";
         <div class="dashboard-header animate-fade-in-down">
           <!-- Greeting row -->
           <div class="greeting-row">
-            <div class="greeting-left" (click)="goToProfile()">
+            <div
+              class="greeting-left"
+              (click)="goToProfile()"
+              aria-hidden="true"
+            >
               <ion-avatar class="greeting-avatar">
                 @if (authService.user()?.image) {
                 <img [src]="authService.user()!.image!" alt="avatar" />
@@ -101,25 +112,35 @@ import type { DailyStatus } from "@app/core/services/token.service";
               }}</span>
             </div>
             <div class="greeting-right">
+              <div
+                class="share-pill"
+                (click)="onShareRoom()"
+                aria-hidden="true"
+              >
+                <ion-icon name="share-outline" />
+              </div>
               @if (currentStreak() > 0) {
-                <div class="streak-pill" (click)="openDailyRewardModal()">
-                  <ion-icon name="flame-outline" />
-                  <span>{{ currentStreak() }}</span>
-                </div>
-              }
-              @if (userService.scansDisplay(); as display) {
-                <div
-                  class="scan-pill"
-                  [class.pro]="display === 'unlimited'"
-                  [class.danger]="display === 0"
-                >
-                  @if (display === "unlimited") {
-                    <ion-icon name="infinite-outline" />
-                  } @else {
-                    <ion-icon name="camera-outline" />
-                    <span>{{ display }}</span>
-                  }
-                </div>
+              <div
+                class="streak-pill"
+                (click)="openDailyRewardModal()"
+                aria-hidden="true"
+              >
+                <ion-icon name="flame-outline" />
+                <span>{{ currentStreak() }}</span>
+              </div>
+              } @if (userService.scansDisplay(); as display) {
+              <div
+                class="scan-pill"
+                [class.pro]="display === 'unlimited'"
+                [class.danger]="display === 0"
+              >
+                @if (display === "unlimited") {
+                <ion-icon name="infinite-outline" />
+                } @else {
+                <ion-icon name="camera-outline" />
+                <span>{{ display }}</span>
+                }
+              </div>
               }
             </div>
           </div>
@@ -159,10 +180,10 @@ import type { DailyStatus } from "@app/core/services/token.service";
 
           <!-- Referral badge -->
           @if (referralBadge(); as badge) {
-            <button class="referral-pill glass-card" (click)="goToProfile()">
-              <ion-icon name="people-outline" />
-              <span>{{ badge.count }}/{{ badge.max }}</span>
-            </button>
+          <button class="referral-pill glass-card" (click)="goToProfile()">
+            <ion-icon name="people-outline" />
+            <span>{{ badge.count }}/{{ badge.max }}</span>
+          </button>
           }
         </div>
 
@@ -192,7 +213,7 @@ import type { DailyStatus } from "@app/core/services/token.service";
           <ngt-canvas
             [shadows]="true"
             [dpr]="[1, 2]"
-            [camera]="{ position: [5, 5, 5], fov: 45 }"
+            [camera]="{ position: [8, 7, 8], fov: 50 }"
           >
             <app-pain-cave-scene
               *canvasContent
@@ -206,11 +227,11 @@ import type { DailyStatus } from "@app/core/services/token.service";
 
           <!-- First trophy tap hint -->
           @if (showTrophyHint()) {
-            <div class="trophy-hint-overlay animate-fade-in">
-              <div class="trophy-hint-banner">
-                <span>{{ 'tutorial.tapTrophy' | translate }}</span>
-              </div>
+          <div class="trophy-hint-overlay animate-fade-in">
+            <div class="trophy-hint-banner">
+              <span>{{ "tutorial.tapTrophy" | translate }}</span>
             </div>
+          </div>
           }
 
           <!-- Loading pill -->
@@ -218,7 +239,7 @@ import type { DailyStatus } from "@app/core/services/token.service";
             <div class="loading-dots">
               <span></span><span></span><span></span>
             </div>
-            <span>{{ 'common.loading' | translate }}</span>
+            <span>{{ "common.loading" | translate }}</span>
           </div>
 
           <!-- Edit room button -->
@@ -264,13 +285,13 @@ import type { DailyStatus } from "@app/core/services/token.service";
       >
         <ng-template>
           @if (dailyStatus(); as status) {
-            <app-daily-reward-sheet
-              [streakDays]="status.streakDays"
-              [rewardAmount]="status.rewardAmount"
-              [isDay7Bonus]="status.isDay7Bonus"
-              [claimable]="status.claimable"
-              (claimSuccess)="onDailyClaimed($event)"
-            />
+          <app-daily-reward-sheet
+            [streakDays]="status.streakDays"
+            [rewardAmount]="status.rewardAmount"
+            [isDay7Bonus]="status.isDay7Bonus"
+            [claimable]="status.claimable"
+            (claimSuccess)="onDailyClaimed($event)"
+          />
           }
         </ng-template>
       </ion-modal>
@@ -370,7 +391,7 @@ import type { DailyStatus } from "@app/core/services/token.service";
       box-shadow:
         0 4px 16px rgba(0, 0, 0, 0.08),
         0 1px 2px rgba(0, 0, 0, 0.04);
-      border-radius: 24px;
+      border-radius: 32px;
       pointer-events: auto;
     }
 
@@ -636,6 +657,31 @@ import type { DailyStatus } from "@app/core/services/token.service";
       }
     }
 
+    .share-pill {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      pointer-events: auto;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+
+      &:active {
+        transform: scale(0.92);
+      }
+
+      ion-icon {
+        font-size: 17px;
+        color: #fff;
+      }
+    }
+
     /* Upgrade Modal */
     .upgrade-container {
       display: flex;
@@ -863,6 +909,9 @@ export class HomePage implements OnInit, ViewWillEnter {
     );
   });
 
+  private shareService = inject(ShareService);
+  private screenshotService = inject(ScreenshotService);
+
   constructor() {
     addIcons({
       cameraOutline,
@@ -871,6 +920,7 @@ export class HomePage implements OnInit, ViewWillEnter {
       lockClosedOutline,
       rocketOutline,
       infiniteOutline,
+      shareOutline,
       trophyOutline,
       heartOutline,
       eyeOutline,
@@ -889,9 +939,10 @@ export class HomePage implements OnInit, ViewWillEnter {
     this.checkReferralReward();
 
     // First-trophy tutorial: flag set during trophy creation → always show hint + tutorial
-    const tutorialPending = localStorage.getItem('firstTrophyTutorialPending') === 'true';
+    const tutorialPending =
+      localStorage.getItem("firstTrophyTutorialPending") === "true";
     if (tutorialPending) {
-      localStorage.removeItem('firstTrophyTutorialPending');
+      localStorage.removeItem("firstTrophyTutorialPending");
       // Reset tutorial completion so room-edit tutorial runs fresh for this account
       await this.tutorialService.resetCompletion();
       this.showTrophyHint.set(true);
@@ -901,7 +952,9 @@ export class HomePage implements OnInit, ViewWillEnter {
 
     // Fallback: trophy exists but tutorial never done (e.g. reinstall, app update)
     if (!this.pendingRoomTutorial) {
-      const trophyCount = (this.roomService.room()?.items ?? []).filter(i => i.trophyId).length;
+      const trophyCount = (this.roomService.room()?.items ?? []).filter(
+        (i) => i.trophyId
+      ).length;
       if (trophyCount === 1) {
         const tutorialCompleted = await this.tutorialService.hasCompleted();
         if (!tutorialCompleted) {
@@ -924,9 +977,11 @@ export class HomePage implements OnInit, ViewWillEnter {
       } else {
         // Preload 3D assets in parallel before canvas mounts
         for (const item of room.items ?? []) {
-          if (item.trophy?.textureUrl) textureResource.preload(item.trophy.textureUrl);
+          if (item.trophy?.textureUrl)
+            textureResource.preload(item.trophy.textureUrl);
           if (item.customImageUrl) textureResource.preload(item.customImageUrl);
-          if (item.decoration?.modelUrl?.startsWith('http')) gltfResource.preload(item.decoration.modelUrl);
+          if (item.decoration?.modelUrl?.startsWith("http"))
+            gltfResource.preload(item.decoration.modelUrl);
         }
       }
     } catch {
@@ -946,8 +1001,8 @@ export class HomePage implements OnInit, ViewWillEnter {
     this.inspectedItemId.set(null);
     if (this.pendingRoomTutorial) {
       this.pendingRoomTutorial = false;
-      this.router.navigate(['/room/edit'], {
-        queryParams: { tutorial: 'true' },
+      this.router.navigate(["/room/edit"], {
+        queryParams: { tutorial: "true" },
       });
     }
   }
@@ -982,11 +1037,11 @@ export class HomePage implements OnInit, ViewWillEnter {
     this.showTrophyHint.set(false);
     if (this.pendingRoomTutorial) {
       this.pendingRoomTutorial = false;
-      this.router.navigate(['/room/edit'], {
-        queryParams: { tutorial: 'true' },
+      this.router.navigate(["/room/edit"], {
+        queryParams: { tutorial: "true" },
       });
     } else {
-      this.router.navigate(['/room/edit']);
+      this.router.navigate(["/room/edit"]);
     }
   }
 
@@ -1019,14 +1074,14 @@ export class HomePage implements OnInit, ViewWillEnter {
 
       if (status.claimable) {
         const todayStr = new Date().toISOString().slice(0, 10);
-        const shownDate = localStorage.getItem('daily_modal_shown_date');
+        const shownDate = localStorage.getItem("daily_modal_shown_date");
         if (shownDate !== todayStr) {
-          localStorage.setItem('daily_modal_shown_date', todayStr);
+          localStorage.setItem("daily_modal_shown_date", todayStr);
           this.showDailyRewardModal.set(true);
         }
       }
     } catch (e) {
-      console.error('Failed to check daily reward', e);
+      console.error("Failed to check daily reward", e);
     }
   }
 
@@ -1038,13 +1093,75 @@ export class HomePage implements OnInit, ViewWillEnter {
     // Update daily status to reflect claimed state
     const current = this.dailyStatus();
     if (current) {
-      this.dailyStatus.set({ ...current, claimable: false, streakDays: event.streakDays });
+      this.dailyStatus.set({
+        ...current,
+        claimable: false,
+        streakDays: event.streakDays,
+      });
     }
 
     // Auto-dismiss after 2 seconds
     setTimeout(() => {
       this.showDailyRewardModal.set(false);
     }, 2000);
+  }
+
+  async onShareRoom(): Promise<void> {
+    try {
+      const blob = await this.screenshotService.captureRoom();
+      const file = new File([blob], "pain-cave.png", { type: "image/png" });
+
+      const slug = await this.shareService.generateShareLink();
+      const shareUrl = slug ? this.shareService.getShareUrl(slug) : 'https://wallofme.app';
+      const shareText = `${this.translate.instant("share.storyText")} ${shareUrl}`;
+      const shareTitle = this.translate.instant("share.shareRoom");
+
+      // Native: write to cache file then share URI
+      const { Capacitor } = await import("@capacitor/core");
+      if (Capacitor.isNativePlatform()) {
+        const { Share } = await import("@capacitor/share");
+        const { Filesystem, Directory } = await import("@capacitor/filesystem");
+
+        const reader = new FileReader();
+        const dataUri = await new Promise<string>((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+
+        const base64Data = dataUri.split(",")[1];
+        const tempFile = await Filesystem.writeFile({
+          path: "pain-cave.png",
+          data: base64Data,
+          directory: Directory.Cache,
+        });
+
+        await Share.share({
+          title: shareTitle,
+          text: shareText,
+          files: [tempFile.uri],
+        });
+        return;
+      }
+
+      // Web: share with File object
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          files: [file],
+        });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "pain-cave.png";
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch {
+      // User cancelled or capture failed
+    }
   }
 
   private async checkReferralReward(): Promise<void> {

@@ -541,5 +541,15 @@
     "settingsEntry": "Inviter des amis",
     "shareTitle": "Rejoins WallOfMe !",
     "shareText": "Rejoins-moi sur WallOfMe — le Métavers de l'Athlète !"
+  },
+  "share": {
+    "shareTrophy": "Partager ma réussite",
+    "shareRoom": "Partager ma Pain Cave",
+    "shareReward": "+50 flammes pour ton partage !",
+    "trophyAdded": "Trophée ajouté !",
+    "shareResult": "Partager mon résultat",
+    "goToRoom": "Voir ma room",
+    "storyTitle": "Ma Pain Cave",
+    "storyText": "Je construis ma Pain Cave d'athlète 🏆 Crée la tienne sur WallOfMe"
   }
 }
