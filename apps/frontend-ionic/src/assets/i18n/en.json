@@ -245,6 +245,7 @@
     "starterPackDesc": "300 flames + Exclusive decoration",
     "starterPackCta": "Get Now",
     "starterPackExpires": "Expires in {{days}}d {{hours}}h",
+    "claimAvailable": "Available",
     "streak": "Daily Streak",
     "streakDay": "Day {{current}}/7",
     "streakBonus": "Day 7 bonus: +25 flames",
@@ -467,6 +468,14 @@
     "unlockFeature": "Unlock This Feature",
     "featureRequiresPro": "{{feature}} requires WallOfMe Pro. Upgrade to unlock all premium features.",
     "viewPlans": "View Pro Plans"
+  },
+  "dailyReward": {
+    "title": "Daily Bonus!",
+    "claim": "Claim Now",
+    "claimed": "Claimed!",
+    "day7Title": "Day 7 Bonus!",
+    "keepItUp": "Come back tomorrow!",
+    "day": "Day"
   },
   "claimWall": {
     "cta": "Create My Room",

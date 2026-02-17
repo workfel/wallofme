@@ -12,3 +12,10 @@
 - [ ] Déploiment sur le Google play Store
 - [ ] Déploiment sur le Apple Store
 - [x] Option déplacement mode libre des modeles 3d ( sans collision)
+- [ ] Page détail de trophé  ( http://localhost:8100/trophy/f47af6da-ba80-473e-9c39-14d9b4e0684c)
+- [x] Page profile glassmorphism  + Choix language de l'app + Choix pays ( utiliser component ewxistant)
+- [ ] Le "Partager une capture" ne fonctionne pas. ça mets "impossible d'envoyer un message vide. 
+- [ ] specs/claim_your_wall.md (Flux "Créez votre Mur" - Acquisition)
+- [ ] specs/social_challenges.md (Défis Sociaux - Rétention)
+- [ ] specs/gamified_sharing.md (Partage Gamifié - Viralité)
+- [ ] specs/daily_streaks_ux.md (Amélioration UX Daily Streaks - Rétention)

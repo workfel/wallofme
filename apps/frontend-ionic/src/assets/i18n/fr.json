@@ -245,6 +245,7 @@
     "starterPackDesc": "300 flammes + Décoration exclusive",
     "starterPackCta": "Obtenir maintenant",
     "starterPackExpires": "Expire dans {{days}}j {{hours}}h",
+    "claimAvailable": "Disponible",
     "streak": "Série quotidienne",
     "streakDay": "Jour {{current}}/7",
     "streakBonus": "Bonus jour 7 : +25 flammes",
@@ -467,6 +468,14 @@
     "marathon": "Marathon",
     "ultra": "Ultra",
     "other": "Autre"
+  },
+  "dailyReward": {
+    "title": "Bonus Quotidien !",
+    "claim": "Réclamer",
+    "claimed": "Réclamé !",
+    "day7Title": "Bonus Jour 7 !",
+    "keepItUp": "Reviens demain !",
+    "day": "Jour"
   },
   "claimWall": {
     "cta": "Créer ma Room",

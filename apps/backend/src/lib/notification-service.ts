@@ -1,5 +1,5 @@
 import { db } from "../db";
-import { notification, deviceToken } from "../db/schema";
+import { notification, deviceToken, user } from "../db/schema";
 import { eq, and, gte, desc } from "drizzle-orm";
 
 let firebaseApp: import("firebase-admin").app.App | null = null;
@@ -176,5 +176,64 @@ export async function sendReferralRewardNotification(
     await Promise.all(sendPromises);
   } catch (err) {
     console.error("[notification-service] sendReferralRewardNotification error:", err);
+  }
+}
+
+export async function sendStreakReminderNotification(
+  userId: string,
+  streakDays: number,
+  locale: string | null,
+): Promise<void> {
+  try {
+    const admin = await getFirebaseAdmin();
+
+    const isFr = locale === "fr";
+    const title = isFr ? "Ne perds pas ta flamme !" : "Don't lose your streak!";
+    const body = isFr
+      ? `Tu as une série de ${streakDays} jours. Connecte-toi pour la garder !`
+      : `You have a ${streakDays}-day streak. Log in to keep it!`;
+
+    await db.insert(notification).values({
+      userId,
+      type: "streak_reminder",
+      title,
+      body,
+      metadata: JSON.stringify({ streakDays }),
+    });
+
+    if (!admin) return;
+
+    const tokens = await db.query.deviceToken.findMany({
+      where: eq(deviceToken.userId, userId),
+    });
+
+    if (tokens.length === 0) return;
+
+    const messaging = admin.messaging();
+    const sendPromises = tokens.map(async (t) => {
+      try {
+        await messaging.send({
+          token: t.token,
+          notification: { title, body },
+          data: { type: "streak_reminder" },
+        });
+      } catch (err: any) {
+        if (
+          err?.code === "messaging/registration-token-not-registered" ||
+          err?.code === "messaging/invalid-registration-token"
+        ) {
+          await db.delete(deviceToken).where(eq(deviceToken.id, t.id));
+        } else {
+          console.error(
+            `[notification-service] FCM send error for token ${t.id}:`,
+            err,
+          );
+        }
+      }
+    });
+
+    await Promise.all(sendPromises);
+  } catch (err) {
+    console.error("[notification-service] sendStreakReminderNotification error:", err);
   }
 }

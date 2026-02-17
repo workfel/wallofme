@@ -16,6 +16,7 @@ import { themes } from "./routes/themes.routes";
 import { webhooks } from "./routes/webhooks.routes";
 import { social } from "./routes/social.routes";
 import { referrals } from "./routes/referrals.routes";
+import { startStreakReminderCron } from "./lib/streak-cron";
 
 type Variables = {
   user: typeof auth.$Infer.Session.user | null;
@@ -75,6 +76,9 @@ const route = app
   .route("/api/referrals", referrals);
 
 export type AppType = typeof route;
+
+// Start background cron jobs
+startStreakReminderCron();
 
 export default {
   port: process.env.PORT || 3333,

@@ -29,6 +29,7 @@ import {
   cameraOutline,
   createOutline,
   eyeOutline,
+  flameOutline,
   heartOutline,
   infiniteOutline,
   lockClosedOutline,
@@ -52,6 +53,8 @@ import {
   TrophyInfoSheetComponent,
   type TrophyInfoData,
 } from "../../room/components/trophy-info-sheet/trophy-info-sheet.component";
+import { DailyRewardSheetComponent } from "@app/shared/components/daily-reward-sheet/daily-reward-sheet.component";
+import type { DailyStatus } from "@app/core/services/token.service";
 
 @Component({
   selector: "app-home",
@@ -61,6 +64,7 @@ import {
     NgtCanvas,
     PainCaveSceneComponent,
     TrophyInfoSheetComponent,
+    DailyRewardSheetComponent,
     IonContent,
     IonButton,
     IonText,
@@ -96,20 +100,28 @@ import {
                   | translate : { name: authService.user()?.firstName || "" }
               }}</span>
             </div>
-            @if (userService.scansDisplay(); as display) {
-            <div
-              class="scan-pill"
-              [class.pro]="display === 'unlimited'"
-              [class.danger]="display === 0"
-            >
-              @if (display === "unlimited") {
-              <ion-icon name="infinite-outline" />
-              } @else {
-              <ion-icon name="camera-outline" />
-              <span>{{ display }}</span>
+            <div class="greeting-right">
+              @if (currentStreak() > 0) {
+                <div class="streak-pill" (click)="openDailyRewardModal()">
+                  <ion-icon name="flame-outline" />
+                  <span>{{ currentStreak() }}</span>
+                </div>
+              }
+              @if (userService.scansDisplay(); as display) {
+                <div
+                  class="scan-pill"
+                  [class.pro]="display === 'unlimited'"
+                  [class.danger]="display === 0"
+                >
+                  @if (display === "unlimited") {
+                    <ion-icon name="infinite-outline" />
+                  } @else {
+                    <ion-icon name="camera-outline" />
+                    <span>{{ display }}</span>
+                  }
+                </div>
               }
             </div>
-            }
           </div>
 
           <!-- Stats row -->
@@ -230,6 +242,26 @@ import {
             (navigatePrev)="navigatePrev()"
             (navigateNext)="navigateNext()"
           />
+        </ng-template>
+      </ion-modal>
+
+      <!-- Daily Reward Modal -->
+      <ion-modal
+        [isOpen]="showDailyRewardModal()"
+        [initialBreakpoint]="0.55"
+        [breakpoints]="[0, 0.55]"
+        (didDismiss)="showDailyRewardModal.set(false)"
+      >
+        <ng-template>
+          @if (dailyStatus(); as status) {
+            <app-daily-reward-sheet
+              [streakDays]="status.streakDays"
+              [rewardAmount]="status.rewardAmount"
+              [isDay7Bonus]="status.isDay7Bonus"
+              [claimable]="status.claimable"
+              (claimSuccess)="onDailyClaimed($event)"
+            />
+          }
         </ng-template>
       </ion-modal>
 
@@ -371,6 +403,43 @@ import {
       letter-spacing: -0.01em;
     }
 
+    .greeting-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .streak-pill {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 8px 14px;
+      border-radius: 100px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffd700;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      pointer-events: auto;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+
+      &:active {
+        transform: scale(0.95);
+      }
+
+      ion-icon {
+        font-size: 18px;
+        color: #ffd700;
+      }
+
+      span {
+        color: #ffd700;
+      }
+    }
+
     .scan-pill {
       display: flex;
       align-items: center;
@@ -380,7 +449,7 @@ import {
       font-size: 14px;
       font-weight: 700;
       color: #fff;
-      background: rgba(0, 0, 0, 0.8); /* Dark pill for contrast */
+      background: rgba(0, 0, 0, 0.8);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -685,6 +754,9 @@ export class HomePage implements OnInit, ViewWillEnter {
   error = signal(false);
   loadingProgress = progress();
   showUpgradeModal = signal(false);
+  showDailyRewardModal = signal(false);
+  dailyStatus = signal<DailyStatus | null>(null);
+  currentStreak = signal(0);
   inspectedItemId = signal<string | null>(null);
 
   hasItems = computed(() => (this.roomService.room()?.items?.length ?? 0) > 0);
@@ -750,6 +822,7 @@ export class HomePage implements OnInit, ViewWillEnter {
     addIcons({
       cameraOutline,
       createOutline,
+      flameOutline,
       lockClosedOutline,
       rocketOutline,
       infiniteOutline,
@@ -769,6 +842,7 @@ export class HomePage implements OnInit, ViewWillEnter {
     await this.fetchRoom();
     this.referralService.fetchReferralInfo();
     this.checkReferralReward();
+    this.checkDailyReward();
 
     const room = this.roomService.room();
     const itemCount = (room?.items ?? []).length;
@@ -850,6 +924,54 @@ export class HomePage implements OnInit, ViewWillEnter {
   onUpgrade(): void {
     this.showUpgradeModal.set(false);
     this.router.navigate(["/pro"]);
+  }
+
+  async openDailyRewardModal(): Promise<void> {
+    // Re-fetch fresh status before opening modal
+    const status = await this.tokenService.fetchDailyStatus();
+    if (status) {
+      this.dailyStatus.set(status);
+      this.currentStreak.set(status.streakDays);
+    }
+    this.showDailyRewardModal.set(true);
+  }
+
+  private async checkDailyReward(): Promise<void> {
+    try {
+      const status = await this.tokenService.fetchDailyStatus();
+      if (!status) return;
+
+      this.dailyStatus.set(status);
+      this.currentStreak.set(status.streakDays);
+
+      if (status.claimable) {
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const shownDate = localStorage.getItem('daily_modal_shown_date');
+        if (shownDate !== todayStr) {
+          localStorage.setItem('daily_modal_shown_date', todayStr);
+          this.showDailyRewardModal.set(true);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to check daily reward', e);
+    }
+  }
+
+  onDailyClaimed(event: { earned: number; streakDays: number }): void {
+    this.currentStreak.set(event.streakDays);
+    this.tokenService.fetchBalance();
+    this.userService.fetchProfile();
+
+    // Update daily status to reflect claimed state
+    const current = this.dailyStatus();
+    if (current) {
+      this.dailyStatus.set({ ...current, claimable: false, streakDays: event.streakDays });
+    }
+
+    // Auto-dismiss after 2 seconds
+    setTimeout(() => {
+      this.showDailyRewardModal.set(false);
+    }, 2000);
   }
 
   private async checkReferralReward(): Promise<void> {

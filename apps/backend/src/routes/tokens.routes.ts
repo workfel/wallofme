@@ -7,6 +7,7 @@ import { tokenTransaction } from "../db/schema";
 import { requireAuth } from "../middleware/auth";
 import { paginationSchema } from "../validators/common.validator";
 import { getBalance, creditTokens } from "../lib/token-service";
+import { calculateStreak } from "../lib/streak-service";
 import type { auth } from "../lib/auth";
 
 type Variables = {
@@ -137,6 +138,37 @@ export const tokens = new Hono<{ Variables: Variables }>()
     });
   })
 
+  // GET /daily-status — read-only check for daily reward state
+  .get("/daily-status", requireAuth, async (c) => {
+    const userId = c.get("user")!.id;
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const [todayClaim, streakDays] = await Promise.all([
+      db.query.tokenTransaction.findFirst({
+        where: and(
+          eq(tokenTransaction.userId, userId),
+          eq(tokenTransaction.type, "bonus"),
+          gte(tokenTransaction.createdAt, todayStart)
+        ),
+      }),
+      calculateStreak(userId),
+    ]);
+
+    const claimable = !todayClaim;
+    // Next day after claiming will be streakDays + 1
+    const nextDay = claimable ? streakDays + 1 : streakDays;
+    const isDay7Bonus = claimable && nextDay % 7 === 0 && nextDay > 0;
+    const rewardAmount = isDay7Bonus
+      ? DAILY_LOGIN_AMOUNT * 5
+      : DAILY_LOGIN_AMOUNT;
+
+    return c.json({
+      data: { claimable, streakDays, rewardAmount, isDay7Bonus },
+    });
+  })
+
   // POST /earn/daily-login
   .post("/earn/daily-login", requireAuth, async (c) => {
     const userId = c.get("user")!.id;
@@ -157,9 +189,15 @@ export const tokens = new Hono<{ Variables: Variables }>()
       return c.json({ error: "Already claimed today" }, 429);
     }
 
+    // Calculate streak to determine Day 7 bonus
+    const streakDays = await calculateStreak(userId);
+    const nextDay = streakDays + 1;
+    const isDay7Bonus = nextDay % 7 === 0 && nextDay > 0;
+    const amount = isDay7Bonus ? DAILY_LOGIN_AMOUNT * 5 : DAILY_LOGIN_AMOUNT;
+
     const balance = await creditTokens(
       userId,
-      DAILY_LOGIN_AMOUNT,
+      amount,
       "bonus",
       "daily-login",
       "daily_login"
@@ -168,7 +206,9 @@ export const tokens = new Hono<{ Variables: Variables }>()
     return c.json({
       data: {
         balance,
-        earned: DAILY_LOGIN_AMOUNT,
+        earned: amount,
+        streakDays: nextDay,
+        isDay7Bonus,
       },
     });
   })

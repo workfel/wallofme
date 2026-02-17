@@ -162,20 +162,9 @@ const STARTER_PACK_KEY = 'wallofme_starter_pack_first_seen';
               {{ 'tokens.claimed' | translate }}
             </ion-badge>
           } @else {
-            <ion-button
-              slot="end"
-              fill="solid"
-              size="small"
-              color="success"
-              [disabled]="dailyLoading()"
-              (click)="claimDaily()"
-            >
-              @if (dailyLoading()) {
-                <ion-spinner name="crescent" />
-              } @else {
-                {{ 'tokens.claimNow' | translate }}
-              }
-            </ion-button>
+            <ion-badge slot="end" color="success">
+              {{ 'tokens.claimAvailable' | translate }}
+            </ion-badge>
           }
         </ion-item>
 
@@ -623,7 +612,6 @@ export class GetTokensPage implements OnInit, OnDestroy, ViewDidEnter {
   streakDays = [1, 2, 3, 4, 5, 6, 7];
 
   videoLoading = signal(false);
-  dailyLoading = signal(false);
   dailyClaimed = signal(false);
   videoCooldownMinutes = signal(0);
   starterPackAvailable = signal(false);
@@ -680,7 +668,7 @@ export class GetTokensPage implements OnInit, OnDestroy, ViewDidEnter {
   ngOnInit(): void {
     this.tokenService.fetchBalance();
     this.purchaseService.fetchOfferings();
-    this.checkDailyStatus();
+    this.checkDailyStatusReadOnly();
     this.checkVideoCooldown();
     this.checkStarterPack();
     this.userService.fetchProfile().then(() => this.loadStreak());
@@ -721,16 +709,11 @@ export class GetTokensPage implements OnInit, OnDestroy, ViewDidEnter {
     }
   }
 
-  private async checkDailyStatus(): Promise<void> {
-    const result = await this.tokenService.earnDailyLogin();
-    if (result.blocked === 'already_claimed') {
-      this.dailyClaimed.set(true);
-    } else if (result.earned > 0) {
-      this.dailyClaimed.set(true);
-      await this.showToast(
-        this.translate.instant('tokens.loginClaimed', { amount: result.earned }),
-        'success',
-      );
+  private async checkDailyStatusReadOnly(): Promise<void> {
+    const status = await this.tokenService.fetchDailyStatus();
+    if (status) {
+      this.dailyClaimed.set(!status.claimable);
+      this.currentStreak.set(status.streakDays);
     }
   }
 
@@ -803,25 +786,6 @@ export class GetTokensPage implements OnInit, OnDestroy, ViewDidEnter {
       }
     } finally {
       this.videoLoading.set(false);
-    }
-  }
-
-  async claimDaily(): Promise<void> {
-    this.dailyLoading.set(true);
-    try {
-      const result = await this.tokenService.earnDailyLogin();
-      if (result.earned > 0) {
-        this.dailyClaimed.set(true);
-        this.currentStreak.update((s) => s + 1);
-        await this.showToast(
-          this.translate.instant('tokens.loginClaimed', { amount: result.earned }),
-          'success',
-        );
-      } else {
-        this.dailyClaimed.set(true);
-      }
-    } finally {
-      this.dailyLoading.set(false);
     }
   }
 

@@ -18,6 +18,17 @@ export interface EarnResult {
   blocked?: 'cooldown' | 'daily_limit' | 'already_claimed';
   /** Seconds until the action is available again */
   retryAfterSeconds?: number;
+  /** Streak days after claiming */
+  streakDays?: number;
+  /** Whether this was a Day 7 bonus */
+  isDay7Bonus?: boolean;
+}
+
+export interface DailyStatus {
+  claimable: boolean;
+  streakDays: number;
+  rewardAmount: number;
+  isDay7Bonus: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -67,15 +78,36 @@ export class TokenService {
     return { earned: 0 };
   }
 
+  async fetchDailyStatus(): Promise<DailyStatus | null> {
+    try {
+      const res = await this.api.client.api.tokens['daily-status'].$get();
+      if (res.ok) {
+        const json = (await res.json()) as unknown as {
+          data?: DailyStatus;
+        };
+        return json?.data ?? null;
+      }
+    } catch (e) {
+      console.error('Failed to fetch daily status', e);
+    }
+    return null;
+  }
+
   async earnDailyLogin(): Promise<EarnResult> {
     try {
       const res = await this.api.client.api.tokens.earn['daily-login'].$post();
       if (res.ok) {
-        const json = (await res.json()) as unknown as TokenBalanceResponse;
-        const balance = json?.data?.balance ?? json?.balance ?? this.balance();
-        const earned = json?.data?.earned ?? json?.earned ?? 0;
+        const json = (await res.json()) as unknown as {
+          data?: { balance?: number; earned?: number; streakDays?: number; isDay7Bonus?: boolean };
+        };
+        const balance = json?.data?.balance ?? this.balance();
+        const earned = json?.data?.earned ?? 0;
         this.balance.set(balance);
-        return { earned };
+        return {
+          earned,
+          streakDays: json?.data?.streakDays,
+          isDay7Bonus: json?.data?.isDay7Bonus,
+        };
       }
       if (res.status === 429) {
         return { earned: 0, blocked: 'already_claimed' };

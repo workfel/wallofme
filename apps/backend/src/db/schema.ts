@@ -59,6 +59,7 @@ export const devicePlatformEnum = pgEnum("device_platform", [
 export const notificationTypeEnum = pgEnum("notification_type", [
   "room_liked",
   "referral_reward",
+  "streak_reminder",
 ]);
 
 // ─── BetterAuth Tables ──────────────────────────────────
