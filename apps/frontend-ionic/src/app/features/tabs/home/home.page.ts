@@ -204,6 +204,15 @@ import type { DailyStatus } from "@app/core/services/token.service";
           </ngt-canvas>
           }
 
+          <!-- First trophy tap hint -->
+          @if (showTrophyHint()) {
+            <div class="trophy-hint-overlay animate-fade-in">
+              <div class="trophy-hint-banner">
+                <span>{{ 'tutorial.tapTrophy' | translate }}</span>
+              </div>
+            </div>
+          }
+
           <!-- Loading pill -->
           <div class="loading-pill" [class.visible]="loadingProgress.active()">
             <div class="loading-dots">
@@ -736,11 +745,44 @@ import type { DailyStatus } from "@app/core/services/token.service";
         transform: scale(1);
       }
     }
+
+    /* First trophy tap hint */
+    .trophy-hint-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 12;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .trophy-hint-banner {
+      padding: 16px 32px;
+      border-radius: 100px;
+      background: rgba(var(--ion-color-primary-rgb), 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(var(--ion-color-primary-rgb), 0.35);
+      animation: pulse-hint 2s ease-in-out infinite;
+
+      span {
+        font-size: 17px;
+        font-weight: 700;
+        color: #fff;
+        letter-spacing: -0.01em;
+      }
+    }
+
+    @keyframes pulse-hint {
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.06); opacity: 1; }
+    }
   `,
 })
 export class HomePage implements OnInit, ViewWillEnter {
   private router = inject(Router);
-  private tutorialRedirected = false;
+  private pendingRoomTutorial = false;
   private themeService = inject(ThemeService);
   private tutorialService = inject(TutorialService);
   private referralService = inject(ReferralService);
@@ -758,6 +800,7 @@ export class HomePage implements OnInit, ViewWillEnter {
   dailyStatus = signal<DailyStatus | null>(null);
   currentStreak = signal(0);
   inspectedItemId = signal<string | null>(null);
+  showTrophyHint = signal(false);
 
   hasItems = computed(() => (this.roomService.room()?.items?.length ?? 0) > 0);
 
@@ -842,19 +885,32 @@ export class HomePage implements OnInit, ViewWillEnter {
     await this.fetchRoom();
     this.referralService.fetchReferralInfo();
     this.checkReferralReward();
-    this.checkDailyReward();
 
-    const room = this.roomService.room();
-    const itemCount = (room?.items ?? []).length;
-    if (itemCount === 1 && !this.tutorialRedirected) {
-      const tutorialCompleted = await this.tutorialService.hasCompleted();
-      if (!tutorialCompleted) {
-        this.tutorialRedirected = true;
-        this.router.navigate(["/room/edit"], {
-          queryParams: { tutorial: "true" },
-        });
+    // First-trophy tutorial: flag set during trophy creation → always show hint + tutorial
+    const tutorialPending = localStorage.getItem('firstTrophyTutorialPending') === 'true';
+    if (tutorialPending) {
+      localStorage.removeItem('firstTrophyTutorialPending');
+      // Reset tutorial completion so room-edit tutorial runs fresh for this account
+      await this.tutorialService.resetCompletion();
+      this.showTrophyHint.set(true);
+      this.pendingRoomTutorial = true;
+      return; // Skip daily reward modal during tutorial
+    }
+
+    // Fallback: trophy exists but tutorial never done (e.g. reinstall, app update)
+    if (!this.pendingRoomTutorial) {
+      const trophyCount = (this.roomService.room()?.items ?? []).filter(i => i.trophyId).length;
+      if (trophyCount === 1) {
+        const tutorialCompleted = await this.tutorialService.hasCompleted();
+        if (!tutorialCompleted) {
+          this.showTrophyHint.set(true);
+          this.pendingRoomTutorial = true;
+          return;
+        }
       }
     }
+
+    this.checkDailyReward();
   }
 
   async fetchRoom(): Promise<void> {
@@ -879,12 +935,19 @@ export class HomePage implements OnInit, ViewWillEnter {
   onItemPressed(itemId: string): void {
     const item = this.roomService.room()?.items.find((i) => i.id === itemId);
     if (item?.trophy) {
+      this.showTrophyHint.set(false);
       this.inspectedItemId.set(itemId);
     }
   }
 
   clearInspection(): void {
     this.inspectedItemId.set(null);
+    if (this.pendingRoomTutorial) {
+      this.pendingRoomTutorial = false;
+      this.router.navigate(['/room/edit'], {
+        queryParams: { tutorial: 'true' },
+      });
+    }
   }
 
   navigatePrev(): void {
@@ -914,7 +977,15 @@ export class HomePage implements OnInit, ViewWillEnter {
   }
 
   goToEdit(): void {
-    this.router.navigate(["/room/edit"]);
+    this.showTrophyHint.set(false);
+    if (this.pendingRoomTutorial) {
+      this.pendingRoomTutorial = false;
+      this.router.navigate(['/room/edit'], {
+        queryParams: { tutorial: 'true' },
+      });
+    } else {
+      this.router.navigate(['/room/edit']);
+    }
   }
 
   goToProfile(): void {

@@ -1,14 +1,18 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import {
+  AlertController,
   IonContent,
   IonButton,
   IonIcon,
   IonText,
+  NavController,
+  Platform,
 } from '@ionic/angular/standalone';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { addIcons } from 'ionicons';
 import { camera, ribbonOutline } from 'ionicons/icons';
+import { TrophyService } from '@app/core/services/trophy.service';
 
 @Component({
   selector: 'app-first-trophy',
@@ -23,6 +27,10 @@ import { camera, ribbonOutline } from 'ionicons/icons';
   template: `
     <ion-content [fullscreen]="true">
       <div class="first-trophy-container animate-fade-in-up">
+        <div class="step-indicator">
+          <span>{{ 'firstTrophy.step' | translate }}</span>
+        </div>
+
         <div class="hero-section">
           <div class="hero-icon-wrapper">
             <ion-icon name="ribbon-outline" class="hero-icon" />
@@ -38,10 +46,6 @@ import { camera, ribbonOutline } from 'ionicons/icons';
             <ion-icon slot="start" name="camera" />
             {{ 'firstTrophy.scanNow' | translate }}
           </ion-button>
-
-          <ion-button expand="block" fill="clear" (click)="skip()">
-            {{ 'firstTrophy.skip' | translate }}
-          </ion-button>
         </div>
       </div>
     </ion-content>
@@ -55,6 +59,19 @@ import { camera, ribbonOutline } from 'ionicons/icons';
       padding: 40px 24px;
       max-width: 400px;
       margin: 0 auto;
+    }
+
+    .step-indicator {
+      text-align: center;
+      margin-bottom: 24px;
+
+      span {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--ion-color-primary);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
     }
 
     .hero-section {
@@ -110,18 +127,62 @@ import { camera, ribbonOutline } from 'ionicons/icons';
     }
   `,
 })
-export class FirstTrophyPage {
+export class FirstTrophyPage implements OnInit, OnDestroy {
   private router = inject(Router);
+  private navCtrl = inject(NavController);
+  private alertController = inject(AlertController);
+  private platform = inject(Platform);
+  private translate = inject(TranslateService);
+  private trophyService = inject(TrophyService);
+
+  private backButtonSub?: ReturnType<typeof this.platform.backButton.subscribeWithPriority>;
 
   constructor() {
     addIcons({ camera, ribbonOutline });
+  }
+
+  async ngOnInit(): Promise<void> {
+    // Register hardware back button override
+    this.backButtonSub = this.platform.backButton.subscribeWithPriority(10, () => {
+      this.confirmBack();
+    });
+
+    // Reinstall case: if the user already has ready trophies in the DB, skip the gate
+    await this.trophyService.fetchTrophies();
+    const hasReadyTrophy = this.trophyService.trophies().some((t) => t.status === 'ready');
+    if (hasReadyTrophy) {
+      localStorage.setItem('firstTrophyCompleted', 'true');
+      this.navCtrl.navigateRoot('/tabs/home', { animated: false });
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.backButtonSub?.unsubscribe();
   }
 
   goToScan(): void {
     this.router.navigate(['/trophy/create']);
   }
 
-  skip(): void {
-    this.router.navigate(['/tabs/home']);
+  async confirmBack(): Promise<void> {
+    const alert = await this.alertController.create({
+      header: this.translate.instant('firstTrophy.backConfirmTitle'),
+      message: this.translate.instant('firstTrophy.backConfirmMessage'),
+      buttons: [
+        {
+          text: this.translate.instant('firstTrophy.backConfirmContinue'),
+          role: 'cancel',
+        },
+        {
+          text: this.translate.instant('firstTrophy.backConfirmSkip'),
+          role: 'destructive',
+          handler: () => {
+            localStorage.setItem('firstTrophyCompleted', 'dismissed');
+            this.navCtrl.navigateRoot('/tabs/home', { animated: true, animationDirection: 'back' });
+          },
+        },
+      ],
+    });
+    await alert.present();
   }
 }

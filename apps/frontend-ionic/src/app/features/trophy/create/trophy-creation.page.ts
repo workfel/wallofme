@@ -30,6 +30,7 @@ import { TrophyMatchingComponent } from "./components/trophy-matching.component"
 import { TrophyResultsSearchComponent } from "./components/trophy-results-search.component";
 import { TrophyDoneComponent } from "./components/trophy-done.component";
 import { TrophyRefinementComponent } from "./components/trophy-refinement.component";
+import { TrophyCelebrationComponent } from "./components/trophy-celebration.component";
 
 type CreationPhase =
   | "capture"
@@ -38,7 +39,8 @@ type CreationPhase =
   | "details"
   | "matching"
   | "search"
-  | "done";
+  | "done"
+  | "celebrate";
 
 @Component({
   selector: "app-trophy-creation",
@@ -56,19 +58,22 @@ type CreationPhase =
     TrophyMatchingComponent,
     TrophyResultsSearchComponent,
     TrophyDoneComponent,
+    TrophyCelebrationComponent,
   ],
   template: `
     <ion-content class="ion-padding" [fullscreen]="true">
-      <!-- Floating glass header -->
-      <div class="floating-header">
-        <button class="back-pill" (click)="goBack()">
-          <ion-icon name="arrow-back-outline" />
-        </button>
-        <div class="header-title-pill">
-          <span>{{ headerTitle() | translate }}</span>
+      <!-- Floating glass header — hidden during celebration -->
+      @if (phase() !== 'celebrate') {
+        <div class="floating-header">
+          <button class="back-pill" (click)="goBack()">
+            <ion-icon name="arrow-back-outline" />
+          </button>
+          <div class="header-title-pill">
+            <span>{{ headerTitle() | translate }}</span>
+          </div>
+          <div class="header-spacer"></div>
         </div>
-        <div class="header-spacer"></div>
-      </div>
+      }
 
       @switch (phase()) {
         @case ("capture") {
@@ -95,6 +100,12 @@ type CreationPhase =
         @case ("done") {
           <app-trophy-results-search />
           <app-trophy-done [saving]="scanService.savingResults()" (done)="onFinish()" />
+        }
+        @case ("celebrate") {
+          <app-trophy-celebration
+            (done)="onCelebrationDone()"
+            (share)="onCelebrationShare()"
+          />
         }
       }
 
@@ -237,6 +248,8 @@ export class TrophyCreationPage {
         return "review.step4";
       case "done":
         return "review.step5";
+      case "celebrate":
+        return "";
     }
   });
 
@@ -367,9 +380,17 @@ export class TrophyCreationPage {
     const room = this.roomService.room();
     const trophyItemCount = (room?.items ?? []).filter(i => i.trophyId).length;
     const isFirstTrophy = trophyItemCount <= 1;
-    const tutorialCompleted = await this.tutorialService.hasCompleted();
 
-    // Show success toast
+    this.scanService.reset();
+
+    if (isFirstTrophy) {
+      localStorage.setItem('firstTrophyCompleted', 'true');
+      localStorage.setItem('firstTrophyTutorialPending', 'true');
+      this.phase.set('celebrate');
+      return;
+    }
+
+    // Show success toast for subsequent trophies
     const message = this.translate.instant('review.trophyAdded');
     const toast = await this.toastController.create({
       message,
@@ -380,16 +401,18 @@ export class TrophyCreationPage {
     });
     await toast.present();
 
-    this.scanService.reset();
+    this.router.navigate(["/tabs/home"]);
+  }
 
-    if (isFirstTrophy && !tutorialCompleted) {
-      this.navCtrl.navigateRoot("/tabs/home", {
-        animated: true,
-        animationDirection: "forward",
-      });
-    } else {
-      this.router.navigate(["/tabs/home"]);
-    }
+  onCelebrationDone(): void {
+    this.navCtrl.navigateRoot("/tabs/home", {
+      animated: true,
+      animationDirection: "forward",
+    });
+  }
+
+  onCelebrationShare(): void {
+    // No-op — will be implemented in gamified_sharing spec
   }
 
   private async doValidateAndSearch(raceId?: string): Promise<void> {

@@ -296,10 +296,20 @@
     "searchingHint": "Recherche dans les bases de données..."
   },
   "firstTrophy": {
-    "title": "Scannez votre premier trophée !",
-    "subtitle": "Prenez en photo une médaille ou un dossard pour commencer à construire votre Pain Cave.",
-    "scanNow": "Scanner",
-    "skip": "Passer"
+    "title": "Ta Pain Cave t'attend.",
+    "subtitle": "Scanne ta première médaille ou ton dossard — ça prend moins de 2 minutes.",
+    "step": "Étape 1/1 — Débloque ta room",
+    "scanNow": "Scanner mon premier trophée",
+    "backConfirmTitle": "Tu es sûr ?",
+    "backConfirmMessage": "Ta Pain Cave t'attend. Scanne ta première médaille maintenant, ça prend moins de 2 minutes.",
+    "backConfirmContinue": "Continuer le scan",
+    "backConfirmSkip": "Passer pour l'instant"
+  },
+  "celebration": {
+    "title": "Ta Pain Cave prend vie !",
+    "subtitle": "Tu viens de créer ton premier trophée. Il est maintenant dans ta room.",
+    "viewRoom": "Voir ma room",
+    "share": "Partager"
   },
   "review": {
     "processing": "Traitement de l'image...",
@@ -482,6 +492,7 @@
     "subtitle": "C'est gratuit et ça prend 1 minute"
   },
   "tutorial": {
+    "tapTrophy": "Touche ton trophée !",
     "welcome": "Bienvenue dans ta Pain Cave ! Découvrons comment personnaliser ta chambre.",
     "welcomeBtn": "C'est parti !",
     "theme": "Appuie ici pour changer le style de ta chambre",

@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { TabsPage } from './tabs.page';
 import { authGuard } from '@app/core/guards/auth.guard';
 import { onboardingGuard } from '@app/core/guards/onboarding.guard';
+import { firstTrophyGuard } from '@app/core/guards/first-trophy.guard';
 
 export const TABS_ROUTES: Routes = [
   {
@@ -10,7 +11,7 @@ export const TABS_ROUTES: Routes = [
     children: [
       {
         path: 'home',
-        canActivate: [authGuard, onboardingGuard],
+        canActivate: [authGuard, onboardingGuard, firstTrophyGuard],
         loadComponent: () =>
           import('./home/home.page').then((m) => m.HomePage),
       },

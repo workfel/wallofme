@@ -296,10 +296,20 @@
     "searchingHint": "Searching race databases..."
   },
   "firstTrophy": {
-    "title": "Scan your first trophy!",
-    "subtitle": "Take a photo of a race medal or bib to start building your Pain Cave.",
-    "scanNow": "Scan Now",
-    "skip": "Skip for now"
+    "title": "Your Pain Cave awaits.",
+    "subtitle": "Scan your first medal or bib — it takes less than 2 minutes.",
+    "step": "Step 1 of 1 — Unlock your room",
+    "scanNow": "Scan my first trophy",
+    "backConfirmTitle": "Are you sure?",
+    "backConfirmMessage": "Your Pain Cave is waiting. Scan your first trophy now — it takes less than 2 minutes.",
+    "backConfirmContinue": "Keep scanning",
+    "backConfirmSkip": "Skip for now"
+  },
+  "celebration": {
+    "title": "Your Pain Cave is alive!",
+    "subtitle": "You just created your first trophy. It's now in your room.",
+    "viewRoom": "See my room",
+    "share": "Share"
   },
   "review": {
     "processing": "Processing image...",
@@ -482,6 +492,7 @@
     "subtitle": "It's free and takes 1 minute"
   },
   "tutorial": {
+    "tapTrophy": "Tap your trophy!",
     "welcome": "Welcome to your Pain Cave! Let's discover how to customize your room.",
     "welcomeBtn": "Let's go!",
     "theme": "Tap here to change the look of your room",
