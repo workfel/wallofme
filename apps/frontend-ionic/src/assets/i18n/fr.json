@@ -507,6 +507,15 @@
     "next": "Suivant",
     "skip": "Passer le tutoriel"
   },
+  "stats": {
+    "officialResultsFound": "Résultats officiels trouvés",
+    "time": "Temps",
+    "ranking": "Classement",
+    "category": "Catégorie",
+    "percentile": "Percentile",
+    "unlockResults": "Débloquer mes résultats complets",
+    "disclaimer": "Estimation basée sur des données publiques. Les résultats peuvent différer des données officielles."
+  },
   "referral": {
     "title": "Inviter des amis",
     "subtitle": "Gagnez 500 flammes pour chaque ami qui scanne son premier trophée",

@@ -193,6 +193,7 @@ interface FloatingHeart {
           [hasPrev]="trophyItems().length > 1"
           [hasNext]="trophyItems().length > 1"
           [isAuthenticated]="!!authService.user()"
+          [isPro]="authService.user()?.isPro ?? false"
           (dismiss)="clearInspection()"
           (viewDetails)="onViewDetails($event)"
           (seeFinishers)="onSeeFinishers($event)"
@@ -518,6 +519,7 @@ export class RoomViewPage implements OnInit {
             time: item.trophy.raceResult.time,
             ranking: item.trophy.raceResult.ranking,
             categoryRanking: item.trophy.raceResult.categoryRanking,
+            totalParticipants: item.trophy.raceResult.totalParticipants ?? null,
           }
         : null,
     };

@@ -1,4 +1,5 @@
 import { Component, inject, computed, effect, output } from "@angular/core";
+import { Router } from "@angular/router";
 import { FormsModule } from "@angular/forms";
 import {
   IonButton,
@@ -22,7 +23,10 @@ import {
   informationCircleOutline,
 } from "ionicons/icons";
 
+import { AuthService } from "@app/core/services/auth.service";
 import { ScanService } from "@app/core/services/scan.service";
+import { StatsPreviewCardComponent } from "@app/shared/components/stats-preview-card/stats-preview-card.component";
+import { hasValidStats } from "@app/shared/lib/stats-utils";
 
 export interface ResultsEdit {
   time: string | null;
@@ -37,6 +41,7 @@ export interface ResultsEdit {
   imports: [
     FormsModule,
     TranslateModule,
+    StatsPreviewCardComponent,
     IonButton,
     IonIcon,
     IonSpinner,
@@ -63,87 +68,99 @@ export interface ResultsEdit {
     }
 
     @if (scan.step() === "done") {
-      @if (scan.searchResult()?.found) {
-        <!-- Results found: trophy bounce + disclaimer -->
-        <div class="results-reveal animate-fade-in">
-          <div class="trophy-bounce">
-            <ion-icon name="trophy-outline" class="trophy-icon" />
-          </div>
+      @if (showStatsPreview()) {
+        <!-- Stats preview card (paywall) -->
+        <app-stats-preview-card
+          [time]="scan.searchResult()!.time ?? null"
+          [ranking]="scan.searchResult()!.ranking ?? null"
+          [categoryRanking]="scan.searchResult()!.categoryRanking ?? null"
+          [totalParticipants]="scan.searchResult()!.totalParticipants ?? null"
+          [isPro]="isPro()"
+          (unlock)="onUnlock()"
+        />
+      } @else {
+        @if (scan.searchResult()?.found) {
+          <!-- Results found: trophy bounce + disclaimer -->
+          <div class="results-reveal animate-fade-in">
+            <div class="trophy-bounce">
+              <ion-icon name="trophy-outline" class="trophy-icon" />
+            </div>
 
-          <div class="ai-disclaimer">
-            <ion-icon
-              name="information-circle-outline"
-              class="disclaimer-icon"
-            />
+            <div class="ai-disclaimer">
+              <ion-icon
+                name="information-circle-outline"
+                class="disclaimer-icon"
+              />
+              <ion-text color="medium">
+                <small>{{ "review.aiDisclaimer" | translate }}</small>
+              </ion-text>
+            </div>
+          </div>
+        }
+
+        @if (!scan.searchResult()?.found) {
+          <div class="no-results-reveal animate-fade-in">
+            <div class="no-results-icon-wrap">
+              <ion-icon name="search-outline" class="no-results-icon" />
+            </div>
             <ion-text color="medium">
-              <small>{{ "review.aiDisclaimer" | translate }}</small>
+              <p class="no-results-hint">{{ "review.noResultsMessage" | translate }}</p>
             </ion-text>
           </div>
-        </div>
-      }
+        }
 
-      @if (!scan.searchResult()?.found) {
-        <div class="no-results-reveal animate-fade-in">
-          <div class="no-results-icon-wrap">
-            <ion-icon name="search-outline" class="no-results-icon" />
-          </div>
-          <ion-text color="medium">
-            <p class="no-results-hint">{{ "review.noResultsMessage" | translate }}</p>
-          </ion-text>
-        </div>
+        <!-- Editable results card -->
+        <ion-card class="result-card">
+          <ion-card-header>
+            <ion-card-title>
+              @if (scan.searchResult()?.found) {
+                {{ "review.resultsFound" | translate }}
+              } @else {
+                {{ "review.enterResults" | translate }}
+              }
+            </ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-list lines="none">
+              <ion-item>
+                <ion-input
+                  [label]="'review.time' | translate"
+                  labelPlacement="floating"
+                  [(ngModel)]="editTime"
+                  placeholder="01:23:45"
+                />
+              </ion-item>
+              <ion-item>
+                <ion-input
+                  [label]="'review.ranking' | translate"
+                  labelPlacement="floating"
+                  type="number"
+                  [(ngModel)]="editRanking"
+                  placeholder="42"
+                />
+              </ion-item>
+              <ion-item>
+                <ion-input
+                  [label]="'review.categoryRanking' | translate"
+                  labelPlacement="floating"
+                  type="number"
+                  [(ngModel)]="editCategoryRanking"
+                  placeholder="12"
+                />
+              </ion-item>
+              <ion-item>
+                <ion-input
+                  [label]="'review.totalParticipants' | translate"
+                  labelPlacement="floating"
+                  type="number"
+                  [(ngModel)]="editTotalParticipants"
+                  placeholder="500"
+                />
+              </ion-item>
+            </ion-list>
+          </ion-card-content>
+        </ion-card>
       }
-
-      <!-- Editable results card -->
-      <ion-card class="result-card">
-        <ion-card-header>
-          <ion-card-title>
-            @if (scan.searchResult()?.found) {
-              {{ "review.resultsFound" | translate }}
-            } @else {
-              {{ "review.enterResults" | translate }}
-            }
-          </ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <ion-list lines="none">
-            <ion-item>
-              <ion-input
-                [label]="'review.time' | translate"
-                labelPlacement="floating"
-                [(ngModel)]="editTime"
-                placeholder="01:23:45"
-              />
-            </ion-item>
-            <ion-item>
-              <ion-input
-                [label]="'review.ranking' | translate"
-                labelPlacement="floating"
-                type="number"
-                [(ngModel)]="editRanking"
-                placeholder="42"
-              />
-            </ion-item>
-            <ion-item>
-              <ion-input
-                [label]="'review.categoryRanking' | translate"
-                labelPlacement="floating"
-                type="number"
-                [(ngModel)]="editCategoryRanking"
-                placeholder="12"
-              />
-            </ion-item>
-            <ion-item>
-              <ion-input
-                [label]="'review.totalParticipants' | translate"
-                labelPlacement="floating"
-                type="number"
-                [(ngModel)]="editTotalParticipants"
-                placeholder="500"
-              />
-            </ion-item>
-          </ion-list>
-        </ion-card-content>
-      </ion-card>
 
       <div class="retry-row">
         @if (scan.resultsRetryLoading()) {
@@ -375,7 +392,19 @@ export interface ResultsEdit {
   `,
 })
 export class TrophyResultsSearchComponent {
+  private authService = inject(AuthService);
+  private router = inject(Router);
   scan = inject(ScanService);
+
+  isPro = computed(() => this.authService.user()?.isPro ?? false);
+
+  showStatsPreview = computed(() => {
+    const result = this.scan.searchResult();
+    return (
+      result?.found === true &&
+      hasValidStats(result.ranking, result.totalParticipants)
+    );
+  });
 
   resultsRetryMaxed = computed(() => this.scan.resultsRetryAttempts() >= 3);
 
@@ -416,6 +445,16 @@ export class TrophyResultsSearchComponent {
   }
 
   getEditedResults(): ResultsEdit {
+    // When stats preview is shown, return values from search directly (no user editing)
+    if (this.showStatsPreview()) {
+      const result = this.scan.searchResult()!;
+      return {
+        time: result.time ?? null,
+        ranking: result.ranking ?? null,
+        categoryRanking: result.categoryRanking ?? null,
+        totalParticipants: result.totalParticipants ?? null,
+      };
+    }
     return {
       time: this.editTime.trim() || null,
       ranking: this.editRanking ? parseInt(this.editRanking, 10) || null : null,
@@ -426,6 +465,10 @@ export class TrophyResultsSearchComponent {
         ? parseInt(this.editTotalParticipants, 10) || null
         : null,
     };
+  }
+
+  onUnlock(): void {
+    this.router.navigate(['/pro']);
   }
 
   async onRetryResults(): Promise<void> {

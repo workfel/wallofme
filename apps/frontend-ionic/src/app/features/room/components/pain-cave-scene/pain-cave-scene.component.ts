@@ -88,6 +88,7 @@ export interface RoomItem3D {
       time: string | null;
       ranking: number | null;
       categoryRanking: number | null;
+      totalParticipants: number | null;
       race: {
         id?: string;
         name: string;

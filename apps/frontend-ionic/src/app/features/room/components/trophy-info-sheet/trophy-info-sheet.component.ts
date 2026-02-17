@@ -1,4 +1,5 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
+import { Router } from '@angular/router';
 import {
   IonHeader,
   IonToolbar,
@@ -30,6 +31,8 @@ import {
 } from 'ionicons/icons';
 import { TranslateModule } from '@ngx-translate/core';
 
+import { StatsPreviewCardComponent } from '@app/shared/components/stats-preview-card/stats-preview-card.component';
+
 export interface TrophyInfoData {
   id: string;
   type: 'medal' | 'bib';
@@ -46,6 +49,7 @@ export interface TrophyInfoData {
     time: string | null;
     ranking: number | null;
     categoryRanking: number | null;
+    totalParticipants: number | null;
   } | null;
 }
 
@@ -64,7 +68,7 @@ const SPORT_ICON_MAP: Record<string, string> = {
   standalone: true,
   imports: [
     IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonButtons,
-    IonIcon, TranslateModule,
+    IonIcon, TranslateModule, StatsPreviewCardComponent,
   ],
   template: `
     <ion-header>
@@ -118,26 +122,8 @@ const SPORT_ICON_MAP: Record<string, string> = {
                 </div>
               }
 
-              <!-- Stats grid -->
+              <!-- Date & Location grid -->
               <div class="stats-grid">
-                @if (t.result?.time) {
-                  <div class="stat-cell stat-accent">
-                    <span class="stat-label">{{ 'room.raceTime' | translate }}</span>
-                    <span class="stat-value">{{ t.result!.time }}</span>
-                  </div>
-                }
-                @if (t.result?.ranking) {
-                  <div class="stat-cell">
-                    <span class="stat-label">{{ 'room.raceRanking' | translate }}</span>
-                    <span class="stat-value">#{{ t.result!.ranking }}</span>
-                  </div>
-                }
-                @if (t.result?.categoryRanking) {
-                  <div class="stat-cell">
-                    <span class="stat-label">{{ 'room.raceCategoryRanking' | translate }}</span>
-                    <span class="stat-value">#{{ t.result!.categoryRanking }}</span>
-                  </div>
-                }
                 @if (t.race.date) {
                   <div class="stat-cell">
                     <span class="stat-label">{{ 'room.raceDate' | translate }}</span>
@@ -151,6 +137,16 @@ const SPORT_ICON_MAP: Record<string, string> = {
                   </div>
                 }
               </div>
+
+              <!-- Stats preview card (paywall) -->
+              <app-stats-preview-card
+                [time]="t.result?.time ?? null"
+                [ranking]="t.result?.ranking ?? null"
+                [categoryRanking]="t.result?.categoryRanking ?? null"
+                [totalParticipants]="t.result?.totalParticipants ?? null"
+                [isPro]="isPro()"
+                (unlock)="onUnlock()"
+              />
               @if (t.race.id && isAuthenticated()) {
                 <ion-button
                   expand="block"
@@ -330,12 +326,15 @@ const SPORT_ICON_MAP: Record<string, string> = {
   `,
 })
 export class TrophyInfoSheetComponent {
+  private router = inject(Router);
+
   trophy = input<TrophyInfoData | null>(null);
   trophyIndex = input(0);
   totalTrophies = input(0);
   hasPrev = input(false);
   hasNext = input(false);
   isAuthenticated = input(true);
+  isPro = input(false);
   dismiss = output<void>();
   viewDetails = output<string>();
   seeFinishers = output<string>();
@@ -361,5 +360,10 @@ export class TrophyInfoSheetComponent {
 
   formatLocation(city: string | null, country: string | null): string {
     return [city, country].filter((v) => !!v).join(', ');
+  }
+
+  onUnlock(): void {
+    this.dismiss.emit();
+    this.router.navigate(['/pro']);
   }
 }

@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, input } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, input } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   IonContent,
@@ -20,6 +20,8 @@ import { addIcons } from 'ionicons';
 import { peopleOutline } from 'ionicons/icons';
 
 import { ApiService } from '@app/core/services/api.service';
+import { AuthService } from '@app/core/services/auth.service';
+import { StatsPreviewCardComponent } from '@app/shared/components/stats-preview-card/stats-preview-card.component';
 
 interface TrophyDetail {
   id: string;
@@ -53,6 +55,7 @@ interface TrophyDetail {
   standalone: true,
   imports: [
     TranslateModule,
+    StatsPreviewCardComponent,
     IonContent,
     IonHeader,
     IonToolbar,
@@ -121,20 +124,17 @@ interface TrophyDetail {
                 @if (raceInfo.distance) {
                   <p>{{ raceInfo.distance }}</p>
                 }
-                @if (trophy()!.raceResult!.time) {
-                  <p><strong>{{ 'review.time' | translate }}:</strong> {{ trophy()!.raceResult!.time }}</p>
-                }
-                @if (trophy()!.raceResult!.ranking) {
-                  <p>
-                    <strong>{{ 'review.ranking' | translate }}:</strong>
-                    #{{ trophy()!.raceResult!.ranking }}
-                    @if (trophy()!.raceResult!.totalParticipants) {
-                      / {{ trophy()!.raceResult!.totalParticipants }}
-                    }
-                  </p>
-                }
               </ion-card-content>
             </ion-card>
+
+            <app-stats-preview-card
+              [time]="trophy()!.raceResult!.time"
+              [ranking]="trophy()!.raceResult!.ranking"
+              [categoryRanking]="trophy()!.raceResult!.categoryRanking"
+              [totalParticipants]="trophy()!.raceResult!.totalParticipants"
+              [isPro]="isPro()"
+              (unlock)="onUnlock()"
+            />
 
             @if (trophy()!.finisherCount && trophy()!.finisherCount! > 0) {
               <ion-button expand="block" (click)="onSeeFinishers(raceInfo.id)">
@@ -172,10 +172,13 @@ export class TrophyDetailPage implements OnInit {
   id = input.required<string>();
 
   private api = inject(ApiService);
+  private authService = inject(AuthService);
   private router = inject(Router);
 
   trophy = signal<TrophyDetail | null>(null);
   loading = signal(true);
+
+  isPro = computed(() => this.authService.user()?.isPro ?? false);
 
   constructor() {
     addIcons({ peopleOutline });
@@ -204,5 +207,9 @@ export class TrophyDetailPage implements OnInit {
 
   onSeeFinishers(raceId: string): void {
     this.router.navigate(['/race', raceId, 'finishers']);
+  }
+
+  onUnlock(): void {
+    this.router.navigate(['/pro']);
   }
 }

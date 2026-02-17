@@ -25,6 +25,7 @@ export interface RoomItem {
       time: string | null;
       ranking: number | null;
       categoryRanking: number | null;
+      totalParticipants: number | null;
       race: {
         name: string;
         date: string | null;

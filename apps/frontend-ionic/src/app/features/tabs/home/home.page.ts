@@ -245,6 +245,7 @@ import type { DailyStatus } from "@app/core/services/token.service";
             [totalTrophies]="trophyItems().length"
             [hasPrev]="trophyItems().length > 1"
             [hasNext]="trophyItems().length > 1"
+            [isPro]="authService.user()?.isPro ?? false"
             (dismiss)="clearInspection()"
             (viewDetails)="onViewDetails($event)"
             (seeFinishers)="onSeeFinishers($event)"
@@ -836,6 +837,7 @@ export class HomePage implements OnInit, ViewWillEnter {
             time: item.trophy.raceResult.time,
             ranking: item.trophy.raceResult.ranking,
             categoryRanking: item.trophy.raceResult.categoryRanking,
+            totalParticipants: item.trophy.raceResult.totalParticipants ?? null,
           }
         : null,
     };

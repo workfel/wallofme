@@ -507,6 +507,15 @@
     "next": "Next",
     "skip": "Skip tutorial"
   },
+  "stats": {
+    "officialResultsFound": "Official Results Found",
+    "time": "Time",
+    "ranking": "Ranking",
+    "category": "Category",
+    "percentile": "Percentile",
+    "unlockResults": "Unlock My Full Results",
+    "disclaimer": "Estimate based on public data. Results may differ from official data."
+  },
   "referral": {
     "title": "Invite Friends",
     "subtitle": "Earn 500 flames for each friend who scans their first trophy",

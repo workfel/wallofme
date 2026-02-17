@@ -19,3 +19,11 @@
 - [ ] specs/social_challenges.md (Défis Sociaux - Rétention)
 - [ ] specs/gamified_sharing.md (Partage Gamifié - Viralité)
 - [ ] specs/daily_streaks_ux.md (Amélioration UX Daily Streaks - Rétention)
+
+## Croissance & Monétisation
+
+- [ ] specs/force-first-trophy.md (Forcer le 1er trophée - Activation)
+- [ ] specs/stats-paywall.md (Paywall Stats de Course - Monétisation Pro)
+- [ ] specs/instagram-stories-share.md (Share Instagram Stories - Viralité + fix bug partage)
+- [ ] specs/race-wall-of-fame.md (Race Wall of Fame - Social Discovery)
+- [ ] specs/trophy-percentile-badge.md (Badge Top X% sur trophées 3D - Aspirationnel Pro)
