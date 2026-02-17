@@ -91,8 +91,27 @@
   --ion-toolbar-background: #ffffff;
   --ion-toolbar-color: #11181c;
 
+  /* Glass backgrounds */
+  --wom-glass-bg: rgba(255, 255, 255, 0.65);
+  --wom-glass-bg-strong: rgba(255, 255, 255, 0.85);
+  --wom-glass-bg-medium: rgba(255, 255, 255, 0.55);
+  --wom-glass-bg-subtle: rgba(255, 255, 255, 0.40);
+  --wom-glass-bg-wash: rgba(255, 255, 255, 0.25);
 
-  
+  /* Glass borders */
+  --wom-glass-border: rgba(255, 255, 255, 0.40);
+  --wom-glass-border-strong: rgba(255, 255, 255, 0.60);
+  --wom-glass-border-subtle: rgba(255, 255, 255, 0.20);
+  --wom-glass-border-ring: rgba(255, 255, 255, 0.80);
+
+  /* Dividers */
+  --wom-divider: rgba(0, 0, 0, 0.08);
+  --wom-divider-subtle: rgba(0, 0, 0, 0.05);
+
+  /* Gold accents */
+  --wom-gold-text: #8b6b00;
+  --wom-gold-bg: linear-gradient(135deg, #fff8e1 0%, #fff3ca 100%);
+  --wom-gold-border: rgba(255, 215, 0, 0.3);
 }
 
 /*
@@ -145,6 +164,28 @@
 
   /* Item dark */
   --ion-item-background: #1e2023;
+
+  /* Glass backgrounds (dark) */
+  --wom-glass-bg: rgba(255, 255, 255, 0.12);
+  --wom-glass-bg-strong: rgba(255, 255, 255, 0.18);
+  --wom-glass-bg-medium: rgba(255, 255, 255, 0.10);
+  --wom-glass-bg-subtle: rgba(255, 255, 255, 0.07);
+  --wom-glass-bg-wash: rgba(255, 255, 255, 0.05);
+
+  /* Glass borders (dark) */
+  --wom-glass-border: rgba(255, 255, 255, 0.14);
+  --wom-glass-border-strong: rgba(255, 255, 255, 0.20);
+  --wom-glass-border-subtle: rgba(255, 255, 255, 0.08);
+  --wom-glass-border-ring: rgba(255, 255, 255, 0.25);
+
+  /* Dividers (dark) */
+  --wom-divider: rgba(255, 255, 255, 0.08);
+  --wom-divider-subtle: rgba(255, 255, 255, 0.05);
+
+  /* Gold accents (dark) */
+  --wom-gold-text: #ffd700;
+  --wom-gold-bg: linear-gradient(135deg, rgba(245, 166, 35, 0.15) 0%, rgba(255, 215, 0, 0.10) 100%);
+  --wom-gold-border: rgba(255, 215, 0, 0.2);
 }
 
 @mixin dark-theme-modal {
@@ -214,6 +255,25 @@ body.light-theme {
 
   --ion-card-background: #ffffff;
   --ion-item-background: #ffffff;
+
+  /* Glass backgrounds (light override) */
+  --wom-glass-bg: rgba(255, 255, 255, 0.65);
+  --wom-glass-bg-strong: rgba(255, 255, 255, 0.85);
+  --wom-glass-bg-medium: rgba(255, 255, 255, 0.55);
+  --wom-glass-bg-subtle: rgba(255, 255, 255, 0.40);
+  --wom-glass-bg-wash: rgba(255, 255, 255, 0.25);
+
+  --wom-glass-border: rgba(255, 255, 255, 0.40);
+  --wom-glass-border-strong: rgba(255, 255, 255, 0.60);
+  --wom-glass-border-subtle: rgba(255, 255, 255, 0.20);
+  --wom-glass-border-ring: rgba(255, 255, 255, 0.80);
+
+  --wom-divider: rgba(0, 0, 0, 0.08);
+  --wom-divider-subtle: rgba(0, 0, 0, 0.05);
+
+  --wom-gold-text: #8b6b00;
+  --wom-gold-bg: linear-gradient(135deg, #fff8e1 0%, #fff3ca 100%);
+  --wom-gold-border: rgba(255, 215, 0, 0.3);
 
   ion-modal {
     --ion-background-color: #ffffff;

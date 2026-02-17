@@ -142,10 +142,10 @@ import { ReferralService } from "@app/core/services/referral.service";
     .referral-card {
       margin: 0 16px 20px;
       padding: 20px;
-      background: rgba(255, 255, 255, 0.55);
+      background: var(--wom-glass-bg-medium);
       backdrop-filter: blur(20px) saturate(1.8);
       -webkit-backdrop-filter: blur(20px) saturate(1.8);
-      border: 1px solid rgba(255, 255, 255, 0.4);
+      border: 1px solid var(--wom-glass-border);
       box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.08),
         0 2px 4px rgba(0, 0, 0, 0.04);
@@ -255,7 +255,7 @@ import { ReferralService } from "@app/core/services/referral.service";
       gap: 6px;
       font-size: 14px;
       font-weight: 700;
-      color: #8b6b00;
+      color: var(--wom-gold-text);
       margin-bottom: 14px;
 
       ion-icon {

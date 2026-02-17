@@ -367,10 +367,10 @@ const GRADIENT_PALETTES = [
     .toggle-track {
       position: relative;
       display: flex;
-      background: rgba(255, 255, 255, 0.45);
+      background: var(--wom-glass-bg-subtle);
       backdrop-filter: blur(16px) saturate(1.8);
       -webkit-backdrop-filter: blur(16px) saturate(1.8);
-      border: 1px solid rgba(255, 255, 255, 0.5);
+      border: 1px solid var(--wom-glass-border-strong);
       border-radius: 16px;
       padding: 4px;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
@@ -429,7 +429,7 @@ const GRADIENT_PALETTES = [
       background : #1a1a1a1a;
       backdrop-filter: blur(16px) saturate(1.8);
       -webkit-backdrop-filter: blur(16px) saturate(1.8);
-      border: 1px solid rgba(255, 255, 255, 0.5);
+      border: 1px solid var(--wom-glass-border-strong);
       border-radius: 20px;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
       cursor: pointer;
@@ -445,7 +445,7 @@ const GRADIENT_PALETTES = [
       height: 44px;
       border-radius: 50%;
       background: var(--ion-color-primary);
-      color: #fff;
+      color: var(--ion-color-primary-contrast);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -488,7 +488,7 @@ const GRADIENT_PALETTES = [
 
     ion-searchbar {
       --border-radius: 16px;
-      --background: rgba(255, 255, 255, 0.5);
+      --background: var(--wom-glass-bg-medium);
       --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
       padding: 8px 0 4px;
     }
@@ -509,15 +509,15 @@ const GRADIENT_PALETTES = [
         flex-shrink: 0;
         font-size: 13px;
         font-weight: 600;
-        --background: rgba(255, 255, 255, 0.5);
+        --background: var(--wom-glass-bg-medium);
         backdrop-filter: blur(8px);
-        border: 1px solid rgba(255, 255, 255, 0.4);
+        border: 1px solid var(--wom-glass-border);
       }
     }
 
     ion-segment {
       margin-bottom: 12px;
-      --background: rgba(255, 255, 255, 0.4);
+      --background: var(--wom-glass-bg-subtle);
       border-radius: 12px;
     }
 
@@ -561,10 +561,10 @@ const GRADIENT_PALETTES = [
       margin: 0;
       border-radius: 20px;
       overflow: hidden;
-      background: rgba(255, 255, 255, 0.55);
+      background: var(--wom-glass-bg-medium);
       backdrop-filter: blur(16px) saturate(1.6);
       -webkit-backdrop-filter: blur(16px) saturate(1.6);
-      border: 1px solid rgba(255, 255, 255, 0.5);
+      border: 1px solid var(--wom-glass-border-strong);
       box-shadow:
         0 4px 16px rgba(0, 0, 0, 0.06),
         0 1px 2px rgba(0, 0, 0, 0.03);
@@ -614,7 +614,7 @@ const GRADIENT_PALETTES = [
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid var(--wom-glass-border-subtle);
 
         ion-icon {
           font-size: 12px;
@@ -637,7 +637,7 @@ const GRADIENT_PALETTES = [
       width: 24px;
       height: 24px;
       flex-shrink: 0;
-      border: 1.5px solid rgba(255, 255, 255, 0.8);
+      border: 1.5px solid var(--wom-glass-border-ring);
     }
 
     .avatar-fallback {

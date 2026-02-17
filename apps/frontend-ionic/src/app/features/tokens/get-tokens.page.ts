@@ -292,7 +292,7 @@ const STARTER_PACK_KEY = 'wallofme_starter_pack_first_seen';
   styles: `
     .balance-card {
       background: var(--ion-color-primary);
-      color: white;
+      color: var(--ion-color-primary-contrast);
       border-radius: 16px;
       padding: 24px;
       text-align: center;

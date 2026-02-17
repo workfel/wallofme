@@ -358,10 +358,10 @@ import { ReferralCardComponent } from "@app/shared/components/referral-card/refe
 
     /* Glass Card Shared Styles */
     .glass-card {
-      background: rgba(255, 255, 255, 0.65);
+      background: var(--wom-glass-bg);
       backdrop-filter: blur(20px) saturate(1.8);
       -webkit-backdrop-filter: blur(20px) saturate(1.8);
-      border: 1px solid rgba(255, 255, 255, 0.4);
+      border: 1px solid var(--wom-glass-border);
       box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.08),
         0 2px 4px rgba(0, 0, 0, 0.04);
@@ -374,10 +374,10 @@ import { ReferralCardComponent } from "@app/shared/components/referral-card/refe
       align-items: center;
       padding: 32px 24px 24px;
       margin: 16px;
-      background: rgba(255, 255, 255, 0.65);
+      background: var(--wom-glass-bg);
       backdrop-filter: blur(20px) saturate(1.8);
       -webkit-backdrop-filter: blur(20px) saturate(1.8);
-      border: 1px solid rgba(255, 255, 255, 0.4);
+      border: 1px solid var(--wom-glass-border);
       box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.08),
         0 2px 4px rgba(0, 0, 0, 0.04);
@@ -395,8 +395,8 @@ import { ReferralCardComponent } from "@app/shared/components/referral-card/refe
         border-radius: 50%;
         background: linear-gradient(
           135deg,
-          rgba(255, 255, 255, 0.8),
-          rgba(255, 255, 255, 0.2)
+          var(--wom-glass-border-ring),
+          var(--wom-glass-bg-wash)
         );
         z-index: 0;
       }
@@ -408,7 +408,7 @@ import { ReferralCardComponent } from "@app/shared/components/referral-card/refe
       cursor: pointer;
       position: relative;
       z-index: 1;
-      border: 4px solid rgba(255, 255, 255, 0.9);
+      border: 4px solid var(--wom-glass-border-ring);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
@@ -425,14 +425,14 @@ import { ReferralCardComponent } from "@app/shared/components/referral-card/refe
       height: 32px;
       border-radius: 50%;
       background: var(--ion-color-primary);
-      color: #fff;
+      color: var(--ion-color-primary-contrast);
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       box-shadow: 0 4px 12px rgba(var(--ion-color-primary-rgb), 0.4);
       z-index: 2;
-      border: 2px solid #fff;
+      border: 2px solid var(--ion-background-color);
 
       ion-icon {
         font-size: 16px;
@@ -481,10 +481,10 @@ import { ReferralCardComponent } from "@app/shared/components/referral-card/refe
       justify-content: center;
       margin: 0 16px 20px;
       padding: 16px 0;
-      background: rgba(255, 255, 255, 0.5);
+      background: var(--wom-glass-bg-medium);
       backdrop-filter: blur(20px) saturate(1.8);
       -webkit-backdrop-filter: blur(20px) saturate(1.8);
-      border: 1px solid rgba(255, 255, 255, 0.4);
+      border: 1px solid var(--wom-glass-border);
       box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.08),
         0 2px 4px rgba(0, 0, 0, 0.04);
@@ -516,7 +516,7 @@ import { ReferralCardComponent } from "@app/shared/components/referral-card/refe
     .stat-divider {
       width: 1px;
       height: 32px;
-      background: rgba(0, 0, 0, 0.08);
+      background: var(--wom-divider);
     }
 
     .pro-banner {
@@ -525,8 +525,8 @@ import { ReferralCardComponent } from "@app/shared/components/referral-card/refe
       justify-content: space-between;
       margin: 0 16px 24px;
       padding: 14px 20px;
-      background: linear-gradient(135deg, #fff8e1 0%, #fff3ca 100%);
-      border: 1px solid rgba(255, 215, 0, 0.3);
+      background: var(--wom-gold-bg);
+      border: 1px solid var(--wom-gold-border);
       border-radius: 20px;
       box-shadow: 0 4px 16px rgba(255, 200, 0, 0.15);
     }
@@ -537,7 +537,7 @@ import { ReferralCardComponent } from "@app/shared/components/referral-card/refe
       gap: 10px;
       font-size: 15px;
       font-weight: 700;
-      color: #8b6b00;
+      color: var(--wom-gold-text);
 
       ion-icon {
         font-size: 22px;
@@ -557,10 +557,10 @@ import { ReferralCardComponent } from "@app/shared/components/referral-card/refe
       overflow: hidden;
       cursor: pointer;
       border-radius: 16px;
-      background: rgba(255, 255, 255, 0.4);
+      background: var(--wom-glass-bg-subtle);
       backdrop-filter: blur(20px) saturate(1.8);
       -webkit-backdrop-filter: blur(20px) saturate(1.8);
-      border: 1px solid rgba(255, 255, 255, 0.6);
+      border: 1px solid var(--wom-glass-border-strong);
       box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.08),
         0 2px 4px rgba(0, 0, 0, 0.04);
@@ -570,7 +570,7 @@ import { ReferralCardComponent } from "@app/shared/components/referral-card/refe
 
       &:active {
         transform: scale(0.96);
-        background: rgba(255, 255, 255, 0.5);
+        background: var(--wom-glass-bg-medium);
       }
     }
 
@@ -591,7 +591,7 @@ import { ReferralCardComponent } from "@app/shared/components/referral-card/refe
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(255, 255, 255, 0.2);
+      background: var(--wom-glass-bg-wash);
 
       ion-icon {
         font-size: 32px;
@@ -602,7 +602,7 @@ import { ReferralCardComponent } from "@app/shared/components/referral-card/refe
     .trophy-processing-overlay {
       position: absolute;
       inset: 0;
-      background: rgba(255, 255, 255, 0.6);
+      background: var(--wom-glass-bg-medium);
       backdrop-filter: blur(4px);
       display: flex;
       align-items: center;
@@ -624,7 +624,7 @@ import { ReferralCardComponent } from "@app/shared/components/referral-card/refe
 
       @extend .glass-card;
       margin: 0 16px;
-      background: rgba(255, 255, 255, 0.3);
+      background: var(--wom-glass-bg-wash);
 
       .empty-icon {
         font-size: 56px;

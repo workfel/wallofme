@@ -101,10 +101,10 @@ import { TutorialService } from "@app/core/services/tutorial.service";
       max-width: 300px;
       padding: 16px 20px;
       border-radius: 16px;
-      background: rgba(255, 255, 255, 0.85);
+      background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.88);
       backdrop-filter: blur(20px) saturate(1.8);
       -webkit-backdrop-filter: blur(20px) saturate(1.8);
-      border: 1px solid rgba(255, 255, 255, 0.5);
+      border: 1px solid rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.1);
       box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.15),
         0 2px 4px rgba(0, 0, 0, 0.08);
@@ -146,7 +146,7 @@ import { TutorialService } from "@app/core/services/tutorial.service";
       border: none;
       border-radius: 100px;
       background: var(--ion-color-primary, #3880ff);
-      color: #fff;
+      color: var(--ion-color-primary-contrast);
       font-size: 14px;
       font-weight: 700;
       cursor: pointer;
@@ -185,10 +185,10 @@ import { TutorialService } from "@app/core/services/tutorial.service";
       z-index: 9000;
       padding: 12px 20px;
       border-radius: 100px;
-      background: rgba(255, 255, 255, 0.85);
+      background: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.88);
       backdrop-filter: blur(20px) saturate(1.8);
       -webkit-backdrop-filter: blur(20px) saturate(1.8);
-      border: 1px solid rgba(255, 255, 255, 0.5);
+      border: 1px solid rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.1);
       box-shadow:
         0 4px 16px rgba(0, 0, 0, 0.1),
         0 2px 4px rgba(0, 0, 0, 0.06);

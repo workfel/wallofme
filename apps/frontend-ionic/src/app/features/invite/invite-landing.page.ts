@@ -117,12 +117,12 @@ import { ReferralService } from "@app/core/services/referral.service";
       align-items: center;
       gap: 6px;
       padding: 10px 24px;
-      background: linear-gradient(135deg, #fff8e1 0%, #fff3ca 100%);
-      border: 1px solid rgba(255, 215, 0, 0.3);
+      background: var(--wom-gold-bg);
+      border: 1px solid var(--wom-gold-border);
       border-radius: 20px;
       font-size: 18px;
       font-weight: 800;
-      color: #8b6b00;
+      color: var(--wom-gold-text);
       box-shadow: 0 4px 16px rgba(255, 200, 0, 0.15);
     }
 

@@ -200,10 +200,10 @@ interface PublicProfile {
 
     /* Glass Card Shared Styles */
     .glass-card {
-      background: rgba(255, 255, 255, 0.65);
+      background: var(--wom-glass-bg);
       backdrop-filter: blur(20px) saturate(1.8);
       -webkit-backdrop-filter: blur(20px) saturate(1.8);
-      border: 1px solid rgba(255, 255, 255, 0.4);
+      border: 1px solid var(--wom-glass-border);
       box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.08),
         0 2px 4px rgba(0, 0, 0, 0.04);
@@ -260,7 +260,7 @@ interface PublicProfile {
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid var(--wom-glass-border-subtle);
       border-radius: 50%;
       background: rgba(0, 0, 0, 0.4);
       backdrop-filter: blur(12px);
@@ -290,10 +290,10 @@ interface PublicProfile {
       margin: -80px 0px 0px; /* Pull up over banner */
       padding-top: calc(var(--avatar-overlap) + 8px);
       min-height: 200px;
-      background: rgba(255, 255, 255, 0.65);
+      background: var(--wom-glass-bg);
       backdrop-filter: blur(20px) saturate(1.8);
       -webkit-backdrop-filter: blur(20px) saturate(1.8);
-      border: 1px solid rgba(255, 255, 255, 0.4);
+      border: 1px solid var(--wom-glass-border);
       box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.08),
         0 2px 4px rgba(0, 0, 0, 0.04);
@@ -315,7 +315,7 @@ interface PublicProfile {
       width: var(--avatar-size);
       height: var(--avatar-size);
       border-radius: 50%;
-      border: 4px solid rgba(255, 255, 255, 0.8);
+      border: 4px solid var(--wom-glass-border-ring);
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
       overflow: hidden;
       background: var(--ion-color-step-100);
@@ -393,8 +393,8 @@ interface PublicProfile {
       justify-content: center;
       margin: 24px 16px 0;
       padding: 16px 0;
-      border-top: 1px solid rgba(0, 0, 0, 0.05);
-      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      border-top: 1px solid var(--wom-divider-subtle);
+      border-bottom: 1px solid var(--wom-divider-subtle);
     }
 
     .stat-item {
@@ -423,7 +423,7 @@ interface PublicProfile {
     .stat-divider {
       width: 1px;
       height: 28px;
-      background: rgba(0, 0, 0, 0.1);
+      background: var(--wom-divider);
     }
 
     /* ── Action button ──────────────────────── */
@@ -485,8 +485,8 @@ interface PublicProfile {
       aspect-ratio: 1;
       overflow: hidden;
       border-radius: 16px;
-      background: rgba(255, 255, 255, 0.4);
-      border: 1px solid rgba(255, 255, 255, 0.6);
+      background: var(--wom-glass-bg-subtle);
+      border: 1px solid var(--wom-glass-border-strong);
     }
 
     .trophy-img {
@@ -501,7 +501,7 @@ interface PublicProfile {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(255, 255, 255, 0.2);
+      background: var(--wom-glass-bg-wash);
 
       ion-icon {
         font-size: 32px;

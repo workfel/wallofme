@@ -300,12 +300,12 @@ const SPORT_EMOJIS: Record<string, string> = {
 
       &.active {
         background: var(--ion-color-primary);
-        color: #fff;
+        color: var(--ion-color-primary-contrast);
       }
 
       &.done {
         background: var(--ion-color-success);
-        color: #fff;
+        color: var(--ion-color-success-contrast);
       }
     }
 

@@ -307,7 +307,7 @@ const SPORT_ICON_MAP: Record<string, string> = {
     }
 
     .stat-accent .stat-value {
-      color: #cf9f0a;
+      color: var(--wom-gold-text);
     }
 
     .no-info {
