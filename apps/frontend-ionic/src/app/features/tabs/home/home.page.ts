@@ -18,9 +18,10 @@ import {
   IonText,
   IonTitle,
   IonToolbar,
+  ToastController,
   ViewWillEnter,
 } from "@ionic/angular/standalone";
-import { TranslateModule } from "@ngx-translate/core";
+import { TranslateModule, TranslateService } from "@ngx-translate/core";
 import { NgtCanvas } from "angular-three/dom";
 import { progress, textureResource, gltfResource } from "angular-three-soba/loaders";
 import { addIcons } from "ionicons";
@@ -31,14 +32,17 @@ import {
   heartOutline,
   infiniteOutline,
   lockClosedOutline,
+  peopleOutline,
   personCircleOutline,
   rocketOutline,
   trophyOutline,
 } from "ionicons/icons";
 
 import { AuthService } from "@app/core/services/auth.service";
+import { ReferralService } from "@app/core/services/referral.service";
 import { RoomService } from "@app/core/services/room.service";
 import { ThemeService } from "@app/core/services/theme.service";
+import { TokenService } from "@app/core/services/token.service";
 import { TutorialService } from "@app/core/services/tutorial.service";
 import { UserService } from "@app/core/services/user.service";
 import type { RoomTheme } from "@app/types/room-theme";
@@ -140,6 +144,14 @@ import {
               <span class="stat-label">{{ "home.statViews" | translate }}</span>
             </div>
           </div>
+
+          <!-- Referral badge -->
+          @if (referralBadge(); as badge) {
+            <button class="referral-pill glass-card" (click)="goToProfile()">
+              <ion-icon name="people-outline" />
+              <span>{{ badge.count }}/{{ badge.max }}</span>
+            </button>
+          }
         </div>
 
         <!-- Room 3D -->
@@ -442,6 +454,36 @@ import {
       background: rgba(255, 255, 255, 0.3);
     }
 
+    .referral-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border: none;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      align-self: flex-start;
+      margin-top: 4px;
+      font-family: inherit;
+      transition: transform 0.18s ease;
+
+      &:active {
+        transform: scale(0.95);
+      }
+
+      ion-icon {
+        font-size: 16px;
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      span {
+        font-size: 13px;
+        font-weight: 700;
+        color: #fff;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+      }
+    }
+
     /* Empty States & Loading */
     .centered {
       position: absolute;
@@ -632,6 +674,10 @@ export class HomePage implements OnInit, ViewWillEnter {
   private tutorialRedirected = false;
   private themeService = inject(ThemeService);
   private tutorialService = inject(TutorialService);
+  private referralService = inject(ReferralService);
+  private tokenService = inject(TokenService);
+  private toastCtrl = inject(ToastController);
+  private translate = inject(TranslateService);
   roomService = inject(RoomService);
   userService = inject(UserService);
   authService = inject(AuthService);
@@ -686,6 +732,12 @@ export class HomePage implements OnInit, ViewWillEnter {
     return this.themeService.resolveThemeFromRoom(r);
   });
 
+  referralBadge = computed(() => {
+    const info = this.referralService.info();
+    if (!info?.referralCode) return null;
+    return { count: info.referralCount, max: info.maxReferrals };
+  });
+
   daysUntilReset = computed(() => {
     const now = new Date();
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -705,6 +757,7 @@ export class HomePage implements OnInit, ViewWillEnter {
       heartOutline,
       eyeOutline,
       personCircleOutline,
+      peopleOutline,
     });
   }
 
@@ -714,6 +767,8 @@ export class HomePage implements OnInit, ViewWillEnter {
 
   async ionViewWillEnter(): Promise<void> {
     await this.fetchRoom();
+    this.referralService.fetchReferralInfo();
+    this.checkReferralReward();
 
     const room = this.roomService.room();
     const itemCount = (room?.items ?? []).length;
@@ -795,5 +850,19 @@ export class HomePage implements OnInit, ViewWillEnter {
   onUpgrade(): void {
     this.showUpgradeModal.set(false);
     this.router.navigate(["/pro"]);
+  }
+
+  private async checkReferralReward(): Promise<void> {
+    const name = await this.referralService.checkForNewReward();
+    if (name) {
+      this.tokenService.fetchBalance();
+      const toast = await this.toastCtrl.create({
+        message: this.translate.instant("referral.rewardToast", { name }),
+        duration: 4000,
+        color: "success",
+        position: "top",
+      });
+      await toast.present();
+    }
   }
 }

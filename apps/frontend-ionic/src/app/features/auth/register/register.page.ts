@@ -19,6 +19,7 @@ import {
   sunnyOutline,
   moonOutline,
   contrastOutline,
+  flameOutline,
 } from "ionicons/icons";
 
 import { TranslateService } from "@ngx-translate/core";
@@ -28,6 +29,7 @@ import {
   AppThemeService,
   type AppThemeMode,
 } from "@app/core/services/app-theme.service";
+import { ReferralService } from "@app/core/services/referral.service";
 
 @Component({
   selector: "app-register",
@@ -74,6 +76,13 @@ import {
           <h1 class="app-title">WallOfMe</h1>
           <p class="app-subtitle">{{ "auth.register" | translate }}</p>
         </div>
+
+        @if (referrerName()) {
+          <div class="referral-banner">
+            <ion-icon name="flame-outline" />
+            <span>{{ "referral.bonusBanner" | translate: { name: referrerName() } }}</span>
+          </div>
+        }
 
         <div class="form-section">
           <ion-list lines="none">
@@ -246,6 +255,26 @@ import {
       margin: 8px 0 0;
     }
 
+    .referral-banner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #fff8e1 0%, #fff3ca 100%);
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      border-radius: 14px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #8b6b00;
+      box-shadow: 0 4px 12px rgba(255, 200, 0, 0.12);
+
+      ion-icon {
+        font-size: 20px;
+        flex-shrink: 0;
+      }
+    }
+
     .form-section {
       margin-bottom: 24px;
     }
@@ -310,6 +339,7 @@ export class RegisterPage {
   private authService = inject(AuthService);
   private router = inject(Router);
   private translate = inject(TranslateService);
+  private referralService = inject(ReferralService);
   i18n = inject(I18nService);
   appTheme = inject(AppThemeService);
 
@@ -318,6 +348,7 @@ export class RegisterPage {
   password = "";
   isLoading = signal(false);
   errorMessage = signal("");
+  referrerName = signal<string | null>(null);
 
   themeIcon = computed(() => {
     switch (this.appTheme.mode()) {
@@ -337,7 +368,18 @@ export class RegisterPage {
       sunnyOutline,
       moonOutline,
       contrastOutline,
+      flameOutline,
     });
+
+    // Check if coming from a referral invite
+    const code = localStorage.getItem("referral_code");
+    if (code) {
+      this.referralService.lookupCode(code).then((result) => {
+        if (result.valid) {
+          this.referrerName.set(result.referrerFirstName);
+        }
+      });
+    }
   }
 
   cycleTheme(): void {

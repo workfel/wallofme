@@ -70,6 +70,16 @@ export const auth = betterAuth({
         required: false,
         input: false,
       },
+      referralCode: {
+        type: "string",
+        required: false,
+        input: false,
+      },
+      referredBy: {
+        type: "string",
+        required: false,
+        input: false,
+      },
     },
   },
   plugins: [

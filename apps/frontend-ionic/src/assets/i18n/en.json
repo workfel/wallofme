@@ -486,5 +486,31 @@
     "completeBtn": "Done",
     "next": "Next",
     "skip": "Skip tutorial"
+  },
+  "referral": {
+    "title": "Invite Friends",
+    "subtitle": "Earn 500 flames for each friend who scans their first trophy",
+    "yourCode": "Your Code",
+    "copied": "Copied!",
+    "inviteButton": "Invite a Friend",
+    "friendsInvited": "friends invited",
+    "totalEarned": "flames earned",
+    "pending": "Pending",
+    "rewarded": "Rewarded",
+    "limitReached": "You've reached the maximum number of referrals",
+    "invitesYou": "invites you to WallOfMe!",
+    "inviteLandingSubtitle": "Join the Metaverse of the Athlete and build your Pain Cave",
+    "bonusFlames": "bonus flames",
+    "joinNow": "Join Now",
+    "invalidCode": "Invalid Invite",
+    "invalidCodeSubtitle": "This invite link is no longer valid, but you can still sign up!",
+    "bonusBanner": "Invited by {{name}} — +500 bonus flames!",
+    "generating": "Generating your code...",
+    "earnSection": "Refer & Earn",
+    "earnDesc": "Earn 500 flames per friend",
+    "rewardToast": "{{name}} scanned their first trophy! +500 flames",
+    "settingsEntry": "Invite Friends",
+    "shareTitle": "Join WallOfMe!",
+    "shareText": "Join me on WallOfMe — the Metaverse of the Athlete!"
   }
 }

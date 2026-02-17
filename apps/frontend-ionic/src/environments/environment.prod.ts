@@ -1,6 +1,7 @@
 export const environment = {
   production: true,
   apiUrl: "https://api-wallofme.workfel.cloud/",
+  appUrl: "https://wallofme.com",
   revenueCat: {
     apiKey: "test_QEJHSVEYBAtNAnbuxKcQMkSRUqW", // Capacitor iOS (Apple IAP)
     webApiKey: "rcb_sb_YzwEVuZjxZTuatoqNHjplHBus", // Web Billing (Stripe)

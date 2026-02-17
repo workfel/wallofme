@@ -40,6 +40,9 @@ bun run db:generate         # Generate Drizzle migration files from schema chang
 bun run db:migrate          # Run pending migrations
 bun run db:push             # Push schema directly to DB (dev shortcut)
 bun run db:studio           # Open Drizzle Studio GUI
+bun run db:seed             # Seed decoration data
+bun run db:seed:data        # Seed test/demo user data
+bun run db:seed:update      # Update decoration seed config from source
 ```
 
 ### Database (root)
@@ -68,14 +71,19 @@ npm install                 # Install all workspace dependencies
 | `AI_PROVIDER` | AI provider: `mistral` \| `openai` \| `google` |
 | `AI_VISION_MODEL` / `AI_TEXT_MODEL` | Optional model overrides |
 | `MISTRAL_API_KEY` / `OPENAI_API_KEY` / `GOOGLE_GENERATIVE_AI_API_KEY` | API key for chosen provider |
+| `ENCRYPT_PAYLOADS` | Enable AES-256-GCM payload encryption (boolean, optional) |
+| `ENCRYPTION_KEY` | Hex-encoded AES-256 key (required if encryption enabled) |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | Firebase service account JSON string (optional, disables push if missing) |
+| `IP_HASH_SALT` | Salt for anonymous room view deduplication (defaults to `"wallofme-view-salt"`) |
 
 ### Frontend (`apps/frontend-ionic/src/environments/environment.ts`)
 - `apiUrl` — Backend URL (default: `http://localhost:3333`). For native device testing, use your machine's network IP instead of localhost.
+- `encryptPayloads` / `encryptionKey` — Must match backend encryption settings.
 
 ## Tech Stack
 
 - **Frontend:** Angular 21 + Ionic 8 + Capacitor 6, angular-three + three.js (3D rendering), @ngx-translate (i18n), Angular signals for state, TypeScript strict mode
-- **Backend:** Hono 4 on Bun runtime, Drizzle ORM + PostgreSQL 16, BetterAuth (email/password + Google + Apple OAuth) with Capacitor plugin, Cloudflare R2 (via AWS S3 SDK), Sharp image processing, ai-sdk (multi-provider: OpenAI/Google/Mistral), @imgly/background-removal-node, TypeScript strict mode
+- **Backend:** Hono 4 on Bun runtime, Drizzle ORM + PostgreSQL 16, BetterAuth (email/password + Google OAuth) with Capacitor plugin, Cloudflare R2 (via AWS S3 SDK), Sharp image processing, ai-sdk (multi-provider: OpenAI/Google/Mistral), @imgly/background-removal-node, Firebase Cloud Messaging (push notifications), TypeScript strict mode
 
 ## Architecture
 
@@ -98,16 +106,21 @@ npm install                 # Install all workspace dependencies
 **Routing** (`app.routes.ts`): Config-based lazy-loaded routes with guards.
 
 ```
-/auth/*          Login, register, OTP, OAuth callback
-/onboarding      Profile completion (firstName, lastName, country)
-/tabs/*          Bottom tabs: Home, Explore, Trophies, Profile
-/trophy/scan     Camera capture (modal)
-/trophy/review   AI analysis + review (modal)
-/trophy/:id      Trophy detail
-/tokens          Token store
-/room/edit       Edit Pain Cave room
-/room/share/:slug  Shared room (public, no auth)
-/room/:userId    View user's room
+/auth/*              Login, register, OTP, OAuth callback
+/onboarding          Profile completion (firstName, lastName, country)
+/tabs/*              Bottom tabs: Home, Explore, Trophies, Profile
+/trophy/create       Multi-step trophy creation (capture + AI analysis + review)
+/trophy/first        First trophy onboarding flow
+/trophy/:id          Trophy detail
+/profile/edit        Edit profile (glassmorphism, auto-save)
+/tokens              Token store
+/pro                 Pro upgrade page
+/race/:raceId/finishers  Race finishers list
+/room/edit           Edit Pain Cave room
+/invite/:code        Referral invite landing (public)
+/room/share/:slug    Shared room (public, no auth)
+/profile/:userId     Public user profile
+/room/:userId        View user's room
 ```
 
 **Project layout:**
@@ -146,7 +159,8 @@ src/app/
 | `tokens.routes.ts` | Token economy endpoints (auth) |
 | `themes.routes.ts` | Theme catalog and acquisition endpoints |
 | `webhooks.routes.ts` | External webhook handlers (e.g., RevenueCat) |
-| `social.routes.ts` | Room likes, views, and social interactions |
+| `social.routes.ts` | `POST /social/rooms/:id/like` (anon), `GET /social/rooms/:id/likes`, `POST /social/rooms/:id/view`, notifications CRUD (auth) |
+| `referrals.routes.ts` | `GET /referrals/me` (auth), `GET /referrals/code/:code` (public), `POST /referrals/apply` (auth) |
 
 **Variables type**: Every route file must declare the Hono `Variables` type locally:
 ```ts
@@ -161,6 +175,21 @@ type Variables = {
 **Auth ownership check**: Fetch resource, compare `userId` to `c.get("user")!.id`, return 404 (not 403) if mismatch.
 
 **Error handling**: Global `errorHandler` middleware (`src/middleware/error-handler.ts`). Includes error details conditionally based on `NODE_ENV`.
+
+### Payload Encryption (Optional)
+
+AES-256-GCM encryption for all API JSON payloads, gated by `ENCRYPT_PAYLOADS` env var.
+
+- **Backend middleware** (`src/middleware/encryption.ts`): Decrypts incoming `{ _enc: "..." }` requests, encrypts outgoing JSON responses. Excluded paths: `/api/auth/*`, `/api/webhooks/*`.
+- **Frontend** (`CryptoService`): Mirrors backend crypto using Web Crypto API. `ApiService` handles encrypt/decrypt automatically when `encryptPayloads` is enabled in environment config.
+- **Key generation**: `bun -e "import { generateKey } from './src/lib/crypto'; console.log(generateKey())"`
+
+### Push Notifications (Firebase Cloud Messaging)
+
+- **Backend** (`src/lib/notification-service.ts`): `sendLikeNotification()` aggregates multiple likes in 1-hour window into a single push. Invalid device tokens are auto-cleaned.
+- **Frontend** (`PushNotificationService`): Registers device tokens on app launch, handles permission requests.
+- **Routes** in `social.routes.ts`: `POST /notifications/register`, `DELETE /notifications/unregister`, `GET /notifications`, `PATCH /notifications/:id/read`
+- Silently disabled if `FIREBASE_SERVICE_ACCOUNT_JSON` is not set.
 
 ### API Communication Pattern (Hono RPC)
 
@@ -179,11 +208,11 @@ The backend exports `AppType` from chained route definitions in `src/index.ts`. 
 **Schema**: `src/db/schema.ts`. **Connection**: `src/db/index.ts` (node-postgres Pool). **Config**: `drizzle.config.ts`.
 
 **BetterAuth-managed tables** (text PKs): `user`, `session`, `account`, `verification`
-**Custom user fields**: `displayName`, `isPro` (boolean), `locale`, `firstName`, `lastName`, `country`, `tokenBalance` (integer)
+**Custom user fields**: `displayName`, `isPro` (boolean), `locale`, `firstName`, `lastName`, `country`, `tokenBalance` (integer), `sports`, `proExpiresAt`, `latitude`, `longitude`, `referralCode` (unique), `referredBy`
 
-**Domain tables** (UUID PKs with `defaultRandom()`): `race`, `race_result`, `trophy`, `room` (one per user, unique userId), `decoration`, `room_item`, `user_decoration`, `theme`, `user_theme`, `token_transaction`, `room_like` (unique per room+user), `room_view`, `device_token`, `notification`
+**Domain tables** (UUID PKs with `defaultRandom()`): `race`, `race_result`, `trophy`, `room` (one per user, unique userId), `decoration`, `room_item`, `user_decoration`, `theme`, `user_theme`, `token_transaction`, `room_view`, `device_token`, `notification`
 
-**Enums**: `sport`, `trophy_type` (medal/bib), `trophy_status` (pending/processing/ready/error), `result_source` (manual/ai/scraped), `wall` (left/right), `token_transaction_type` (purchase/rewarded_video/spend_decoration/spend_theme/refund/bonus), `device_platform` (ios/android/web), `notification_type` (room_liked)
+**Enums**: `sport`, `trophy_type` (medal/bib), `trophy_status` (pending/processing/ready/error), `result_source` (manual/ai/scraped), `wall` (left/right), `token_transaction_type` (purchase/rewarded_video/spend_decoration/spend_theme/refund/bonus), `device_platform` (ios/android/web), `notification_type` (room_liked/referral_reward)
 
 **Relations** defined via Drizzle `relations()` API — enables `db.query.*.findMany({ with: { ... } })` relational queries.
 
@@ -198,6 +227,35 @@ Two-step presigned URL pattern:
 
 Upload types: `trophy-photo`, `avatar`. Accepted content types: `image/jpeg`, `image/png`, `image/webp`.
 
+## UI Conventions
+
+### Glassmorphism Floating Header
+
+Feature pages do **not** use `<ion-header>` / `<ion-toolbar>`. Instead, they use a floating glassmorphism header inside `<ion-content>`:
+
+```html
+<div class="floating-header">
+  <button class="back-pill" (click)="goBack()">
+    <ion-icon name="arrow-back-outline" />
+  </button>
+  <div class="header-title-pill">
+    <span>{{ title }}</span>
+  </div>
+  <div class="header-spacer"></div>
+</div>
+```
+
+Glass effect CSS: `background: rgba(var(--ion-background-color-rgb), 0.65–0.72)`, `backdrop-filter: blur(16px) saturate(1.8)`, subtle border and box-shadow. Back button uses `NavController.back()`. See `trophy-creation.page.ts`, `profile-edit.page.ts`, `public-profile.page.ts` for reference.
+
+### Auto-save Pattern
+
+Edit pages (e.g. `profile-edit.page.ts`) use debounced auto-save instead of explicit save buttons:
+- Text inputs fire `(ionInput)="scheduleAutosave()"` with 1200ms debounce
+- Signal-based fields (sports, country) trigger autosave via Angular `effect()`
+- A `profileLoaded` flag prevents autosave during initial data load
+- `ngOnDestroy` flushes any pending save immediately
+- A small spinner in the header title pill indicates save in progress
+
 ## Conventions
 
 - **File naming:** kebab-case for all files (e.g., `auth.service.ts`, `trophy-scan.page.ts`)
@@ -207,6 +265,7 @@ Upload types: `trophy-photo`, `avatar`. Accepted content types: `image/jpeg`, `i
 - **Frontend state:** Use `signal()` for mutable state, `computed()` for derived state, `.asReadonly()` for public exposure
 - **Platform code:** Ionic `mode: 'ios'` set globally in `app.config.ts`
 - **Capacitor config:** `capacitor.config.ts` — app ID `com.wallofme.app`, URL scheme `wallofme`
+- **Deep linking:** `wallofme://room/share/{slug}` handled in `AppComponent` via Capacitor `App.addListener('appUrlOpen', ...)`
 - **Auth ownership:** Always verify `resource.userId === c.get("user")!.id` before mutations; return 404 (not 403) on mismatch
 
 ## Agent Skills

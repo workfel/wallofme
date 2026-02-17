@@ -96,6 +96,13 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'invite/:code',
+    loadComponent: () =>
+      import('./features/invite/invite-landing.page').then(
+        (m) => m.InviteLandingPage
+      ),
+  },
+  {
     path: 'room/share/:slug',
     loadComponent: () =>
       import('./features/room/share/room-share.page').then(

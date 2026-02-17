@@ -10,6 +10,7 @@ import {
 } from "../validators/user.validator";
 import { getPublicUrl } from "../lib/storage";
 import { FREE_SCAN_LIMIT, getMonthlyScansUsed } from "../lib/scan-limit";
+import { generateReferralCode } from "../lib/referral-service";
 import type { auth } from "../lib/auth";
 
 type Variables = {
@@ -150,6 +151,17 @@ export const users = new Hono<{ Variables: Variables }>()
       const currentUser = c.get("user")!;
       const body = c.req.valid("json");
 
+      // Check if user was referred — give bonus tokens
+      const existingProfile = await db.query.user.findFirst({
+        where: eq(user.id, currentUser.id),
+        columns: { referredBy: true },
+      });
+      const isReferred = !!existingProfile?.referredBy;
+      const starterTokens = isReferred ? 6000 : 5500;
+
+      // Generate referral code for this user
+      const referralCode = await generateReferralCode(body.firstName);
+
       const [updated] = await db
         .update(user)
         .set({
@@ -161,7 +173,8 @@ export const users = new Hono<{ Variables: Variables }>()
           latitude: body.latitude ?? null,
           longitude: body.longitude ?? null,
           updatedAt: new Date(),
-          tokenBalance: 5500,
+          tokenBalance: starterTokens,
+          referralCode,
         })
         .where(eq(user.id, currentUser.id))
         .returning();

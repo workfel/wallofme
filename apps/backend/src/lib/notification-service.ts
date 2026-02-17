@@ -123,3 +123,58 @@ export async function sendLikeNotification(
     console.error("[notification-service] sendLikeNotification error:", err);
   }
 }
+
+export async function sendReferralRewardNotification(
+  referrerId: string,
+  referredUserName: string,
+): Promise<void> {
+  try {
+    const admin = await getFirebaseAdmin();
+
+    const title = "Referral Reward!";
+    const body = `${referredUserName} validated their first trophy. You earned 500 flames!`;
+
+    await db.insert(notification).values({
+      userId: referrerId,
+      type: "referral_reward",
+      title,
+      body,
+      metadata: JSON.stringify({ referredUserName }),
+    });
+
+    if (!admin) return;
+
+    const tokens = await db.query.deviceToken.findMany({
+      where: eq(deviceToken.userId, referrerId),
+    });
+
+    if (tokens.length === 0) return;
+
+    const messaging = admin.messaging();
+    const sendPromises = tokens.map(async (t) => {
+      try {
+        await messaging.send({
+          token: t.token,
+          notification: { title, body },
+          data: { type: "referral_reward" },
+        });
+      } catch (err: any) {
+        if (
+          err?.code === "messaging/registration-token-not-registered" ||
+          err?.code === "messaging/invalid-registration-token"
+        ) {
+          await db.delete(deviceToken).where(eq(deviceToken.id, t.id));
+        } else {
+          console.error(
+            `[notification-service] FCM send error for token ${t.id}:`,
+            err,
+          );
+        }
+      }
+    });
+
+    await Promise.all(sendPromises);
+  } catch (err) {
+    console.error("[notification-service] sendReferralRewardNotification error:", err);
+  }
+}

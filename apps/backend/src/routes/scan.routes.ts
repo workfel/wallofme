@@ -18,6 +18,7 @@ import { processTrophyImage } from "../lib/image-processor";
 import { downloadBuffer, uploadBuffer, getPublicUrl } from "../lib/storage";
 import sharp from "sharp";
 import { nanoid } from "nanoid";
+import { processReferrerReward } from "../lib/referral-service";
 import type { auth } from "../lib/auth";
 
 type Variables = {
@@ -202,6 +203,9 @@ export const scan = new Hono<{ Variables: Variables }>()
           updatedAt: new Date(),
         })
         .where(eq(trophy.id, body.trophyId));
+
+      // Fire-and-forget: reward referrer on first validated trophy
+      processReferrerReward(currentUser.id).catch(console.error);
 
       return c.json({
         data: {

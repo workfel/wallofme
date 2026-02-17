@@ -30,12 +30,14 @@ import {
   starOutline,
   arrowForwardOutline,
   giftOutline,
+  peopleOutline,
 } from 'ionicons/icons';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { TokenService } from '@app/core/services/token.service';
 import { AdService } from '@app/core/services/ad.service';
 import { PurchaseService, type TokenPackOffering } from '@app/core/services/purchase.service';
 import { AuthService } from '@app/core/services/auth.service';
+import { ReferralService } from '@app/core/services/referral.service';
 import { UserService } from '@app/core/services/user.service';
 
 interface TokenPack {
@@ -217,6 +219,19 @@ const STARTER_PACK_KEY = 'wallofme_starter_pack_first_seen';
           }
         </ion-item>
       </ion-list>
+
+      <!-- Refer & Earn Section -->
+      <h2 class="section-title">{{ 'referral.earnSection' | translate }}</h2>
+      <div class="referral-earn-card" (click)="goToReferral()">
+        <div class="referral-earn-left">
+          <ion-icon name="people-outline" color="primary" />
+          <div class="referral-earn-text">
+            <h3>{{ 'referral.settingsEntry' | translate }}</h3>
+            <p>{{ 'referral.earnDesc' | translate }}</p>
+          </div>
+        </div>
+        <ion-badge color="warning" class="referral-earn-badge">+500</ion-badge>
+      </div>
 
       <!-- Buy Tokens Section -->
       <h2 class="section-title">{{ 'tokens.buyTokens' | translate }}</h2>
@@ -429,6 +444,56 @@ const STARTER_PACK_KEY = 'wallofme_starter_pack_first_seen';
       }
     }
 
+    /* Referral Earn Card */
+    .referral-earn-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      background: rgba(var(--ion-color-primary-rgb), 0.06);
+      border: 1px solid rgba(var(--ion-color-primary-rgb), 0.15);
+      border-radius: 16px;
+      cursor: pointer;
+      transition: transform 0.2s;
+      margin-bottom: 8px;
+
+      &:active {
+        transform: scale(0.98);
+      }
+    }
+
+    .referral-earn-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      ion-icon {
+        font-size: 28px;
+        flex-shrink: 0;
+      }
+    }
+
+    .referral-earn-text {
+      h3 {
+        font-size: 15px;
+        font-weight: 700;
+        margin: 0;
+      }
+
+      p {
+        font-size: 12px;
+        color: var(--ion-color-medium);
+        margin: 2px 0 0;
+      }
+    }
+
+    .referral-earn-badge {
+      font-size: 14px;
+      font-weight: 800;
+      padding: 6px 12px;
+      border-radius: 12px;
+    }
+
     /* Packs Grid */
     .packs-grid {
       display: grid;
@@ -548,6 +613,7 @@ export class GetTokensPage implements OnInit, OnDestroy, ViewDidEnter {
   adService = inject(AdService);
   purchaseService = inject(PurchaseService);
   private authService = inject(AuthService);
+  private referralService = inject(ReferralService);
   private userService = inject(UserService);
   private toastCtrl = inject(ToastController);
   private translate = inject(TranslateService);
@@ -607,6 +673,7 @@ export class GetTokensPage implements OnInit, OnDestroy, ViewDidEnter {
       starOutline,
       arrowForwardOutline,
       giftOutline,
+      peopleOutline,
     });
   }
 
@@ -798,6 +865,10 @@ export class GetTokensPage implements OnInit, OnDestroy, ViewDidEnter {
     } finally {
       this.starterPackLoading.set(false);
     }
+  }
+
+  goToReferral(): void {
+    this.router.navigate(['/tabs/profile']);
   }
 
   goToPro(): void {

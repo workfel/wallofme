@@ -26,6 +26,7 @@ import { chevronDown, closeOutline } from "ionicons/icons";
 import { AuthService } from "@app/core/services/auth.service";
 import { ApiService } from "@app/core/services/api.service";
 import { GeolocationService } from "@app/core/services/geolocation.service";
+import { ReferralService } from "@app/core/services/referral.service";
 import { I18nService } from "@app/core/services/i18n.service";
 import {
   COUNTRIES,
@@ -423,6 +424,7 @@ export class OnboardingPage implements OnInit {
   private translate = inject(TranslateService);
   private geoService = inject(GeolocationService);
   private i18n = inject(I18nService);
+  private referralService = inject(ReferralService);
 
   firstName = "";
   lastName = "";
@@ -534,6 +536,13 @@ export class OnboardingPage implements OnInit {
     this.errorMessage.set("");
 
     try {
+      // Apply referral code if present (before onboarding so referredBy is set)
+      const referralCode = localStorage.getItem("referral_code");
+      if (referralCode) {
+        await this.referralService.applyCode(referralCode);
+        localStorage.removeItem("referral_code");
+      }
+
       // Request geolocation (non-blocking — null on failure)
       const position = await this.geoService.getCurrentPosition();
 

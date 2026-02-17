@@ -486,5 +486,31 @@
     "completeBtn": "Terminé",
     "next": "Suivant",
     "skip": "Passer le tutoriel"
+  },
+  "referral": {
+    "title": "Inviter des amis",
+    "subtitle": "Gagnez 500 flammes pour chaque ami qui scanne son premier trophée",
+    "yourCode": "Votre code",
+    "copied": "Copié !",
+    "inviteButton": "Inviter un ami",
+    "friendsInvited": "amis invités",
+    "totalEarned": "flammes gagnées",
+    "pending": "En attente",
+    "rewarded": "Récompensé",
+    "limitReached": "Vous avez atteint le nombre maximum de parrainages",
+    "invitesYou": "vous invite sur WallOfMe !",
+    "inviteLandingSubtitle": "Rejoignez le Métavers de l'Athlète et construisez votre Pain Cave",
+    "bonusFlames": "flammes bonus",
+    "joinNow": "Rejoindre",
+    "invalidCode": "Invitation invalide",
+    "invalidCodeSubtitle": "Ce lien d'invitation n'est plus valide, mais vous pouvez quand même vous inscrire !",
+    "bonusBanner": "Invité par {{name}} — +500 flammes bonus !",
+    "generating": "Génération de votre code...",
+    "earnSection": "Parrainage",
+    "earnDesc": "Gagnez 500 flammes par ami",
+    "rewardToast": "{{name}} a scanné son premier trophée ! +500 flammes",
+    "settingsEntry": "Inviter des amis",
+    "shareTitle": "Rejoins WallOfMe !",
+    "shareText": "Rejoins-moi sur WallOfMe — le Métavers de l'Athlète !"
   }
 }

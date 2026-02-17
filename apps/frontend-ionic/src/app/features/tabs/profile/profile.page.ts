@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, inject, signal } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { Router } from "@angular/router";
 import {
@@ -19,6 +19,7 @@ import {
   IonText,
   IonTitle,
   IonToolbar,
+  ViewWillEnter,
 } from "@ionic/angular/standalone";
 import { TranslateModule, TranslateService } from "@ngx-translate/core";
 import { addIcons } from "ionicons";
@@ -32,6 +33,7 @@ import {
   languageOutline,
   logOutOutline,
   moonOutline,
+  peopleOutline,
   personCircleOutline,
   ribbonOutline,
   settingsOutline,
@@ -45,7 +47,9 @@ import { TokenService } from "@app/core/services/token.service";
 import { TrophyService } from "@app/core/services/trophy.service";
 import { UserService } from "@app/core/services/user.service";
 import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.component";
+import { ReferralService } from "@app/core/services/referral.service";
 import { TutorialService } from "@app/core/services/tutorial.service";
+import { ReferralCardComponent } from "@app/shared/components/referral-card/referral-card.component";
 
 @Component({
   selector: "app-profile",
@@ -69,6 +73,7 @@ import { TutorialService } from "@app/core/services/tutorial.service";
     IonRefresher,
     IonRefresherContent,
     ProBadgeComponent,
+    ReferralCardComponent,
   ],
   template: `
     <ion-content [fullscreen]="true">
@@ -154,6 +159,9 @@ import { TutorialService } from "@app/core/services/tutorial.service";
         </div>
       </div>
 
+      <!-- Referral Card -->
+      <app-referral-card />
+
       <!-- Pro Banner -->
       @if (!authService.user()?.isPro) {
         <div class="pro-banner" (click)="onUpgradePro()" aria-hidden>
@@ -221,8 +229,8 @@ import { TutorialService } from "@app/core/services/tutorial.service";
       <!-- Settings Bottom Sheet -->
       <ion-modal
         [isOpen]="showSettings()"
-        [initialBreakpoint]="0.45"
-        [breakpoints]="[0, 0.45]"
+        [initialBreakpoint]="0.52"
+        [breakpoints]="[0, 0.52]"
         (didDismiss)="showSettings.set(false)"
       >
         <ng-template>
@@ -256,6 +264,10 @@ import { TutorialService } from "@app/core/services/tutorial.service";
                   {{ "profile.theme" | translate }}
                   <p>{{ currentTheme() | translate }}</p>
                 </ion-label>
+              </ion-item>
+              <ion-item button [detail]="true" (click)="onInviteFriends()">
+                <ion-icon slot="start" name="people-outline" color="primary" />
+                <ion-label>{{ "referral.settingsEntry" | translate }}</ion-label>
               </ion-item>
               <ion-item button [detail]="true" (click)="onReplayTutorial()">
                 <ion-icon slot="start" name="help-circle-outline" />
@@ -633,7 +645,7 @@ import { TutorialService } from "@app/core/services/tutorial.service";
     }
   `,
 })
-export class ProfilePage implements OnInit {
+export class ProfilePage implements ViewWillEnter {
   authService = inject(AuthService);
   tokenService = inject(TokenService);
   roomService = inject(RoomService);
@@ -644,6 +656,7 @@ export class ProfilePage implements OnInit {
   private translate = inject(TranslateService);
   private appThemeService = inject(AppThemeService);
   private tutorialService = inject(TutorialService);
+  private referralService = inject(ReferralService);
 
   private langChange = toSignal(this.translate.onLangChange);
   private currentLang = computed(() => {
@@ -668,14 +681,16 @@ export class ProfilePage implements OnInit {
       createOutline,
       arrowForwardOutline,
       checkmarkOutline,
+      peopleOutline,
     });
   }
 
-  ngOnInit(): void {
+  ionViewWillEnter(): void {
     this.trophyService.fetchTrophies();
     this.roomService.fetchMyRoom();
     this.userService.fetchProfile();
     this.tokenService.fetchBalance();
+    this.referralService.fetchReferralInfo();
   }
 
   async onRefresh(event: CustomEvent): Promise<void> {
@@ -683,6 +698,7 @@ export class ProfilePage implements OnInit {
       this.trophyService.fetchTrophies(),
       this.roomService.fetchMyRoom(),
       this.userService.fetchProfile(),
+      this.referralService.fetchReferralInfo(),
     ]);
     (event.target as HTMLIonRefresherElement).complete();
   }
@@ -703,6 +719,12 @@ export class ProfilePage implements OnInit {
   onUpgradePro(): void {
     this.showSettings.set(false);
     this.router.navigate(["/pro"]);
+  }
+
+  async onInviteFriends(): Promise<void> {
+    this.showSettings.set(false);
+    await this.referralService.fetchReferralInfo();
+    this.referralService.shareReferralLink();
   }
 
   async onReplayTutorial(): Promise<void> {

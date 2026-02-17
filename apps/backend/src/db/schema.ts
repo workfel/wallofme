@@ -58,6 +58,7 @@ export const devicePlatformEnum = pgEnum("device_platform", [
 
 export const notificationTypeEnum = pgEnum("notification_type", [
   "room_liked",
+  "referral_reward",
 ]);
 
 // ─── BetterAuth Tables ──────────────────────────────────
@@ -82,6 +83,8 @@ export const user = pgTable("user", {
   proExpiresAt: timestamp("pro_expires_at"),
   latitude: real("latitude"),
   longitude: real("longitude"),
+  referralCode: text("referral_code").unique(),
+  referredBy: text("referred_by"),
 });
 
 export const session = pgTable("session", {
