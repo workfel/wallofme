@@ -445,7 +445,7 @@ export class OnboardingPage implements OnInit {
       (c) =>
         c.name.toLowerCase().includes(query) ||
         c.nameFr.toLowerCase().includes(query) ||
-        c.code.toLowerCase().includes(query)
+        c.code.toLowerCase().includes(query),
     );
   });
 
@@ -465,9 +465,48 @@ export class OnboardingPage implements OnInit {
     if (user.lastName) this.lastName = user.lastName;
     if (user.country) {
       const found = COUNTRIES.find(
-        (c) => c.code === user.country?.toUpperCase()
+        (c) => c.code === user.country?.toUpperCase(),
       );
       if (found) this.selectedCountry.set(found);
+    }
+
+    // Auto-select country from browser language if not set
+    if (!this.selectedCountry()) {
+      const browserLang = navigator.language;
+      if (browserLang) {
+        // Map common languages to their primary country
+        const langToCountry: Record<string, string> = {
+          fr: "FR",
+          en: "US",
+          de: "DE",
+          es: "ES",
+          it: "IT",
+          pt: "PT",
+          nl: "NL",
+          pl: "PL",
+          ru: "RU",
+          ja: "JP",
+          zh: "CN",
+        };
+
+        const parts = browserLang.split("-");
+        let targetCode = parts.length > 1 ? parts[1].toUpperCase() : null;
+
+        // If we have a region, check if it exists in our supported countries
+        if (targetCode) {
+          const exists = COUNTRIES.find((c) => c.code === targetCode);
+          if (!exists) targetCode = null;
+        }
+
+        if (!targetCode) {
+          targetCode = langToCountry[parts[0].toLowerCase()] || null;
+        }
+
+        if (targetCode) {
+          const found = COUNTRIES.find((c) => c.code === targetCode);
+          if (found) this.selectedCountry.set(found);
+        }
+      }
     }
 
     // Fallback: parse from name (e.g. Google OAuth sets "Johan Pujol")
@@ -499,7 +538,7 @@ export class OnboardingPage implements OnInit {
   onNextStep(): void {
     if (!this.firstName.trim() || !this.lastName.trim()) {
       this.errorMessage.set(
-        this.translate.instant("onboarding.fieldsRequired")
+        this.translate.instant("onboarding.fieldsRequired"),
       );
       return;
     }
@@ -527,7 +566,7 @@ export class OnboardingPage implements OnInit {
   async onContinue(): Promise<void> {
     if (this.selectedSports().length === 0) {
       this.errorMessage.set(
-        this.translate.instant("onboarding.sportsRequired")
+        this.translate.instant("onboarding.sportsRequired"),
       );
       return;
     }
@@ -562,13 +601,13 @@ export class OnboardingPage implements OnInit {
 
       // Refresh auth session to get updated user data
       await this.authService.refreshSession();
-      localStorage.removeItem('claim_wall_referral');
+      localStorage.removeItem("claim_wall_referral");
       this.router.navigate(["/trophy/first"]);
     } catch (e: unknown) {
       this.errorMessage.set(
         e instanceof Error
           ? e.message
-          : this.translate.instant("common.updateFailed")
+          : this.translate.instant("common.updateFailed"),
       );
     } finally {
       this.isLoading.set(false);
