@@ -16,6 +16,7 @@ import { themes } from "./routes/themes.routes";
 import { webhooks } from "./routes/webhooks.routes";
 import { social } from "./routes/social.routes";
 import { referrals } from "./routes/referrals.routes";
+import { leaderboard } from "./routes/leaderboard.routes";
 import { startStreakReminderCron } from "./lib/streak-cron";
 
 type Variables = {
@@ -73,7 +74,8 @@ const route = app
   .route("/api/themes", themes)
   .route("/api/webhooks", webhooks)
   .route("/api/social", social)
-  .route("/api/referrals", referrals);
+  .route("/api/referrals", referrals)
+  .route("/api/leaderboard", leaderboard);
 
 export type AppType = typeof route;
 

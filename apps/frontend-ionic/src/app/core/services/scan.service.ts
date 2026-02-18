@@ -102,6 +102,11 @@ export class ScanService {
   // Save results state
   readonly savingResults = signal(false);
 
+  // Community / Wall of Fame state
+  readonly communityFinishersCount = signal<number>(0);
+  readonly validatedRaceId = signal<string | null>(null);
+  readonly validatedRaceName = signal<string | null>(null);
+
   // Refine search state
   readonly refineSearchLoading = signal(false);
 
@@ -144,6 +149,9 @@ export class ScanService {
     this.resultsRetryCooldownRemaining.set(0);
     this.savingResults.set(false);
     this.refineSearchLoading.set(false);
+    this.communityFinishersCount.set(0);
+    this.validatedRaceId.set(null);
+    this.validatedRaceName.set(null);
     for (const timer of this.cooldownTimers.values()) {
       clearInterval(timer);
     }
@@ -371,9 +379,12 @@ export class ScanService {
       }
 
       const validateJson = (await validateRes.json()) as {
-        data: { race: { id: string }; raceResult: { id: string } };
+        data: { race: { id: string; name: string }; raceResult: { id: string }; communityFinishersCount: number };
       };
       this.raceResultId.set(validateJson.data.raceResult.id);
+      this.communityFinishersCount.set(validateJson.data.communityFinishersCount ?? 0);
+      this.validatedRaceId.set(validateJson.data.race.id);
+      this.validatedRaceName.set(validateJson.data.race.name);
 
       // Search results using AI
       const searchRes = await this.api.client.api.scan['search-results'].$post({

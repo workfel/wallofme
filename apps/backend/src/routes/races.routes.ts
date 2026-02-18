@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { eq, desc, sql, and } from "drizzle-orm";
+import { eq, desc, sql, and, inArray, gte, ne } from "drizzle-orm";
 import { db } from "../db";
-import { race, raceResult, user, room } from "../db/schema";
+import { race, raceResult, user, room, trophy } from "../db/schema";
 import { requireAuth } from "../middleware/auth";
 import { idParamSchema, paginationSchema } from "../validators/common.validator";
 import {
@@ -10,6 +10,8 @@ import {
   createRaceResultSchema,
   updateRaceResultSchema,
   searchRaceSchema,
+  listRaceSchema,
+  finishersSortSchema,
 } from "../validators/race.validator";
 import { normalizeRaceName, getSearchTerms } from "../lib/race-matcher";
 import type { auth } from "../lib/auth";
@@ -81,17 +83,61 @@ export const races = new Hono<{ Variables: Variables }>()
   )
 
   // List races
-  .get("/", zValidator("query", paginationSchema), async (c) => {
-    const { page, limit } = c.req.valid("query");
+  .get("/", zValidator("query", listRaceSchema), async (c) => {
+    const { page, limit, q, sport } = c.req.valid("query");
     const offset = (page - 1) * limit;
+    const currentUser = c.get("user");
 
-    const items = await db.query.race.findMany({
-      orderBy: desc(race.createdAt),
-      limit,
-      offset,
-    });
+    const whereConditions = [];
+    if (q) {
+      whereConditions.push(sql`lower(${race.name}) LIKE ${"%" + q.toLowerCase() + "%"}`);
+    }
+    if (sport && sport.length > 0) {
+      whereConditions.push(inArray(race.sport, sport));
+    }
+
+    const items = await db.select({
+      id: race.id,
+      name: race.name,
+      date: race.date,
+      location: race.location,
+      sport: race.sport,
+      distance: race.distance,
+      finisherCount: sql<number>`count(distinct ${raceResult.userId})`,
+      userHasRun: currentUser
+        ? sql<boolean>`bool_or(${raceResult.userId} = ${currentUser.id})`
+        : sql<boolean>`false`,
+    })
+    .from(race)
+    .leftJoin(raceResult, eq(raceResult.raceId, race.id))
+    .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
+    .groupBy(race.id)
+    .orderBy(desc(race.createdAt))
+    .limit(limit)
+    .offset(offset);
 
     return c.json({ data: items, page, limit });
+  })
+
+  // Trending races — must be before /:id
+  .get("/trending", async (c) => {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const results = await db.select({
+      id: race.id,
+      name: race.name,
+      date: race.date,
+      location: race.location,
+      sport: race.sport,
+      distance: race.distance,
+      finisherCount: sql<number>`count(distinct ${raceResult.userId})`,
+    })
+    .from(race)
+    .innerJoin(raceResult, eq(raceResult.raceId, race.id))
+    .where(gte(raceResult.createdAt, thirtyDaysAgo))
+    .groupBy(race.id)
+    .orderBy(sql`count(distinct ${raceResult.userId}) DESC`)
+    .limit(10);
+    return c.json({ data: results });
   })
 
   // Get single race
@@ -114,11 +160,12 @@ export const races = new Hono<{ Variables: Variables }>()
   .get(
     "/:id/finishers",
     zValidator("param", idParamSchema),
-    zValidator("query", paginationSchema),
+    zValidator("query", finishersSortSchema),
     async (c) => {
       const { id } = c.req.valid("param");
-      const { page, limit } = c.req.valid("query");
+      const { page, limit, sort } = c.req.valid("query");
       const offset = (page - 1) * limit;
+      const currentUser = c.get("user");
 
       // Verify race exists
       const raceItem = await db.query.race.findFirst({
@@ -139,6 +186,18 @@ export const races = new Hono<{ Variables: Variables }>()
 
       const totalFinishers = Number(countResult.count);
 
+      // Build dynamic order
+      const orderClauses = [];
+      if (sort === "time") {
+        orderClauses.push(sql`${raceResult.time} IS NULL ASC`);
+        orderClauses.push(sql`${raceResult.time} ASC`);
+        orderClauses.push(sql`COALESCE(${room.likeCount}, 0) DESC`);
+      } else if (sort === "trophies") {
+        orderClauses.push(sql`(SELECT count(*) FROM trophy WHERE trophy.user_id = ${user.id} AND trophy.status = 'ready') DESC`);
+      } else if (sort === "likes") {
+        orderClauses.push(sql`COALESCE(${room.likeCount}, 0) DESC`);
+      }
+
       // Get finishers with user info and room
       const finishers = await db
         .select({
@@ -156,24 +215,94 @@ export const races = new Hono<{ Variables: Variables }>()
             isPro: user.isPro,
           },
           roomLikeCount: room.likeCount,
+          trophyCount: sql<number>`(SELECT count(*) FROM trophy WHERE trophy.user_id = ${user.id} AND trophy.status = 'ready')::int`,
+          isMe: currentUser
+            ? sql<boolean>`${user.id} = ${currentUser.id}`
+            : sql<boolean>`false`,
         })
         .from(raceResult)
         .innerJoin(user, eq(user.id, raceResult.userId))
         .leftJoin(room, eq(room.userId, raceResult.userId))
         .where(eq(raceResult.raceId, id))
-        .orderBy(
-          sql`${raceResult.time} IS NULL ASC`,
-          sql`${raceResult.time} ASC`,
-          sql`COALESCE(${room.likeCount}, 0) DESC`
-        )
+        .orderBy(...orderClauses)
         .limit(limit)
         .offset(offset);
+
+      // Compute current user's position in this race
+      let currentUserFinisher = null;
+
+      if (currentUser) {
+        let finisherRankOrder;
+        if (sort === "time") {
+          finisherRankOrder = sql`${raceResult.time} IS NULL ASC, ${raceResult.time} ASC, COALESCE(${room.likeCount}, 0) DESC`;
+        } else if (sort === "trophies") {
+          finisherRankOrder = sql`(SELECT count(*) FROM trophy WHERE trophy.user_id = ${user.id} AND trophy.status = 'ready') DESC`;
+        } else {
+          finisherRankOrder = sql`COALESCE(${room.likeCount}, 0) DESC`;
+        }
+
+        const rankedFinishers = db
+          .select({
+            id: raceResult.id,
+            time: raceResult.time,
+            ranking: raceResult.ranking,
+            categoryRanking: raceResult.categoryRanking,
+            totalParticipants: raceResult.totalParticipants,
+            userId: user.id,
+            displayName: user.displayName,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            image: user.image,
+            isPro: user.isPro,
+            roomLikeCount: room.likeCount,
+            trophyCount:
+              sql<number>`(SELECT count(*) FROM trophy WHERE trophy.user_id = ${user.id} AND trophy.status = 'ready')::int`.as(
+                "tc",
+              ),
+            rank: sql<number>`(ROW_NUMBER() OVER (ORDER BY ${finisherRankOrder}))::int`.as(
+              "rank",
+            ),
+          })
+          .from(raceResult)
+          .innerJoin(user, eq(user.id, raceResult.userId))
+          .leftJoin(room, eq(room.userId, raceResult.userId))
+          .where(eq(raceResult.raceId, id))
+          .as("ranked_finishers");
+
+        const [myRow] = await db
+          .select()
+          .from(rankedFinishers)
+          .where(eq(rankedFinishers.userId, currentUser.id));
+
+        if (myRow) {
+          currentUserFinisher = {
+            rank: myRow.rank,
+            id: myRow.id,
+            time: myRow.time,
+            ranking: myRow.ranking,
+            categoryRanking: myRow.categoryRanking,
+            totalParticipants: myRow.totalParticipants,
+            user: {
+              id: myRow.userId,
+              displayName: myRow.displayName,
+              firstName: myRow.firstName,
+              lastName: myRow.lastName,
+              image: myRow.image,
+              isPro: myRow.isPro,
+            },
+            roomLikeCount: myRow.roomLikeCount,
+            trophyCount: myRow.trophyCount,
+            isMe: true as const,
+          };
+        }
+      }
 
       return c.json({
         data: {
           race: raceItem,
           finishers,
           totalFinishers,
+          currentUser: currentUserFinisher,
         },
         page,
         limit,

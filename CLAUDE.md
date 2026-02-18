@@ -36,6 +36,7 @@ npm run cap:build:android   # Production build + sync Android
 ### Backend (`apps/backend`)
 ```bash
 bun run dev                 # Start with hot reload (port 3333)
+bun run test                # Run all backend tests (Bun built-in runner)
 bun run db:generate         # Generate Drizzle migration files from schema changes
 bun run db:migrate          # Run pending migrations
 bun run db:push             # Push schema directly to DB (dev shortcut)
@@ -278,3 +279,56 @@ Skills are configured in `.agents/skills/`:
 - **building-native-ui** — Expo Router patterns (legacy reference)
 - **frontend-design** — Production-grade UI design methodology, avoids generic AI aesthetics
 - **ui-ux-pro-max** — Comprehensive UI/UX design intelligence: styles, palettes, font pairings, accessibility
+
+## Development Philosophy — TDD
+
+**Always follow Test-Driven Development for backend changes.**
+
+### Backend Testing Stack
+
+- **Runner**: `bun test` (Bun built-in, no extra deps)
+- **Test location**: `apps/backend/src/__tests__/`
+  - `validators/` — pure Zod schema unit tests (no mocking)
+  - `routes/` — route integration tests with mocked DB
+- **Mocking**: `mock.module()` from `bun:test` (hoisted, Jest-compatible API)
+- **DB mock pattern**: chainable Drizzle builder mock + FIFO queues per method
+
+### TDD Workflow
+
+1. **Write tests first** — before touching any route, validator, or service
+2. **Red** — run `bun run test` and confirm new tests fail
+3. **Green** — implement the minimal code to make tests pass
+4. **Refactor** — clean up with tests still green
+
+### What to Test
+
+| Layer | What to cover |
+|---|---|
+| Validators (Zod) | Valid inputs, defaults, coercions, rejections |
+| Routes | 200/201 happy path, 401 unauth, 404 not-found, 400 bad input, ownership check |
+| New behaviour | Every new field in a response (e.g. `communityFinishersCount`, `isMe`) |
+
+### Mock Pattern (routes)
+
+```ts
+// Chainable Drizzle builder mock
+function makeChain(value: unknown) {
+  const c: any = {};
+  for (const m of ["from","leftJoin","innerJoin","where","groupBy","orderBy","limit","offset"]) c[m] = () => c;
+  c.then    = (res: any, rej: any) => Promise.resolve(value).then(res, rej);
+  c.catch   = (rej: any) => Promise.resolve(value).catch(rej);
+  c.finally = (fin: any) => Promise.resolve(value).finally(fin);
+  return c;
+}
+
+// FIFO queues — push values per test, queues are cleared in beforeEach
+const selectQueue: unknown[] = [];
+mock.module("../../db", () => ({
+  db: {
+    select: () => makeChain(selectQueue.shift() ?? []),
+    query: { race: { findFirst: () => Promise.resolve(findFirstQueue.shift() ?? null) } },
+  },
+}));
+```
+
+Always mock: `../../db`, `../../lib/auth`. Mock external libs (AI, storage, sharp) only in files that import them.

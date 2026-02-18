@@ -88,6 +88,18 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'race/:raceId/wall-of-fame',
+    loadComponent: () =>
+      import('./features/race/finishers/race-finishers.page').then(
+        (m) => m.RaceFinishersPage
+      ),
+  },
+  {
+    path: 'leaderboard',
+    loadComponent: () =>
+      import('./features/leaderboard/leaderboard.page').then(m => m.LeaderboardPage),
+  },
+  {
     path: 'room/edit',
     canActivate: [authGuard, onboardingGuard],
     loadComponent: () =>

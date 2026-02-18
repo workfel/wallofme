@@ -15,7 +15,7 @@ import {
   ToastController,
 } from "@ionic/angular/standalone";
 import { addIcons } from "ionicons";
-import { arrowBackOutline, checkmarkCircle } from "ionicons/icons";
+import { arrowBackOutline, checkmarkCircle, chevronForwardOutline } from "ionicons/icons";
 import { TranslateModule, TranslateService } from "@ngx-translate/core";
 
 import { AuthService } from "@app/core/services/auth.service";
@@ -107,6 +107,16 @@ type CreationPhase =
         }
         @case ("done") {
           <app-trophy-results-search />
+          @if (scanService.communityFinishersCount() > 0) {
+            <div class="community-banner" (click)="goToWallOfFame()">
+              <span class="emoji">&#128293;</span>
+              <div class="banner-text">
+                <p>{{ 'review.communityBanner' | translate:{ count: scanService.communityFinishersCount(), race: scanService.validatedRaceName() } }}</p>
+                <span class="see-link">{{ 'review.seeWallOfFame' | translate }}</span>
+              </div>
+              <ion-icon name="chevron-forward-outline" />
+            </div>
+          }
           <app-trophy-done [saving]="scanService.savingResults()" (done)="onFinish()" />
         }
         @case ("celebrate") {
@@ -210,6 +220,31 @@ type CreationPhase =
     .header-spacer {
       flex: 1;
     }
+
+    .community-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 16px 0;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(var(--ion-color-primary-rgb), 0.1));
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 16px;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+
+      &:active { transform: scale(0.98); }
+
+      .emoji { font-size: 24px; flex-shrink: 0; }
+
+      .banner-text {
+        flex: 1;
+        p { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: var(--ion-text-color); }
+        .see-link { font-size: 12px; color: var(--ion-color-primary); font-weight: 600; }
+      }
+
+      ion-icon { font-size: 18px; color: var(--ion-color-step-400); flex-shrink: 0; }
+    }
   `,
 })
 export class TrophyCreationPage {
@@ -273,7 +308,7 @@ export class TrophyCreationPage {
   });
 
   constructor() {
-    addIcons({ arrowBackOutline, checkmarkCircle });
+    addIcons({ arrowBackOutline, checkmarkCircle, chevronForwardOutline });
     this.scanService.reset();
 
     // Watch scanService.step to auto-transition phases
@@ -483,6 +518,13 @@ export class TrophyCreationPage {
       }
     } catch {
       // Share failed — don't crash
+    }
+  }
+
+  goToWallOfFame(): void {
+    const raceId = this.scanService.validatedRaceId();
+    if (raceId) {
+      this.router.navigate(['/race', raceId, 'wall-of-fame']);
     }
   }
 

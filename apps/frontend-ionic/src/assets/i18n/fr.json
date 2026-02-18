@@ -66,7 +66,8 @@
     "globeView": "Globe",
     "globeTeaser": "Explorer le globe",
     "globeTeaserSub": "Découvrez les athlètes du monde entier",
-    "simulation": "User test"
+    "simulation": "User test",
+    "races": "Courses"
   },
   "trophies": {
     "title": "Mes Trophées",
@@ -362,7 +363,9 @@
     "totalParticipants": "Nombre de participants",
     "addMyTrophy": "Ajouter mon trophée",
     "wrongResults": "Ce ne sont pas mes résultats",
-    "trophyAdded": "Trophée ajouté !"
+    "trophyAdded": "Trophée ajouté !",
+    "communityBanner": "\ud83d\udd25 {{count}} autres athlètes ont aussi terminé {{race}} !",
+    "seeWallOfFame": "Voir le Wall of Fame"
   },
   "refinement": {
     "raceNameTitle": "Quel est le nom de la course ?",
@@ -383,13 +386,40 @@
     "manualDateLabel": "Date (AAAA-MM-JJ)",
     "confirmYear": "Confirmer avec l'année seule"
   },
+  "races": {
+    "trending": "Courses Tendances",
+    "recent": "Courses Récentes",
+    "searchPlaceholder": "Rechercher une course...",
+    "mySports": "Mes sports",
+    "allSports": "Tous les sports",
+    "finishers": "{{count}} finishers",
+    "youRanThis": "Tu as couru ça",
+    "noResults": "Aucune course trouvée",
+    "loading": "Chargement..."
+  },
   "finishers": {
-    "title": "Club des Finishers",
+    "title": "Finishers",
     "club": "Club des Finishers",
     "seeFinishers": "Voir {{count}} Finishers",
     "totalCount": "{{count}} finishers",
     "noTime": "Aucun temps enregistré",
-    "empty": "Vous êtes le premier !"
+    "empty": "Vous êtes le premier !",
+    "sortTime": "Classement",
+    "sortTrophies": "Pain Caves",
+    "sortTrophiesSubtitle": "Parmi les finishers de cette course",
+    "sortLikes": "Populaires",
+    "sortLikesSubtitle": "Parmi les finishers de cette course",
+    "youRanThisBanner": "Tu y étais ! 🏆",
+    "wallOfFame": "Wall of Fame"
+  },
+  "leaderboard": {
+    "title": "Top Athlètes",
+    "sortTrophies": "Trophées",
+    "sortLikes": "Likes",
+    "rank": "#{{rank}}",
+    "trophies": "{{count}} trophées",
+    "likes": "{{count}} likes",
+    "empty": "Aucun athlète pour l'instant"
   },
   "social": {
     "like": "Aimer",
@@ -413,7 +443,9 @@
   },
   "publicProfile": {
     "visitRoom": "Visiter la Pain Cave",
-    "noTrophies": "Pas encore de trophées"
+    "noTrophies": "Pas encore de trophées",
+    "racesSection": "Courses",
+    "noRaces": "Aucune course enregistrée pour l'instant"
   },
   "pro": {
     "title": "WallOfMe Pro",

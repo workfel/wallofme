@@ -2,12 +2,13 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { db } from "../db";
-import { user, trophy, room } from "../db/schema";
+import { user, trophy, room, raceResult } from "../db/schema";
 import { requireAuth } from "../middleware/auth";
 import {
   onboardingSchema,
   updateProfileSchema,
 } from "../validators/user.validator";
+import { paginationSchema } from "../validators/common.validator";
 import { getPublicUrl } from "../lib/storage";
 import { FREE_SCAN_LIMIT, getMonthlyScansUsed } from "../lib/scan-limit";
 import { generateReferralCode } from "../lib/referral-service";
@@ -50,6 +51,33 @@ export const users = new Hono<{ Variables: Variables }>()
         streakDays,
       },
     });
+  })
+
+  // Get user's race results
+  .get("/:id/races", zValidator("query", paginationSchema), async (c) => {
+    const userId = c.req.param("id");
+    const { page, limit } = c.req.valid("query");
+    const offset = (page - 1) * limit;
+
+    // Verify user exists
+    const userRecord = await db.query.user.findFirst({
+      where: eq(user.id, userId),
+      columns: { id: true },
+    });
+    if (!userRecord) {
+      return c.json({ error: "Not found" }, 404);
+    }
+
+    const results = await db.query.raceResult.findMany({
+      where: eq(raceResult.userId, userId),
+      orderBy: desc(raceResult.createdAt),
+      limit,
+      offset,
+      with: { race: { columns: { id: true, name: true, date: true, location: true, sport: true, distance: true } } },
+      columns: { time: true, ranking: true },
+    });
+
+    return c.json({ data: results, page, limit });
   })
 
   // Get public user profile by ID

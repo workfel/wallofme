@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { eq } from "drizzle-orm";
+import { eq, and, ne, sql } from "drizzle-orm";
 import { db } from "../db";
 import { trophy, race, raceResult } from "../db/schema";
 import { requireAuth } from "../middleware/auth";
@@ -184,6 +184,13 @@ export const scan = new Hono<{ Variables: Variables }>()
         raceRecord = created;
       }
 
+      // Count community finishers (excluding current user)
+      const [communityCountResult] = await db
+        .select({ count: sql<number>`count(distinct ${raceResult.userId})::int` })
+        .from(raceResult)
+        .where(and(eq(raceResult.raceId, raceRecord.id), ne(raceResult.userId, currentUser.id)));
+      const communityFinishersCount = Number(communityCountResult?.count ?? 0);
+
       // Create race result stub
       const [newRaceResult] = await db
         .insert(raceResult)
@@ -211,6 +218,7 @@ export const scan = new Hono<{ Variables: Variables }>()
         data: {
           race: raceRecord,
           raceResult: newRaceResult,
+          communityFinishersCount,
         },
       });
     },

@@ -1,6 +1,7 @@
 ---
 name: build-feature
 description: "Implement features from spec markdown files. Use when the user says /build-feature, 'implement this spec', 'build this feature', or provides a path to a spec .md file for implementation. Reads the spec, asks clarifying questions if anything is unclear or ambiguous, plans the implementation, optionally spawns a team for complex multi-domain work, then implements the feature following project conventions from CLAUDE.md."
+triggers : [ 'build feature', 'create US', 'build us', 'create feature']
 ---
 
 # Build Feature from Spec

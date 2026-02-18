@@ -1,6 +1,7 @@
 {
   "name": "backend",
   "scripts": {
+    "test": "bun test",
     "dev": "bun run --hot src/index.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

@@ -1,5 +1,5 @@
 import { Component, inject, input, signal, OnInit } from "@angular/core";
-import { Location } from "@angular/common";
+import { Location, DatePipe } from "@angular/common";
 import { Router } from "@angular/router";
 import {
   IonChip,
@@ -16,12 +16,26 @@ import {
   personCircleOutline,
   ribbonOutline,
   documentTextOutline,
+  chevronForwardOutline,
 } from "ionicons/icons";
 
 import { ApiService } from "@app/core/services/api.service";
 import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.component";
 import { countryFlag, COUNTRIES } from "@app/shared/data/countries";
 import { I18nService } from "@app/core/services/i18n.service";
+
+interface UserRace {
+  time: string | null;
+  ranking: number | null;
+  race: {
+    id: string;
+    name: string;
+    date: string | null;
+    location: string | null;
+    sport: string | null;
+    distance: string | null;
+  };
+}
 
 interface PublicProfile {
   id: string;
@@ -42,6 +56,7 @@ interface PublicProfile {
   standalone: true,
   imports: [
     TranslateModule,
+    DatePipe,
     IonContent,
     IonText,
     IonChip,
@@ -173,6 +188,28 @@ interface PublicProfile {
                   }
                 </div>
               }
+            </div>
+          }
+
+          @if (races().length > 0) {
+            <div class="races-section">
+              <h3 class="section-title">{{ 'publicProfile.racesSection' | translate }}</h3>
+              <div class="races-list">
+                @for (r of races(); track r.race.id) {
+                  <div class="race-row" (click)="openWallOfFame(r.race.id)">
+                    <div class="race-details">
+                      <span class="race-name">{{ r.race.name }}</span>
+                      @if (r.race.date) {
+                        <span class="race-date">{{ r.race.date | date:'mediumDate' }}</span>
+                      }
+                    </div>
+                    @if (r.time) {
+                      <span class="race-time">{{ r.time }}</span>
+                    }
+                    <ion-icon name="chevron-forward-outline" />
+                  </div>
+                }
+              </div>
             </div>
           }
         </div>
@@ -536,6 +573,62 @@ interface PublicProfile {
       justify-content: center;
       height: 100%;
     }
+
+    .races-section {
+      margin-top: 24px;
+      padding: 0 16px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 800;
+      margin: 0 0 12px;
+    }
+
+    .races-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .race-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      background: var(--wom-glass-bg-medium);
+      border: 1px solid var(--wom-glass-border-strong);
+      border-radius: 14px;
+      cursor: pointer;
+
+      &:active { transform: scale(0.98); }
+
+      ion-icon { font-size: 18px; color: var(--ion-color-step-400); flex-shrink: 0; }
+    }
+
+    .race-details {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .race-name {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .race-date {
+      font-size: 12px;
+      color: var(--ion-color-step-500);
+    }
+
+    .race-time {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ion-color-primary);
+      flex-shrink: 0;
+    }
   `,
 })
 export class PublicProfilePage implements OnInit {
@@ -547,6 +640,7 @@ export class PublicProfilePage implements OnInit {
   private i18n = inject(I18nService);
 
   profile = signal<PublicProfile | null>(null);
+  races = signal<UserRace[]>([]);
   loading = signal(true);
 
   constructor() {
@@ -556,6 +650,7 @@ export class PublicProfilePage implements OnInit {
       personCircleOutline,
       ribbonOutline,
       documentTextOutline,
+      chevronForwardOutline,
     });
   }
 
@@ -574,6 +669,28 @@ export class PublicProfilePage implements OnInit {
     } finally {
       this.loading.set(false);
     }
+
+    this.fetchRaces();
+  }
+
+  async fetchRaces(): Promise<void> {
+    try {
+      const userId = this.userId();
+      const res = await (this.api.client.api.users as any)[':id'].races.$get({
+        param: { id: userId },
+        query: { page: '1', limit: '5' },
+      });
+      if (res.ok) {
+        const json = (await res.json()) as { data: UserRace[] };
+        this.races.set(json.data);
+      }
+    } catch {
+      // silently fail
+    }
+  }
+
+  openWallOfFame(raceId: string): void {
+    this.router.navigate(['/race', raceId, 'wall-of-fame']);
   }
 
   goBack(): void {

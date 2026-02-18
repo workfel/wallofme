@@ -15,15 +15,15 @@
 - [ ] Page détail de trophé  ( http://localhost:8100/trophy/f47af6da-ba80-473e-9c39-14d9b4e0684c)
 - [x] Page profile glassmorphism  + Choix language de l'app + Choix pays ( utiliser component ewxistant)
 - [ ] Le "Partager une capture" ne fonctionne pas. ça mets "impossible d'envoyer un message vide. 
-- [ ] specs/claim_your_wall.md (Flux "Créez votre Mur" - Acquisition)
+- [x] specs/claim_your_wall.md (Flux "Créez votre Mur" - Acquisition)
 - [ ] specs/social_challenges.md (Défis Sociaux - Rétention)
 - [ ] specs/gamified_sharing.md (Partage Gamifié - Viralité)
-- [ ] specs/daily_streaks_ux.md (Amélioration UX Daily Streaks - Rétention)
+- [x] specs/daily_streaks_ux.md (Amélioration UX Daily Streaks - Rétention)
 
 ## Croissance & Monétisation
 
-- [ ] specs/force-first-trophy.md (Forcer le 1er trophée - Activation)
-- [ ] specs/stats-paywall.md (Paywall Stats de Course - Monétisation Pro)
-- [ ] specs/instagram-stories-share.md (Share Instagram Stories - Viralité + fix bug partage)
+- [x] specs/force-first-trophy.md (Forcer le 1er trophée - Activation)
+- [x] specs/stats-paywall.md (Paywall Stats de Course - Monétisation Pro)
+- [x] specs/instagram-stories-share.md (Share Instagram Stories - Viralité + fix bug partage)
 - [ ] specs/race-wall-of-fame.md (Race Wall of Fame - Social Discovery)
 - [ ] specs/trophy-percentile-badge.md (Badge Top X% sur trophées 3D - Aspirationnel Pro)

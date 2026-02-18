@@ -6,7 +6,7 @@ import {
   OnDestroy,
   ViewChild,
 } from "@angular/core";
-import { SlicePipe } from "@angular/common";
+import { DatePipe, SlicePipe } from "@angular/common";
 import { Router } from "@angular/router";
 import {
   IonContent,
@@ -43,6 +43,14 @@ import {
   globeOutline,
   chevronForwardOutline,
   flaskOutline,
+  flagOutline,
+  peopleOutline,
+  walkOutline,
+  trailSignOutline,
+  bicycleOutline,
+  waterOutline,
+  fitnessOutline,
+  trophyOutline,
 } from "ionicons/icons";
 
 import {
@@ -51,6 +59,11 @@ import {
   type ExploreSortBy,
   type GlobePoint,
 } from "@app/core/services/explore.service";
+import {
+  RaceDiscoveryService,
+  type RaceCard,
+} from "@app/core/services/race-discovery.service";
+import { UserService } from "@app/core/services/user.service";
 import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.component";
 import { ExploreGlobeComponent } from "./globe/explore-globe.component";
 import { UserPreviewSheetComponent } from "./globe/user-preview-sheet.component";
@@ -70,6 +83,16 @@ const SPORT_FILTERS = [
   "ultra",
 ] as const;
 
+const SPORT_ICONS: Record<string, string> = {
+  running: 'walk-outline',
+  trail: 'trail-sign-outline',
+  triathlon: 'bicycle-outline',
+  cycling: 'bicycle-outline',
+  swimming: 'water-outline',
+  obstacle: 'fitness-outline',
+  other: 'trophy-outline',
+};
+
 const GRADIENT_PALETTES = [
   ["#667eea", "#764ba2"],
   ["#f093fb", "#f5576c"],
@@ -85,6 +108,7 @@ const GRADIENT_PALETTES = [
   selector: "app-explore",
   standalone: true,
   imports: [
+    DatePipe,
     SlicePipe,
     TranslateModule,
     IonContent,
@@ -125,6 +149,7 @@ const GRADIENT_PALETTES = [
           <div
             class="toggle-slider"
             [class.globe]="activeView() === 'globe'"
+            [class.races]="activeView() === 'races'"
           ></div>
           <button
             class="toggle-btn"
@@ -141,6 +166,14 @@ const GRADIENT_PALETTES = [
           >
             <ion-icon name="globe-outline" />
             <span>{{ "explore.globeView" | translate }}</span>
+          </button>
+          <button
+            class="toggle-btn"
+            [class.active]="activeView() === 'races'"
+            (click)="switchView('races')"
+          >
+            <ion-icon name="flag-outline" />
+            <span>{{ "explore.races" | translate }}</span>
           </button>
         </div>
       </div>
@@ -330,6 +363,114 @@ const GRADIENT_PALETTES = [
         />
       </div>
       } }
+
+      @if (activeView() === "races") {
+      <div class="explore-container">
+          <div class="leaderboard-entry-card" (click)="goToLeaderboard()">
+            <div class="leaderboard-entry-left">
+              <span class="leaderboard-icon">🏆</span>
+              <div>
+                <p class="leaderboard-title">Top Athlètes</p>
+                <p class="leaderboard-subtitle">Classement global · Trophées & Likes</p>
+              </div>
+            </div>
+            <ion-icon name="chevron-forward-outline" class="leaderboard-arrow" />
+          </div>
+
+        <!-- Search bar -->
+        <ion-searchbar
+          [placeholder]="'races.searchPlaceholder' | translate"
+          [debounce]="300"
+          (ionInput)="onRaceSearch($event)"
+          mode="ios"
+        />
+
+        <!-- Sport filter toggle -->
+        <div class="sport-filter-toggle">
+          <button class="sport-toggle-btn" [class.active]="showMySportsOnly()" (click)="toggleSportsFilter()">
+            {{ 'races.mySports' | translate }}
+          </button>
+          <button class="sport-toggle-btn" [class.active]="!showMySportsOnly()" (click)="toggleSportsFilter()">
+            {{ 'races.allSports' | translate }}
+          </button>
+        </div>
+
+        <!-- Trending section -->
+        @if (raceDiscovery.trendingRaces().length > 0) {
+          <div class="section-header">
+            <h3>{{ 'races.trending' | translate }}</h3>
+          </div>
+          <div class="trending-scroll">
+            @for (race of raceDiscovery.trendingRaces(); track race.id) {
+              <div class="trending-card" (click)="openWallOfFame(race.id)">
+                <div class="trending-icon">
+                  <ion-icon [name]="getSportIcon(race.sport)" />
+                </div>
+                <div class="trending-info">
+                  <span class="trending-name">{{ race.name }}</span>
+                  <span class="trending-meta">
+                    @if (race.location) { {{ race.location }} · }
+                    {{ 'races.finishers' | translate:{ count: race.finisherCount } }}
+                  </span>
+                </div>
+                @if (race.userHasRun) {
+                  <div class="you-ran-badge">&#10003;</div>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Recent races section -->
+        <div class="section-header">
+          <h3>{{ 'races.recent' | translate }}</h3>
+        </div>
+
+        @if (raceDiscovery.loadingRaces() && raceDiscovery.races().length === 0) {
+          <div class="centered-state">
+            <ion-spinner name="crescent" />
+          </div>
+        } @else if (raceDiscovery.races().length === 0) {
+          <div class="centered-state empty-state">
+            <ion-icon name="trophy-outline" class="empty-icon" />
+            <h3>{{ 'races.noResults' | translate }}</h3>
+          </div>
+        } @else {
+          <div class="races-list">
+            @for (race of raceDiscovery.races(); track race.id) {
+              <div class="race-item" (click)="openWallOfFame(race.id)">
+                <div class="race-sport-icon">
+                  <ion-icon [name]="getSportIcon(race.sport)" />
+                </div>
+                <div class="race-info">
+                  <span class="race-name">{{ race.name }}</span>
+                  <span class="race-meta">
+                    @if (race.location) { {{ race.location }} }
+                    @if (race.date) { · {{ race.date | date:'mediumDate' }} }
+                  </span>
+                </div>
+                <div class="race-right">
+                  <div class="finisher-pill">
+                    <ion-icon name="people-outline" />
+                    {{ race.finisherCount }}
+                  </div>
+                  @if (race.userHasRun) {
+                    <div class="you-ran-chip">&#10003; {{ 'races.youRanThis' | translate }}</div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          <ion-infinite-scroll
+            [disabled]="!raceDiscovery.hasMore()"
+            (ionInfinite)="onRacesInfiniteScroll($event)"
+          >
+            <ion-infinite-scroll-content loadingSpinner="crescent" />
+          </ion-infinite-scroll>
+        }
+      </div>
+      }
     </ion-content>
 
     <!-- User preview bottom sheet -->
@@ -380,7 +521,7 @@ const GRADIENT_PALETTES = [
       position: absolute;
       top: 4px;
       left: 4px;
-      width: calc(50% - 4px);
+      width: calc(33.33% - 2.67px);
       height: calc(100% - 8px);
       /*background: rgba(255, 255, 255, 0.85);*/
       background : #1a1a1a1a;
@@ -390,6 +531,10 @@ const GRADIENT_PALETTES = [
 
       &.globe {
         transform: translateX(100%);
+      }
+
+      &.races {
+        transform: translateX(200%);
       }
     }
 
@@ -696,24 +841,251 @@ const GRADIENT_PALETTES = [
       width: 100%;
       height: calc(100% - 52px);
     }
+
+    .section-header {
+      h3 {
+        font-size: 16px;
+        font-weight: 800;
+        margin: 16px 0 8px;
+        color: var(--ion-text-color);
+      }
+    }
+
+    .sport-filter-toggle {
+      display: flex;
+      gap: 8px;
+      margin: 8px 0;
+    }
+
+    .sport-toggle-btn {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid var(--wom-glass-border);
+      border-radius: 12px;
+      background: transparent;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ion-color-step-500);
+      cursor: pointer;
+
+      &.active {
+        background: var(--ion-color-primary);
+        color: var(--ion-color-primary-contrast);
+        border-color: var(--ion-color-primary);
+      }
+    }
+
+    .trending-scroll {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scrollbar-width: none;
+      &::-webkit-scrollbar { display: none; }
+    }
+
+    .trending-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 220px;
+      padding: 12px;
+      background: var(--wom-glass-bg-medium);
+      border: 1px solid var(--wom-glass-border-strong);
+      border-radius: 16px;
+      cursor: pointer;
+      flex-shrink: 0;
+
+      &:active { transform: scale(0.97); }
+    }
+
+    .trending-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--ion-color-primary);
+      color: var(--ion-color-primary-contrast);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      ion-icon { font-size: 18px; }
+    }
+
+    .trending-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      overflow: hidden;
+    }
+
+    .trending-name {
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .trending-meta {
+      font-size: 11px;
+      color: var(--ion-color-step-500);
+    }
+
+    .you-ran-badge {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--ion-color-success);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .races-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-bottom: 24px;
+    }
+
+    .race-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      background: var(--wom-glass-bg-medium);
+      border: 1px solid var(--wom-glass-border-strong);
+      border-radius: 16px;
+      cursor: pointer;
+
+      &:active { transform: scale(0.98); }
+    }
+
+    .race-sport-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: rgba(var(--ion-color-primary-rgb), 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      ion-icon { font-size: 20px; color: var(--ion-color-primary); }
+    }
+
+    .race-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      overflow: hidden;
+    }
+
+    .race-name {
+      font-size: 14px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .race-meta {
+      font-size: 12px;
+      color: var(--ion-color-step-500);
+    }
+
+    .race-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .finisher-pill {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ion-color-step-500);
+      ion-icon { font-size: 13px; }
+    }
+
+    .you-ran-chip {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--ion-color-success);
+    }
+
+    .leaderboard-entry-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      background: linear-gradient(135deg, rgba(var(--ion-color-warning-rgb), 0.12), rgba(var(--ion-color-primary-rgb), 0.08));
+      border: 1px solid rgba(var(--ion-color-warning-rgb), 0.25);
+      border-radius: 16px;
+      margin-bottom: 20px;
+      cursor: pointer;
+
+      .leaderboard-entry-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .leaderboard-icon {
+        font-size: 28px;
+      }
+
+      .leaderboard-title {
+        font-size: 15px;
+        font-weight: 700;
+        margin: 0 0 2px;
+      }
+
+      .leaderboard-subtitle {
+        font-size: 12px;
+        color: var(--ion-color-medium);
+        margin: 0;
+      }
+
+      .leaderboard-arrow {
+        font-size: 18px;
+        color: var(--ion-color-medium);
+      }
+    }
   `,
 })
 export class ExplorePage
   implements OnInit, OnDestroy, ViewWillLeave, ViewDidEnter
 {
   exploreService = inject(ExploreService);
+  raceDiscovery = inject(RaceDiscoveryService);
+  private userService = inject(UserService);
   private router = inject(Router);
 
   readonly sports = SPORT_FILTERS;
+  readonly sportIcons = SPORT_ICONS;
   activeSort = signal<ExploreSortBy>("recent");
   activeSport = signal<string | null>(null);
-  activeView = signal<"list" | "globe">("list");
+  activeView = signal<"list" | "globe" | "races">("list");
   showGlobe = signal(true);
   selectedGlobeUser = signal<GlobePoint | null>(null);
+  showMySportsOnly = signal(true);
+  raceSearch = signal('');
 
   @ViewChild("previewModal") previewModal!: IonModal;
 
   private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private raceSearchTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     addIcons({
@@ -725,6 +1097,14 @@ export class ExplorePage
       globeOutline,
       chevronForwardOutline,
       flaskOutline,
+      flagOutline,
+      peopleOutline,
+      walkOutline,
+      trailSignOutline,
+      bicycleOutline,
+      waterOutline,
+      fitnessOutline,
+      trophyOutline,
     });
   }
 
@@ -734,6 +1114,7 @@ export class ExplorePage
 
   ngOnDestroy(): void {
     if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
+    if (this.raceSearchTimer) clearTimeout(this.raceSearchTimer);
   }
 
   ionViewWillLeave(): void {
@@ -744,10 +1125,14 @@ export class ExplorePage
     this.showGlobe.set(true);
   }
 
-  switchView(view: "list" | "globe"): void {
+  switchView(view: "list" | "globe" | "races"): void {
     this.activeView.set(view);
     if (view === "globe" && this.exploreService.globePoints().length === 0) {
       this.exploreService.loadGlobePoints(this.activeSport());
+    }
+    if (view === "races" && this.raceDiscovery.trendingRaces().length === 0) {
+      this.raceDiscovery.loadTrending();
+      this.loadRacesWithFilters(true);
     }
   }
 
@@ -799,6 +1184,50 @@ export class ExplorePage
   getGradient(index: number): string {
     const palette = GRADIENT_PALETTES[index % GRADIENT_PALETTES.length];
     return `linear-gradient(135deg, ${palette[0]}, ${palette[1]})`;
+  }
+
+  private getUserSports(): string[] {
+    const sports = this.userService.profile()?.sports;
+    if (!sports) return [];
+    const validSports = ["running", "trail", "triathlon", "cycling", "swimming", "obstacle", "other"];
+    return sports.filter((s) => validSports.includes(s));
+  }
+
+  private loadRacesWithFilters(reset: boolean = false): void {
+    const sports = this.showMySportsOnly() ? this.getUserSports() : [];
+    const q = this.raceSearch() || undefined;
+    this.raceDiscovery.loadRaces({ q, sports, reset });
+  }
+
+  onRaceSearch(event: CustomEvent): void {
+    const value = (event.detail.value as string)?.trim() || '';
+    this.raceSearch.set(value);
+    if (this.raceSearchTimer) clearTimeout(this.raceSearchTimer);
+    this.raceSearchTimer = setTimeout(() => this.loadRacesWithFilters(true), 300);
+  }
+
+  toggleSportsFilter(): void {
+    this.showMySportsOnly.update(v => !v);
+    this.loadRacesWithFilters(true);
+  }
+
+  async onRacesInfiniteScroll(event: CustomEvent): Promise<void> {
+    const sports = this.showMySportsOnly() ? this.getUserSports() : [];
+    const q = this.raceSearch() || undefined;
+    await this.raceDiscovery.loadMore({ q, sports });
+    (event.target as HTMLIonInfiniteScrollElement).complete();
+  }
+
+  openWallOfFame(raceId: string): void {
+    this.router.navigate(['/race', raceId, 'wall-of-fame']);
+  }
+
+  goToLeaderboard(): void {
+    this.router.navigate(['/leaderboard']);
+  }
+
+  getSportIcon(sport: string | null): string {
+    return sport ? (this.sportIcons[sport] ?? 'trophy-outline') : 'trophy-outline';
   }
 
   isSeedUser(userId: string): boolean {

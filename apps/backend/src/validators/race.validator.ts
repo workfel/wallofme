@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { paginationSchema } from "../validators/common.validator";
 
 export const createRaceSchema = z.object({
   name: z.string().min(1).max(255),
@@ -49,4 +50,16 @@ export const updateRaceResultSchema = z.object({
   ranking: z.number().int().positive().nullable().optional(),
   categoryRanking: z.number().int().positive().nullable().optional(),
   totalParticipants: z.number().int().positive().nullable().optional(),
+});
+
+export const listRaceSchema = paginationSchema.extend({
+  sport: z.preprocess(
+    (v) => v === undefined ? undefined : Array.isArray(v) ? v : [v],
+    z.array(z.enum(["running","trail","triathlon","cycling","swimming","obstacle","other"])).optional()
+  ),
+  q: z.string().optional(),
+});
+
+export const finishersSortSchema = paginationSchema.extend({
+  sort: z.enum(["time", "trophies", "likes"]).default("time"),
 });

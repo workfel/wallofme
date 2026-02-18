@@ -66,7 +66,8 @@
     "globeView": "Globe",
     "globeTeaser": "Explore the globe",
     "globeTeaserSub": "See athletes around the world",
-    "simulation": "Simulation"
+    "simulation": "Simulation",
+    "races": "Races"
   },
   "trophies": {
     "title": "My Trophies",
@@ -362,7 +363,9 @@
     "totalParticipants": "Total Participants",
     "addMyTrophy": "Add My Trophy",
     "wrongResults": "These aren't my results",
-    "trophyAdded": "Trophy added!"
+    "trophyAdded": "Trophy added!",
+    "communityBanner": "\ud83d\udd25 {{count}} other athletes also finished {{race}}!",
+    "seeWallOfFame": "See the Wall of Fame"
   },
   "refinement": {
     "raceNameTitle": "What's the race name?",
@@ -383,13 +386,40 @@
     "manualDateLabel": "Date (YYYY-MM-DD)",
     "confirmYear": "Confirm with year only"
   },
+  "races": {
+    "trending": "Trending Races",
+    "recent": "Recent Races",
+    "searchPlaceholder": "Search races...",
+    "mySports": "My Sports",
+    "allSports": "All Sports",
+    "finishers": "{{count}} finishers",
+    "youRanThis": "You ran this",
+    "noResults": "No races found",
+    "loading": "Loading..."
+  },
   "finishers": {
-    "title": "Finisher's Club",
+    "title": "Finishers",
     "club": "Finisher's Club",
     "seeFinishers": "See {{count}} Finishers",
     "totalCount": "{{count}} finishers",
     "noTime": "No time recorded",
-    "empty": "You're the first!"
+    "empty": "You're the first!",
+    "sortTime": "Ranking",
+    "sortTrophies": "Pain Caves",
+    "sortTrophiesSubtitle": "Among finishers of this race",
+    "sortLikes": "Popular",
+    "sortLikesSubtitle": "Among finishers of this race",
+    "youRanThisBanner": "You ran this! 🏆",
+    "wallOfFame": "Wall of Fame"
+  },
+  "leaderboard": {
+    "title": "Top Athletes",
+    "sortTrophies": "Trophies",
+    "sortLikes": "Likes",
+    "rank": "#{{rank}}",
+    "trophies": "{{count}} trophies",
+    "likes": "{{count}} likes",
+    "empty": "No athletes yet"
   },
   "social": {
     "like": "Like",
@@ -433,7 +463,9 @@
   },
   "publicProfile": {
     "visitRoom": "Visit Pain Cave",
-    "noTrophies": "No trophies yet"
+    "noTrophies": "No trophies yet",
+    "racesSection": "Races",
+    "noRaces": "No races recorded yet"
   },
   "pro": {
     "title": "WallOfMe Pro",
