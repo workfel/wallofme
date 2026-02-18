@@ -9,7 +9,6 @@ import {
   IonList,
   IonText,
   IonSpinner,
-  IonChip,
   IonLabel,
   IonModal,
   IonHeader,
@@ -33,38 +32,7 @@ import {
   countryFlag,
   type Country,
 } from "@app/shared/data/countries";
-
-const SPORTS = [
-  "running",
-  "trail",
-  "triathlon",
-  "cycling",
-  "crossfit",
-  "swimming",
-  "ocr",
-  "duathlon",
-  "hyrox",
-  "ironman",
-  "marathon",
-  "ultra",
-  "other",
-] as const;
-
-const SPORT_EMOJIS: Record<string, string> = {
-  running: "\u{1F3C3}",
-  trail: "\u{26F0}\u{FE0F}",
-  triathlon: "\u{1F3CA}",
-  cycling: "\u{1F6B4}",
-  crossfit: "\u{1F3CB}\u{FE0F}",
-  swimming: "\u{1F3CA}",
-  ocr: "\u{1F9D7}",
-  duathlon: "\u{1F3C3}",
-  hyrox: "\u{1F4AA}",
-  ironman: "\u{1F94C}",
-  marathon: "\u{1F3C5}",
-  ultra: "\u{1F30D}",
-  other: "\u{2B50}",
-};
+import { SportSelectorComponent } from "@app/shared/components/sport-selector/sport-selector.component";
 
 @Component({
   selector: "app-onboarding",
@@ -79,7 +47,6 @@ const SPORT_EMOJIS: Record<string, string> = {
     IonList,
     IonText,
     IonSpinner,
-    IonChip,
     IonLabel,
     IonModal,
     IonHeader,
@@ -88,6 +55,7 @@ const SPORT_EMOJIS: Record<string, string> = {
     IonButtons,
     IonSearchbar,
     IonIcon,
+    SportSelectorComponent,
   ],
   template: `
     <ion-content class="ion-padding" [fullscreen]="true">
@@ -178,20 +146,10 @@ const SPORT_EMOJIS: Record<string, string> = {
         </div>
 
         <div class="sports-section">
-          <div class="sport-chips">
-            @for (sport of sports; track sport) {
-            <ion-chip
-              [color]="isSelected(sport) ? 'primary' : 'medium'"
-              [outline]="!isSelected(sport)"
-              (click)="toggleSport(sport)"
-            >
-              <ion-label
-                >{{ getSportEmoji(sport) }}
-                {{ "sports." + sport | translate }}</ion-label
-              >
-            </ion-chip>
-            }
-          </div>
+          <app-sport-selector
+            [selected]="selectedSports()"
+            (selectionChange)="selectedSports.set($event)"
+          />
 
           @if (errorMessage()) {
           <ion-text color="danger">
@@ -392,14 +350,11 @@ const SPORT_EMOJIS: Record<string, string> = {
     .sports-section {
       display: flex;
       flex-direction: column;
+      margin-bottom: 24px;
     }
 
-    .sport-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
+    ::ng-deep .sport-chips {
       justify-content: center;
-      margin-bottom: 24px;
     }
 
     .continue-btn {
@@ -435,8 +390,6 @@ export class OnboardingPage implements OnInit {
   errorMessage = signal("");
   showCountryModal = signal(false);
   countrySearch = signal("");
-
-  readonly sports = SPORTS;
 
   filteredCountries = computed(() => {
     const query = this.countrySearch().toLowerCase();
@@ -544,23 +497,6 @@ export class OnboardingPage implements OnInit {
     }
     this.errorMessage.set("");
     this.step.set(2);
-  }
-
-  isSelected(sport: string): boolean {
-    return this.selectedSports().includes(sport);
-  }
-
-  toggleSport(sport: string): void {
-    const current = this.selectedSports();
-    if (current.includes(sport)) {
-      this.selectedSports.set(current.filter((s) => s !== sport));
-    } else {
-      this.selectedSports.set([...current, sport]);
-    }
-  }
-
-  getSportEmoji(sport: string): string {
-    return SPORT_EMOJIS[sport] ?? "";
   }
 
   async onContinue(): Promise<void> {

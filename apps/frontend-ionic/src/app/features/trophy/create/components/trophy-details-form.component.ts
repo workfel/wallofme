@@ -39,6 +39,7 @@ import {
   countryFlag,
   type Country,
 } from "@app/shared/data/countries";
+import { RACE_SPORTS } from "@app/shared/data/sports";
 
 @Component({
   selector: "app-trophy-details-form",
@@ -370,15 +371,7 @@ export class TrophyDetailsFormComponent implements OnInit, OnDestroy {
       | "other";
   }>();
 
-  sportOptions = [
-    "running",
-    "trail",
-    "triathlon",
-    "cycling",
-    "swimming",
-    "obstacle",
-    "other",
-  ];
+  readonly sportOptions = RACE_SPORTS;
 
   private typewriterTimers: ReturnType<typeof setTimeout>[] = [];
 

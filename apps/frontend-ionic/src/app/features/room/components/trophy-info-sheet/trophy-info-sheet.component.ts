@@ -32,6 +32,7 @@ import {
 import { TranslateModule } from '@ngx-translate/core';
 
 import { StatsPreviewCardComponent } from '@app/shared/components/stats-preview-card/stats-preview-card.component';
+import { sportIcon as getSportIcon } from '@app/shared/data/sports';
 
 export interface TrophyInfoData {
   id: string;
@@ -52,16 +53,6 @@ export interface TrophyInfoData {
     totalParticipants: number | null;
   } | null;
 }
-
-const SPORT_ICON_MAP: Record<string, string> = {
-  running: 'walk-outline',
-  cycling: 'bicycle-outline',
-  triathlon: 'fitness-outline',
-  swimming: 'water-outline',
-  trail: 'trail-sign-outline',
-  obstacle: 'barbell-outline',
-  other: 'ellipse-outline',
-};
 
 @Component({
   selector: 'app-trophy-info-sheet',
@@ -115,9 +106,9 @@ const SPORT_ICON_MAP: Record<string, string> = {
               <h2 class="race-name">{{ t.race.name }}</h2>
 
               <!-- Sport badge -->
-              @if (sportIcon()) {
+              @if (sportIconName()) {
                 <div class="sport-badge">
-                  <ion-icon [name]="sportIcon()!" />
+                  <ion-icon [name]="sportIconName()!" />
                   <span>{{ 'sports.' + t.race!.sport | translate }}</span>
                 </div>
               }
@@ -341,10 +332,10 @@ export class TrophyInfoSheetComponent {
   navigatePrev = output<void>();
   navigateNext = output<void>();
 
-  sportIcon = computed(() => {
+  sportIconName = computed(() => {
     const sport = this.trophy()?.race?.sport;
     if (!sport) return null;
-    return SPORT_ICON_MAP[sport] ?? SPORT_ICON_MAP['other'];
+    return getSportIcon(sport);
   });
 
   constructor() {

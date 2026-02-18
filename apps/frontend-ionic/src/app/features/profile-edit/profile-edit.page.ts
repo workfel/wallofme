@@ -22,7 +22,6 @@ import {
   IonSpinner,
   IonIcon,
   IonAvatar,
-  IonChip,
   IonLabel,
   IonModal,
   IonSearchbar,
@@ -52,38 +51,7 @@ import {
   countryFlag,
   type Country,
 } from "@app/shared/data/countries";
-
-const SPORTS = [
-  "running",
-  "trail",
-  "triathlon",
-  "cycling",
-  "crossfit",
-  "swimming",
-  "ocr",
-  "duathlon",
-  "hyrox",
-  "ironman",
-  "marathon",
-  "ultra",
-  "other",
-] as const;
-
-const SPORT_EMOJIS: Record<string, string> = {
-  running: "\u{1F3C3}",
-  trail: "\u{26F0}\u{FE0F}",
-  triathlon: "\u{1F3CA}",
-  cycling: "\u{1F6B4}",
-  crossfit: "\u{1F3CB}\u{FE0F}",
-  swimming: "\u{1F3CA}",
-  ocr: "\u{1F9D7}",
-  duathlon: "\u{1F3C3}",
-  hyrox: "\u{1F4AA}",
-  ironman: "\u{1F94C}",
-  marathon: "\u{1F3C5}",
-  ultra: "\u{1F30D}",
-  other: "\u{2B50}",
-};
+import { SportSelectorComponent } from "@app/shared/components/sport-selector/sport-selector.component";
 
 const AUTOSAVE_DEBOUNCE_MS = 1200;
 
@@ -106,10 +74,10 @@ const AUTOSAVE_DEBOUNCE_MS = 1200;
     IonSpinner,
     IonIcon,
     IonAvatar,
-    IonChip,
     IonLabel,
     IonModal,
     IonSearchbar,
+    SportSelectorComponent,
   ],
   template: `
     <ion-content class="ion-padding" [fullscreen]="true">
@@ -206,20 +174,10 @@ const AUTOSAVE_DEBOUNCE_MS = 1200;
           <ion-text>
             <h3>{{ "profileEdit.sports" | translate }}</h3>
           </ion-text>
-          <div class="sport-chips">
-            @for (sport of sports; track sport) {
-              <ion-chip
-                [color]="isSelected(sport) ? 'primary' : 'medium'"
-                [outline]="!isSelected(sport)"
-                (click)="toggleSport(sport)"
-              >
-                <ion-label
-                  >{{ getSportEmoji(sport) }}
-                  {{ "sports." + sport | translate }}</ion-label
-                >
-              </ion-chip>
-            }
-          </div>
+          <app-sport-selector
+            [selected]="selectedSports()"
+            (selectionChange)="selectedSports.set($event)"
+          />
         </div>
 
         <!-- Location -->
@@ -412,12 +370,6 @@ const AUTOSAVE_DEBOUNCE_MS = 1200;
       }
     }
 
-    .sport-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
     .location-section {
       margin-top: 24px;
 
@@ -514,8 +466,6 @@ export class ProfileEditPage implements OnInit, OnDestroy {
 
   private profileLoaded = false;
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
-
-  readonly sports = SPORTS;
 
   filteredCountries = computed(() => {
     const query = this.countrySearch().toLowerCase();
@@ -651,23 +601,6 @@ export class ProfileEditPage implements OnInit, OnDestroy {
     } finally {
       this.saving.set(false);
     }
-  }
-
-  isSelected(sport: string): boolean {
-    return this.selectedSports().includes(sport);
-  }
-
-  toggleSport(sport: string): void {
-    const current = this.selectedSports();
-    if (current.includes(sport)) {
-      this.selectedSports.set(current.filter((s) => s !== sport));
-    } else {
-      this.selectedSports.set([...current, sport]);
-    }
-  }
-
-  getSportEmoji(sport: string): string {
-    return SPORT_EMOJIS[sport] ?? "";
   }
 
   getFlag(code: string): string {

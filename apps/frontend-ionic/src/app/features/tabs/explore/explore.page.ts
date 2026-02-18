@@ -51,6 +51,12 @@ import {
   waterOutline,
   fitnessOutline,
   trophyOutline,
+  barbellOutline,
+  bodyOutline,
+  swapHorizontalOutline,
+  flashOutline,
+  medalOutline,
+  earthOutline,
 } from "ionicons/icons";
 
 import {
@@ -59,39 +65,12 @@ import {
   type ExploreSortBy,
   type GlobePoint,
 } from "@app/core/services/explore.service";
-import {
-  RaceDiscoveryService,
-  type RaceCard,
-} from "@app/core/services/race-discovery.service";
+import { RaceDiscoveryService } from "@app/core/services/race-discovery.service";
 import { UserService } from "@app/core/services/user.service";
 import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.component";
 import { ExploreGlobeComponent } from "./globe/explore-globe.component";
 import { UserPreviewSheetComponent } from "./globe/user-preview-sheet.component";
-
-const SPORT_FILTERS = [
-  "running",
-  "trail",
-  "triathlon",
-  "cycling",
-  "crossfit",
-  "swimming",
-  "ocr",
-  "duathlon",
-  "hyrox",
-  "ironman",
-  "marathon",
-  "ultra",
-] as const;
-
-const SPORT_ICONS: Record<string, string> = {
-  running: 'walk-outline',
-  trail: 'trail-sign-outline',
-  triathlon: 'bicycle-outline',
-  cycling: 'bicycle-outline',
-  swimming: 'water-outline',
-  obstacle: 'fitness-outline',
-  other: 'trophy-outline',
-};
+import { USER_SPORTS, sportIcon } from "@app/shared/data/sports";
 
 const GRADIENT_PALETTES = [
   ["#667eea", "#764ba2"],
@@ -362,20 +341,24 @@ const GRADIENT_PALETTES = [
           (pointTapped)="onGlobePointTapped($event)"
         />
       </div>
-      } }
-
-      @if (activeView() === "races") {
+      } } @if (activeView() === "races") {
       <div class="explore-container">
-          <div class="leaderboard-entry-card" (click)="goToLeaderboard()">
-            <div class="leaderboard-entry-left">
-              <span class="leaderboard-icon">🏆</span>
-              <div>
-                <p class="leaderboard-title">Top Athlètes</p>
-                <p class="leaderboard-subtitle">Classement global · Trophées & Likes</p>
-              </div>
+        <div
+          class="leaderboard-entry-card"
+          (click)="goToLeaderboard()"
+          aria-hidden
+        >
+          <div class="leaderboard-entry-left">
+            <span class="leaderboard-icon">🏆</span>
+            <div>
+              <p class="leaderboard-title">Top Athlètes</p>
+              <p class="leaderboard-subtitle">
+                Classement global · Trophées & Likes
+              </p>
             </div>
-            <ion-icon name="chevron-forward-outline" class="leaderboard-arrow" />
           </div>
+          <ion-icon name="chevron-forward-outline" class="leaderboard-arrow" />
+        </div>
 
         <!-- Search bar -->
         <ion-searchbar
@@ -387,87 +370,104 @@ const GRADIENT_PALETTES = [
 
         <!-- Sport filter toggle -->
         <div class="sport-filter-toggle">
-          <button class="sport-toggle-btn" [class.active]="showMySportsOnly()" (click)="toggleSportsFilter()">
-            {{ 'races.mySports' | translate }}
+          <button
+            class="sport-toggle-btn"
+            [class.active]="showMySportsOnly()"
+            (click)="toggleSportsFilter()"
+          >
+            {{ "races.mySports" | translate }}
           </button>
-          <button class="sport-toggle-btn" [class.active]="!showMySportsOnly()" (click)="toggleSportsFilter()">
-            {{ 'races.allSports' | translate }}
+          <button
+            class="sport-toggle-btn"
+            [class.active]="!showMySportsOnly()"
+            (click)="toggleSportsFilter()"
+          >
+            {{ "races.allSports" | translate }}
           </button>
         </div>
 
         <!-- Trending section -->
         @if (raceDiscovery.trendingRaces().length > 0) {
-          <div class="section-header">
-            <h3>{{ 'races.trending' | translate }}</h3>
-          </div>
-          <div class="trending-scroll">
-            @for (race of raceDiscovery.trendingRaces(); track race.id) {
-              <div class="trending-card" (click)="openWallOfFame(race.id)">
-                <div class="trending-icon">
-                  <ion-icon [name]="getSportIcon(race.sport)" />
-                </div>
-                <div class="trending-info">
-                  <span class="trending-name">{{ race.name }}</span>
-                  <span class="trending-meta">
-                    @if (race.location) { {{ race.location }} · }
-                    {{ 'races.finishers' | translate:{ count: race.finisherCount } }}
-                  </span>
-                </div>
-                @if (race.userHasRun) {
-                  <div class="you-ran-badge">&#10003;</div>
-                }
-              </div>
+        <div class="section-header">
+          <h3>{{ "races.trending" | translate }}</h3>
+        </div>
+        <div class="trending-scroll">
+          @for (race of raceDiscovery.trendingRaces(); track race.id) {
+          <div
+            class="trending-card"
+            (click)="openWallOfFame(race.id)"
+            aria-hidden
+          >
+            <div class="trending-icon">
+              <ion-icon [name]="getSportIcon(race.sport)" />
+            </div>
+            <div class="trending-info">
+              <span class="trending-name">{{ race.name }}</span>
+              <span class="trending-meta">
+                @if (race.location) { {{ race.location }} · }
+                {{
+                  "races.finishers" | translate : { count: race.finisherCount }
+                }}
+              </span>
+            </div>
+            @if (race.userHasRun) {
+            <div class="you-ran-badge">&#10003;</div>
             }
           </div>
+          }
+        </div>
         }
 
         <!-- Recent races section -->
         <div class="section-header">
-          <h3>{{ 'races.recent' | translate }}</h3>
+          <h3>{{ "races.recent" | translate }}</h3>
         </div>
 
-        @if (raceDiscovery.loadingRaces() && raceDiscovery.races().length === 0) {
-          <div class="centered-state">
-            <ion-spinner name="crescent" />
-          </div>
+        @if (raceDiscovery.loadingRaces() && raceDiscovery.races().length === 0)
+        {
+        <div class="centered-state">
+          <ion-spinner name="crescent" />
+        </div>
         } @else if (raceDiscovery.races().length === 0) {
-          <div class="centered-state empty-state">
-            <ion-icon name="trophy-outline" class="empty-icon" />
-            <h3>{{ 'races.noResults' | translate }}</h3>
-          </div>
+        <div class="centered-state empty-state">
+          <ion-icon name="trophy-outline" class="empty-icon" />
+          <h3>{{ "races.noResults" | translate }}</h3>
+        </div>
         } @else {
-          <div class="races-list">
-            @for (race of raceDiscovery.races(); track race.id) {
-              <div class="race-item" (click)="openWallOfFame(race.id)">
-                <div class="race-sport-icon">
-                  <ion-icon [name]="getSportIcon(race.sport)" />
-                </div>
-                <div class="race-info">
-                  <span class="race-name">{{ race.name }}</span>
-                  <span class="race-meta">
-                    @if (race.location) { {{ race.location }} }
-                    @if (race.date) { · {{ race.date | date:'mediumDate' }} }
-                  </span>
-                </div>
-                <div class="race-right">
-                  <div class="finisher-pill">
-                    <ion-icon name="people-outline" />
-                    {{ race.finisherCount }}
-                  </div>
-                  @if (race.userHasRun) {
-                    <div class="you-ran-chip">&#10003; {{ 'races.youRanThis' | translate }}</div>
-                  }
-                </div>
+        <div class="races-list">
+          @for (race of raceDiscovery.races(); track race.id) {
+          <div class="race-item" (click)="openWallOfFame(race.id)" aria-hidden>
+            <div class="race-sport-icon">
+              <ion-icon [name]="getSportIcon(race.sport)" />
+            </div>
+            <div class="race-info">
+              <span class="race-name">{{ race.name }}</span>
+              <span class="race-meta">
+                @if (race.location) { {{ race.location }} } @if (race.date) { ·
+                {{ race.date | date : "mediumDate" }} }
+              </span>
+            </div>
+            <div class="race-right">
+              <div class="finisher-pill">
+                <ion-icon name="people-outline" />
+                {{ race.finisherCount }}
               </div>
-            }
+              @if (race.userHasRun) {
+              <div class="you-ran-chip">
+                &#10003; {{ "races.youRanThis" | translate }}
+              </div>
+              }
+            </div>
           </div>
+          }
+        </div>
 
-          <ion-infinite-scroll
-            [disabled]="!raceDiscovery.hasMore()"
-            (ionInfinite)="onRacesInfiniteScroll($event)"
-          >
-            <ion-infinite-scroll-content loadingSpinner="crescent" />
-          </ion-infinite-scroll>
+        <ion-infinite-scroll
+          [disabled]="!raceDiscovery.hasMore()"
+          (ionInfinite)="onRacesInfiniteScroll($event)"
+        >
+          <ion-infinite-scroll-content loadingSpinner="crescent" />
+        </ion-infinite-scroll>
         }
       </div>
       }
@@ -1072,15 +1072,14 @@ export class ExplorePage
   private userService = inject(UserService);
   private router = inject(Router);
 
-  readonly sports = SPORT_FILTERS;
-  readonly sportIcons = SPORT_ICONS;
+  readonly sports = USER_SPORTS;
   activeSort = signal<ExploreSortBy>("recent");
   activeSport = signal<string | null>(null);
   activeView = signal<"list" | "globe" | "races">("list");
   showGlobe = signal(true);
   selectedGlobeUser = signal<GlobePoint | null>(null);
   showMySportsOnly = signal(true);
-  raceSearch = signal('');
+  raceSearch = signal("");
 
   @ViewChild("previewModal") previewModal!: IonModal;
 
@@ -1105,6 +1104,12 @@ export class ExplorePage
       waterOutline,
       fitnessOutline,
       trophyOutline,
+      barbellOutline,
+      bodyOutline,
+      swapHorizontalOutline,
+      flashOutline,
+      medalOutline,
+      earthOutline,
     });
   }
 
@@ -1189,25 +1194,36 @@ export class ExplorePage
   private getUserSports(): string[] {
     const sports = this.userService.profile()?.sports;
     if (!sports) return [];
-    const validSports = ["running", "trail", "triathlon", "cycling", "swimming", "obstacle", "other"];
+    const validSports = [
+      "running",
+      "trail",
+      "triathlon",
+      "cycling",
+      "swimming",
+      "obstacle",
+      "other",
+    ];
     return sports.filter((s) => validSports.includes(s));
   }
 
-  private loadRacesWithFilters(reset: boolean = false): void {
+  private loadRacesWithFilters(reset = false): void {
     const sports = this.showMySportsOnly() ? this.getUserSports() : [];
     const q = this.raceSearch() || undefined;
     this.raceDiscovery.loadRaces({ q, sports, reset });
   }
 
   onRaceSearch(event: CustomEvent): void {
-    const value = (event.detail.value as string)?.trim() || '';
+    const value = (event.detail.value as string)?.trim() || "";
     this.raceSearch.set(value);
     if (this.raceSearchTimer) clearTimeout(this.raceSearchTimer);
-    this.raceSearchTimer = setTimeout(() => this.loadRacesWithFilters(true), 300);
+    this.raceSearchTimer = setTimeout(
+      () => this.loadRacesWithFilters(true),
+      300
+    );
   }
 
   toggleSportsFilter(): void {
-    this.showMySportsOnly.update(v => !v);
+    this.showMySportsOnly.update((v) => !v);
     this.loadRacesWithFilters(true);
   }
 
@@ -1219,15 +1235,15 @@ export class ExplorePage
   }
 
   openWallOfFame(raceId: string): void {
-    this.router.navigate(['/race', raceId, 'wall-of-fame']);
+    this.router.navigate(["/race", raceId, "wall-of-fame"]);
   }
 
   goToLeaderboard(): void {
-    this.router.navigate(['/leaderboard']);
+    this.router.navigate(["/leaderboard"]);
   }
 
   getSportIcon(sport: string | null): string {
-    return sport ? (this.sportIcons[sport] ?? 'trophy-outline') : 'trophy-outline';
+    return sport ? sportIcon(sport) : "trophy-outline";
   }
 
   isSeedUser(userId: string): boolean {
