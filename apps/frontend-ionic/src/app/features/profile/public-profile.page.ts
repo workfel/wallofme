@@ -2,7 +2,6 @@ import { Component, inject, input, signal, OnInit } from "@angular/core";
 import { Location, DatePipe } from "@angular/common";
 import { Router } from "@angular/router";
 import {
-  IonChip,
   IonContent,
   IonIcon,
   IonSpinner,
@@ -14,15 +13,13 @@ import {
   arrowBackOutline,
   cubeOutline,
   personCircleOutline,
-  ribbonOutline,
-  documentTextOutline,
   chevronForwardOutline,
 } from "ionicons/icons";
 
 import { ApiService } from "@app/core/services/api.service";
-import { ProBadgeComponent } from "@app/shared/components/pro-badge/pro-badge.component";
-import { countryFlag, COUNTRIES } from "@app/shared/data/countries";
-import { I18nService } from "@app/core/services/i18n.service";
+import { ProfileInfoComponent } from "@app/shared/components/profile-info/profile-info.component";
+import { StatsRowComponent } from "@app/shared/components/stats-row/stats-row.component";
+import { TrophyGridComponent } from "@app/shared/components/trophy-grid/trophy-grid.component";
 
 interface UserRace {
   time: string | null;
@@ -59,10 +56,11 @@ interface PublicProfile {
     DatePipe,
     IonContent,
     IonText,
-    IonChip,
     IonSpinner,
     IonIcon,
-    ProBadgeComponent,
+    ProfileInfoComponent,
+    StatsRowComponent,
+    TrophyGridComponent,
   ],
   template: `
     <ion-content [fullscreen]="true" [scrollY]="true">
@@ -100,53 +98,21 @@ interface PublicProfile {
             </div>
           </div>
 
-          <!-- Profile info -->
-          <div class="profile-info animate-fade-in">
-            <h2 class="display-name">
-              {{ p.displayName || p.firstName }}
-              @if (p.isPro) {
-                <app-pro-badge size="medium" />
-              }
-            </h2>
+          <app-profile-info
+            [displayName]="p.displayName || p.firstName || ''"
+            [isPro]="p.isPro"
+            [country]="p.country"
+            [sports]="p.sports"
+          />
 
-            @if (p.country) {
-              <p class="subtitle-label">{{ getCountryDisplay(p.country) }}</p>
-            }
-
-            @if (p.sports.length > 0) {
-              <div class="sport-chips">
-                @for (sport of p.sports; track sport) {
-                  <ion-chip outline color="primary" class="sport-chip">
-                    {{ "sports." + sport | translate }}
-                  </ion-chip>
-                }
-              </div>
-            }
-          </div>
-
-          <!-- Stats row -->
-          <div class="stats-row animate-fade-in-up">
-            <div class="stat-item">
-              <span class="stat-value">{{ formatCount(p.trophyCount) }}</span>
-              <span class="stat-label">{{
-                "profile.statTrophies" | translate
-              }}</span>
-            </div>
-            <div class="stat-divider"></div>
-            <div class="stat-item">
-              <span class="stat-value">{{ formatCount(p.likeCount) }}</span>
-              <span class="stat-label">{{
-                "profile.statLikes" | translate
-              }}</span>
-            </div>
-            <div class="stat-divider"></div>
-            <div class="stat-item">
-              <span class="stat-value">{{ formatCount(p.viewCount) }}</span>
-              <span class="stat-label">{{
-                "profile.statViews" | translate
-              }}</span>
-            </div>
-          </div>
+          <app-stats-row
+            [stats]="[
+              { value: p.trophyCount, label: 'profile.statTrophies' },
+              { value: p.likeCount, label: 'profile.statLikes' },
+              { value: p.viewCount, label: 'profile.statViews' }
+            ]"
+            variant="inline"
+          />
 
           <!-- Visit Pain Cave button -->
           <div class="action-row">
@@ -156,40 +122,11 @@ interface PublicProfile {
             </button>
           </div>
 
-          <!-- Trophy Grid -->
-          @if (p.trophies.length === 0) {
-            <div class="empty-state animate-fade-in">
-              <ion-icon name="ribbon-outline" class="empty-icon" />
-              <ion-text color="medium">
-                <p>{{ "publicProfile.noTrophies" | translate }}</p>
-              </ion-text>
-            </div>
-          } @else {
-            <div class="trophy-grid animate-fade-in-up">
-              @for (t of p.trophies; track t.id) {
-                <div class="trophy-cell">
-                  @if (t.thumbnailUrl) {
-                    <img
-                      [src]="t.thumbnailUrl"
-                      [alt]="t.type"
-                      class="trophy-img"
-                      loading="lazy"
-                    />
-                  } @else {
-                    <div class="trophy-fallback">
-                      <ion-icon
-                        [name]="
-                          t.type === 'medal'
-                            ? 'ribbon-outline'
-                            : 'document-text-outline'
-                        "
-                      />
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-          }
+          <app-trophy-grid
+            [trophies]="p.trophies"
+            [clickable]="false"
+            emptyMessage="publicProfile.noTrophies"
+          />
 
           @if (races().length > 0) {
             <div class="races-section">
@@ -230,32 +167,11 @@ interface PublicProfile {
       --avatar-overlap: 55px;
     }
 
-    /* Global Background */
-    ion-content {
-      /*--background: radial-gradient(circle at 50% 0%, #e0f7fa 0%, #f0f4f8 100%);*/
-    }
-
-    /* Glass Card Shared Styles */
-    .glass-card {
-      background: var(--wom-glass-bg);
-      backdrop-filter: blur(20px) saturate(1.8);
-      -webkit-backdrop-filter: blur(20px) saturate(1.8);
-      border: 1px solid var(--wom-glass-border);
-      box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.08),
-        0 2px 4px rgba(0, 0, 0, 0.04);
-      border-radius: 32px;
-    }
-
     /* ── Banner ─────────────────────────────── */
     .banner {
       position: relative;
       height: var(--banner-height);
-      background: linear-gradient(
-        135deg,
-        #1a1a1a 0%,
-        #2c3e50 100%
-      ); /* Darker rich banner */
+      background: linear-gradient(135deg, #1a1a1a 0%, #2c3e50 100%);
       overflow: hidden;
       border-bottom-left-radius: 40px;
       border-bottom-right-radius: 40px;
@@ -292,7 +208,7 @@ interface PublicProfile {
     }
 
     .toolbar-pill {
-      width: 44px; /* Larger touch target */
+      width: 44px;
       height: 44px;
       display: flex;
       align-items: center;
@@ -324,7 +240,7 @@ interface PublicProfile {
     /* ── Card body ───────────────────────────── */
     .card-body {
       position: relative;
-      margin: -80px 0px 0px; /* Pull up over banner */
+      margin: -80px 0px 0px;
       padding-top: calc(var(--avatar-overlap) + 8px);
       min-height: 200px;
       background: var(--wom-glass-bg);
@@ -379,90 +295,6 @@ interface PublicProfile {
       color: var(--ion-color-step-300);
     }
 
-    /* ── Profile info ───────────────────────── */
-    .profile-info {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 12px 24px 0;
-    }
-
-    .display-name {
-      font-size: 24px;
-      font-weight: 800;
-      margin: 0 0 4px;
-      text-align: center;
-      letter-spacing: -0.02em;
-      color: var(--ion-text-color);
-    }
-
-    .subtitle-label {
-      font-size: 15px;
-      color: var(--ion-color-step-600);
-      margin: 2px 0 0;
-      font-weight: 500;
-    }
-
-    .sport-chips {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 6px;
-      margin-top: 12px;
-    }
-
-    .sport-chip {
-      height: 28px;
-      font-size: 12px;
-      margin: 0;
-      background: rgba(var(--ion-color-primary-rgb), 0.1);
-      color: var(--ion-color-primary);
-      border: 1px solid rgba(var(--ion-color-primary-rgb), 0.2);
-      font-weight: 600;
-      --padding-start: 12px;
-      --padding-end: 12px;
-    }
-
-    /* ── Stats row ──────────────────────────── */
-    .stats-row {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 24px 16px 0;
-      padding: 16px 0;
-      border-top: 1px solid var(--wom-divider-subtle);
-      border-bottom: 1px solid var(--wom-divider-subtle);
-    }
-
-    .stat-item {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .stat-value {
-      font-size: 20px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      color: var(--ion-text-color);
-    }
-
-    .stat-label {
-      font-size: 11px;
-      color: var(--ion-color-step-500);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      font-weight: 700;
-    }
-
-    .stat-divider {
-      width: 1px;
-      height: 28px;
-      background: var(--wom-divider);
-    }
-
     /* ── Action button ──────────────────────── */
     .action-row {
       display: flex;
@@ -501,79 +333,7 @@ interface PublicProfile {
       box-shadow: 0 4px 16px rgba(var(--ion-color-primary-rgb), 0.4);
     }
 
-    /* ── Trophy grid ────────────────────────── */
-    .trophy-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      padding: 0 16px 40px; /* outside the glass card now? No, inside */
-    }
-
-    /* Modify trophy grid to be INSIDE or OUTSIDE card?
-       The HTML structure has it inside .card-body.
-       Let's keep it there but style appropriately.
-    */
-    .card-body .trophy-grid {
-      padding: 0 16px 32px;
-    }
-
-    .trophy-cell {
-      position: relative;
-      aspect-ratio: 1;
-      overflow: hidden;
-      border-radius: 16px;
-      background: var(--wom-glass-bg-subtle);
-      border: 1px solid var(--wom-glass-border-strong);
-    }
-
-    .trophy-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .trophy-fallback {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--wom-glass-bg-wash);
-
-      ion-icon {
-        font-size: 32px;
-        color: rgba(var(--ion-color-primary-rgb), 0.5);
-      }
-    }
-
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px 24px;
-      text-align: center;
-
-      .empty-icon {
-        font-size: 48px;
-        color: rgba(var(--ion-color-medium-rgb), 0.5);
-        margin-bottom: 12px;
-      }
-
-      p {
-        margin: 0;
-        font-size: 15px;
-        color: var(--ion-color-medium);
-        font-weight: 500;
-      }
-    }
-
-    .centered {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-    }
-
+    /* ── Races section ─────────────────────── */
     .races-section {
       margin-top: 24px;
       padding: 0 16px;
@@ -629,6 +389,13 @@ interface PublicProfile {
       color: var(--ion-color-primary);
       flex-shrink: 0;
     }
+
+    .centered {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+    }
   `,
 })
 export class PublicProfilePage implements OnInit {
@@ -637,7 +404,6 @@ export class PublicProfilePage implements OnInit {
   private api = inject(ApiService);
   private router = inject(Router);
   private location = inject(Location);
-  private i18n = inject(I18nService);
 
   profile = signal<PublicProfile | null>(null);
   races = signal<UserRace[]>([]);
@@ -648,8 +414,6 @@ export class PublicProfilePage implements OnInit {
       arrowBackOutline,
       cubeOutline,
       personCircleOutline,
-      ribbonOutline,
-      documentTextOutline,
       chevronForwardOutline,
     });
   }
@@ -699,26 +463,5 @@ export class PublicProfilePage implements OnInit {
 
   visitRoom(): void {
     this.router.navigate(["/room", this.userId()]);
-  }
-
-  formatCount(count: number): string {
-    if (count >= 1_000_000) {
-      return (count / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
-    }
-    if (count >= 1_000) {
-      return (count / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
-    }
-    return count.toString();
-  }
-
-  getCountryDisplay(code: string): string {
-    const flag = countryFlag(code);
-    const country = COUNTRIES.find((c) => c.code === code.toUpperCase());
-    if (country) {
-      const name =
-        this.i18n.currentLang === "fr" ? country.nameFr : country.name;
-      return `${flag} ${name}`;
-    }
-    return `${flag} ${code}`;
   }
 }
