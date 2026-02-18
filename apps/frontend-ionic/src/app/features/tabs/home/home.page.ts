@@ -418,7 +418,7 @@ import type { DailyStatus } from "@app/core/services/token.service";
     .greeting-avatar {
       width: 40px;
       height: 40px;
-      border: 2px solid rgba(255, 255, 255, 0.8);
+      border: 2px solid rgba(var(--ion-text-color-rgb), 0.15);
     }
 
     .avatar-fallback {
@@ -429,8 +429,7 @@ import type { DailyStatus } from "@app/core/services/token.service";
     .greeting-text {
       font-size: 16px;
       font-weight: 700;
-      color: #fff; /* Force white text */
-      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      color: var(--ion-text-color);
       letter-spacing: -0.01em;
     }
 
@@ -527,31 +526,27 @@ import type { DailyStatus } from "@app/core/services/token.service";
 
       ion-icon {
         font-size: 18px;
-        color: rgba(255, 255, 255, 0.9);
-        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
       }
     }
 
     .stat-value {
       font-size: 18px;
       font-weight: 800;
-      color: #fff;
-      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      color: var(--ion-text-color);
     }
 
     .stat-label {
       font-size: 10px;
-      color: rgba(255, 255, 255, 0.8);
+      color: var(--ion-color-step-500);
       text-transform: uppercase;
       letter-spacing: 0.05em;
       font-weight: 600;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
 
     .stat-divider {
       width: 1px;
       height: 24px;
-      background: rgba(255, 255, 255, 0.3);
+      background: var(--wom-divider);
     }
 
     .referral-pill {
@@ -573,14 +568,13 @@ import type { DailyStatus } from "@app/core/services/token.service";
 
       ion-icon {
         font-size: 16px;
-        color: rgba(255, 255, 255, 0.9);
+        color: var(--ion-text-color);
       }
 
       span {
         font-size: 13px;
         font-weight: 700;
-        color: #fff;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        color: var(--ion-text-color);
       }
     }
 
